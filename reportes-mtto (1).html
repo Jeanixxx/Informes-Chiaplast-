@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16232e">
+<title>Reportes MTTO</title>
+<style>
+:root{
+  --bg:#eef1f3; --surface:#fff; --ink:#16232e; --muted:#5d6b77; --line:#d5dce1;
+  --steel:#16232e; --accent:#f2b705; --accent-ink:#2a2000; --ok:#13804a; --err:#b3261e;
+  --chip:#e3e8ec; --r:14px;
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#10171d;--surface:#1a252e;--ink:#eef2f5;--muted:#9aa8b4;--line:#2c3a46;--chip:#25323d;--steel:#0b1015;--err:#ff8a80;--ok:#4cd08a}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+input,textarea,button{font:inherit;color:inherit}
+input,textarea{-webkit-user-select:text;user-select:text}
+button{border:0;background:none;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{max-width:520px;margin:0 auto;height:100%;position:relative;overflow:hidden;background:var(--bg)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column}
+.screen.active{display:flex;animation:in .22s ease-out}
+@keyframes in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.screen.active{animation:none}*{transition:none!important}}
+
+/* Barra superior */
+.bar{background:var(--steel);color:#fff;padding:calc(var(--st) + 12px) 16px 14px;display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.bar h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.2px;flex:1}
+.bar small{display:block;font-size:13px;font-weight:500;opacity:.75;margin-top:2px}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:22px;display:grid;place-items:center;flex:0 0 auto}
+.iconbtn:active{background:rgba(255,255,255,.25)}
+.body{flex:1;overflow-y:auto;padding:16px 16px 24px;-webkit-overflow-scrolling:touch}
+.dock{flex:0 0 auto;padding:12px 16px calc(var(--sb) + 12px);background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
+
+/* Botones */
+.btn{min-height:54px;border-radius:var(--r);font-weight:800;font-size:17px;padding:0 20px;flex:1;transition:transform .08s}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--accent);color:var(--accent-ink)}
+.btn-s{background:var(--chip);color:var(--ink);flex:0 0 auto}
+.btn[disabled]{opacity:.6}
+
+/* Splash y login */
+.splash{background:var(--steel);color:#fff;align-items:center;justify-content:center;text-align:center;padding:24px}
+.mark{font-size:40px;font-weight:900;letter-spacing:3px;line-height:1}
+.rule{display:block;width:64px;height:6px;background:var(--accent);margin:16px 0 14px}
+.splash .rule{margin:16px auto 14px}
+.sub{font-size:15px;opacity:.75}
+.login{background:var(--steel);color:#fff;justify-content:space-between}
+.login .top{padding:calc(var(--st) + 56px) 28px 28px}
+.login h1{margin:0 0 12px;font-size:32px;line-height:1.12;letter-spacing:-.6px}
+.login p{margin:0;opacity:.75;font-size:16px;line-height:1.45}
+.stripe{height:14px;background:repeating-linear-gradient(-45deg,var(--accent) 0 14px,#16232e 14px 28px)}
+.sheet{background:var(--surface);color:var(--ink);padding:24px 24px calc(var(--sb) + 24px)}
+.sheet .btn{width:100%;flex:none;display:block}
+.sheet .link{display:block;margin:12px auto 0}
+.sheet small{display:block;color:var(--err);min-height:18px;margin-top:8px;font-size:13px;line-height:1.4;text-align:center}
+/* Menú */
+.demo{display:flex;align-items:center;gap:10px;background:#fff3c4;color:#4a3a00;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;margin-bottom:14px}
+.demo i{width:10px;height:10px;border-radius:50%;background:#d49a00;flex:0 0 auto}
+.h2{font-size:13px;font-weight:700;color:var(--muted);margin:20px 4px 10px}
+.areas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.area{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:var(--r);min-height:92px;padding:14px;text-align:left;display:flex;flex-direction:column;justify-content:space-between}
+.area:active{background:var(--chip)}
+.area b{font-size:26px;font-weight:900;letter-spacing:-.5px}
+.area span{font-size:14px;color:var(--muted);font-weight:600}
+.area.wide{grid-column:1/-1;min-height:0}
+.rec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:14px}
+.rec b{display:block;font-size:15px}
+.rec span{color:var(--muted);font-size:13px}
+.empty{color:var(--muted);font-size:14px;padding:6px 4px;line-height:1.5}
+
+/* Formulario */
+.steps{display:flex;gap:6px;padding:12px 16px 0}
+.steps div{height:5px;flex:1;border-radius:3px;background:var(--line)}
+.steps div.on{background:var(--accent)}
+.steps-l{padding:6px 16px 0;font-size:13px;color:var(--muted);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.f{margin-bottom:18px}
+.f:last-child{margin-bottom:0}
+.f>label,.f>.lbl{display:block;font-weight:700;font-size:15px;margin-bottom:8px}
+.f em{font-style:normal;color:var(--err);margin-left:2px}
+input[type=date],input[type=time],textarea{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);font-size:16px;outline:none;min-height:52px}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(242,183,5,.3)}
+textarea{resize:none;min-height:110px;line-height:1.4}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{flex:1 1 auto;min-height:50px;padding:0 14px;border-radius:12px;background:var(--chip);font-weight:700;font-size:15px;border:2px solid transparent}
+.seg button[aria-pressed=true]{background:var(--steel);color:#fff;border-color:var(--accent)}
+.seg.bad button{border-color:var(--err)}
+.err{color:var(--err);font-size:13px;font-weight:600;margin-top:6px;display:none}
+.bad+.err,.bad~.err{display:block}
+.link{color:var(--muted);font-weight:700;font-size:14px;padding:8px 0;text-decoration:underline}
+.ph{border:2px dashed var(--line);border-radius:12px;padding:14px;color:var(--muted);font-size:13px;line-height:1.4;margin-bottom:18px}
+
+/* Extrusoras */
+.card h3{margin:0 0 6px;font-size:18px}
+.hd{font-size:13px;font-weight:700;color:var(--muted);margin:6px 0 0}
+.zr{padding:12px 0;border-bottom:1px solid var(--line)}
+.zr:last-of-type{border-bottom:0}
+.zr b{display:block;font-size:15px;margin-bottom:8px}
+.zr small{display:block;color:var(--muted);font-size:13px;line-height:1.35;margin:-4px 0 8px}
+.zr input{width:100%;min-height:50px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);font-size:17px;outline:none}
+.zr input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
+.zr .seg button{min-height:46px}
+/* Resumen */
+.row{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row span{color:var(--muted)}
+.row b{text-align:right;word-break:break-word}
+.fname{margin-top:14px;padding:12px;border-radius:12px;background:var(--bg);font-size:14px;word-break:break-all}
+
+/* Resultado */
+.done{align-items:center;justify-content:center;text-align:center;padding:24px}
+.tick{width:92px;height:92px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:48px;margin:0 auto 20px}
+.done h2{margin:0 0 8px;font-size:24px}
+.done p{margin:0 0 18px;color:var(--muted);line-height:1.5}
+.done .card{text-align:left;width:100%}
+.spin{width:22px;height:22px;border:3px solid rgba(0,0,0,.2);border-top-color:currentColor;border-radius:50%;animation:s .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+
+/* Herramientas */
+.tool{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:6px 0 16px}
+.tool b{display:block;font-size:16px}
+.tool span{color:var(--muted);font-size:13px;line-height:1.4}
+.sw{position:relative;width:56px;height:32px;flex:0 0 auto;border-radius:20px;background:#aab4bc;transition:.2s}
+.sw:after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.sw[aria-checked=true]{background:var(--ok)}
+.sw[aria-checked=true]:after{transform:translateX(24px)}
+.drive{font-size:14px;line-height:1.5;color:var(--muted)}
+.toast{position:absolute;left:16px;right:16px;bottom:calc(var(--sb) + 90px);background:var(--steel);color:#fff;padding:14px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:9;text-align:center}
+.toast.show{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Splash -->
+<section id="splash" class="screen splash active">
+  <div><div class="mark">CHIAPLAST</div><i class="rule"></i><div class="sub">Mantenimiento</div></div>
+</section>
+
+<!-- Login -->
+<section id="login" class="screen login">
+  <div class="top">
+    <div class="mark" style="font-size:30px">CHIAPLAST</div><i class="rule"></i>
+    <h1>Departamento de Mantenimiento</h1>
+    <p>Más de 20 años de trabajo en planta. Registra aquí tus reportes.</p>
+  </div>
+  <div class="stripe"></div>
+  <div class="sheet">
+    <button class="btn btn-p" id="loginBtn" onclick="signIn()">Entrar con Google</button>
+    <button class="link" onclick="signInDemo()">Entrar en modo demo</button>
+    <small id="loginErr" role="alert"></small>
+  </div>
+</section>
+
+<!-- Menú -->
+<section id="menu" class="screen">
+  <header class="bar">
+    <h1>Nuevo reporte<small>¿Qué área vas a reportar?</small></h1>
+    <button class="iconbtn" onclick="go('tools')" aria-label="Herramientas">⚙</button>
+  </header>
+  <div class="body">
+    <div id="demoBanner" class="demo" hidden><i></i>Modo demo: no se sube nada a Drive</div>
+    <div class="areas">
+      <button class="area" onclick="pick('Extracción 1','E1')"><b>E1</b><span>Extracción 1</span></button>
+      <button class="area" onclick="pick('Extracción 2','E2')"><b>E2</b><span>Extracción 2</span></button>
+      <button class="area" onclick="pick('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="pick('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
+      <button class="area wide" onclick="pick('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+    </div>
+    <div class="h2">Últimos reportes</div>
+    <div id="recent"></div>
+  </div>
+</section>
+
+<!-- Formulario -->
+<section id="form" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1 id="fTitle">Área<small>Paso 1 de 2</small></h1>
+  </header>
+  <div class="steps"><div class="on"></div><div></div></div>
+  <div class="body">
+    <div class="card">
+      <div class="two">
+        <div class="f"><label for="d">Fecha</label><input type="date" id="d"></div>
+        <div class="f"><label for="t">Hora</label><input type="time" id="t"></div>
+      </div>
+      <button class="link" onclick="setNow()">Usar fecha y hora actuales</button>
+    </div>
+
+    <div id="ext" hidden></div>
+    <div class="card">
+      <!-- ZONA RESERVADA: aquí irán los campos reales de cada área (E1, E2, CAM, DIM, BSL).
+           Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
+      <div class="ph" id="ph"><b>Campos del área pendientes.</b> Los campos reales se agregarán aquí.</div>
+
+      <div class="f"><span class="lbl">Tipo<em>*</em></span>
+        <div class="seg" id="gType" data-v="">
+          <button type="button" aria-pressed="false" onclick="choose('gType',this)">PREVENTIVO</button>
+          <button type="button" aria-pressed="false" onclick="choose('gType',this)">CORRECTIVO</button>
+        </div>
+        <div class="err">Elige el tipo de mantenimiento.</div>
+      </div>
+      <div class="f"><span class="lbl">Estado<em>*</em></span>
+        <div class="seg" id="gStatus" data-v="">
+          <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">ENTREGADO</button>
+          <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PROCESO</button>
+          <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PARO</button>
+        </div>
+        <div class="err">Elige el estado del equipo.</div>
+      </div>
+      <div class="f"><label for="obs">Observaciones</label>
+        <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
+    </div>
+  </div>
+  <div class="dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
+</section>
+
+<!-- Confirmación -->
+<section id="confirm" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Revisar<small>Paso 2 de 2</small></h1>
+  </header>
+  <div class="steps"><div class="on"></div><div class="on"></div></div>
+  <div class="body">
+    <div class="card"><div id="sum"></div>
+      <div class="fname"><span style="color:var(--muted)">Se guardará como</span><br><b id="fn"></b></div>
+    </div>
+  </div>
+  <div class="dock">
+    <button class="btn btn-s" onclick="history.back()">Editar</button>
+    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar y subir</button>
+  </div>
+</section>
+
+<!-- Resultado -->
+<section id="done" class="screen done">
+  <div class="tick">✓</div>
+  <h2 id="rTitle">Listo</h2>
+  <p id="rMsg"></p>
+  <div class="card"><span style="color:var(--muted);font-size:13px">Archivo</span><div id="rFile" style="font-weight:700;word-break:break-all;margin-top:4px"></div></div>
+  <button class="btn btn-p" style="flex:none;width:100%" onclick="finish()">Nuevo reporte</button>
+</section>
+
+<!-- Herramientas -->
+<section id="tools" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Herramientas</h1>
+  </header>
+  <div class="body">
+    <div class="card">
+      <div class="drive" id="acct" style="margin-bottom:14px"></div><div class="tool">
+        <div><b>Modo demo</b><span>Simula la generación y subida del archivo.</span></div>
+        <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
+      </div>
+      <button class="btn btn-s" style="width:100%;margin-bottom:10px" onclick="document.getElementById('drv').hidden=!document.getElementById('drv').hidden">Configuración de Google Drive</button>
+      <div class="drive" id="drv" hidden>Los reportes se suben como Excel a la carpeta <b>Reportes MTTO</b> de tu Google Drive. La app solo puede ver los archivos que ella misma crea (permiso <code>drive.file</code>).</div>
+    </div>
+    <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar sesión</button>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const S={area:'',code:'',demo:false};
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+S.demo=store.get('mtto_demo','false')==='true';
+
+/* Navegación con soporte del botón Atrás de Android */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
+  $('demoBanner').hidden=!S.demo;
+  $('demoSw').setAttribute('aria-checked',S.demo);
+  if(id==='menu') renderRecent();
+  if(id==='tools') $('acct').textContent=store.get('mtto_user','')?'Cuenta: '+store.get('mtto_user',''):'Sin cuenta de Google (modo demo)';
+}
+function go(id){history.pushState({s:id},'');show(id)}
+function root(id){history.replaceState({s:id},'');show(id)}
+addEventListener('popstate',e=>{
+  const s=e.state&&e.state.s;
+  if(!s||s==='splash'||s==='login'){ if(isIn()) show('menu'); return; }
+  if(s==='done'){ show('menu'); return; }
+  show(s);
+});
+const isIn=()=>store.get('mtto_session','false')==='true';
+
+/* Utilidades */
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400)}
+function buzz(n){try{navigator.vibrate&&navigator.vibrate(n||15)}catch(e){}}
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const fmtD=v=>{if(!v)return'—';const[y,m,d]=v.split('-');return d+'/'+m+'/'+y};
+const pad=n=>String(n).padStart(2,'0');
+function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes())}
+
+/* ===== CONFIGURACIÓN GOOGLE ===== */
+const CONFIG={
+  WEB_CLIENT_ID:'PEGA_AQUI_TU_WEB_CLIENT_ID.apps.googleusercontent.com', // OAuth "Aplicación web"
+  FOLDER:'Reportes MTTO'
+};
+const SCOPES=['profile','email','https://www.googleapis.com/auth/drive.file'];
+const XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const GA=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.GoogleAuth;
+let tok={v:'',exp:0};
+
+function loadGIS(){return new Promise((ok,no)=>{if(window.google&&google.accounts)return ok();const e=document.createElement('script');e.src='https://accounts.google.com/gsi/client';e.onload=ok;e.onerror=()=>no(new Error('Sin conexión a internet.'));document.head.appendChild(e)})}
+async function authToken(interactive){
+  if(tok.v&&Date.now()<tok.exp-60000)return tok.v;
+  if(/PEGA_AQUI/.test(CONFIG.WEB_CLIENT_ID))throw new Error('Falta pegar el ID de cliente de Google en CONFIG.');
+  const p=GA();
+  if(p){ // APK con Capacitor
+    await p.initialize({clientId:CONFIG.WEB_CLIENT_ID,scopes:SCOPES,grantOfflineAccess:false});
+    let r=null; if(!interactive){try{r=await p.refresh()}catch(e){}}
+    if(!r||!r.accessToken)r=(await p.signIn()).authentication;
+    tok={v:r.accessToken,exp:Date.now()+3500000}; return tok.v;
+  }
+  await loadGIS(); // navegador (pruebas)
+  return new Promise((ok,no)=>{
+    const c=google.accounts.oauth2.initTokenClient({client_id:CONFIG.WEB_CLIENT_ID,scope:SCOPES.join(' '),
+      callback:r=>r.error?no(new Error('Acceso rechazado.')):(tok={v:r.access_token,exp:Date.now()+r.expires_in*1000},ok(tok.v)),
+      error_callback:e=>no(new Error('Inicio de sesión cancelado.'))});
+    c.requestAccessToken({prompt:interactive?'select_account':''});
+  });
+}
+async function drive(path,opt,t){
+  const r=await fetch('https://www.googleapis.com'+path,Object.assign({},opt,{headers:Object.assign({Authorization:'Bearer '+t},opt.headers||{})}));
+  if(!r.ok){if(r.status===401)tok.v='';let m='';try{m=(await r.json()).error.message}catch(e){}throw new Error('Drive '+r.status+(m?': '+m:''))}
+  return r.json();
+}
+async function folderId(t){
+  let id=store.get('mtto_folder','');
+  if(id){try{const f=await drive('/drive/v3/files/'+id+'?fields=id,trashed',{},t);if(!f.trashed)return id}catch(e){}}
+  const q=encodeURIComponent("name='"+CONFIG.FOLDER+"' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  const l=await drive('/drive/v3/files?q='+q+'&fields=files(id)',{},t);
+  id=l.files.length?l.files[0].id:(await drive('/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:CONFIG.FOLDER,mimeType:'application/vnd.google-apps.folder'})},t)).id;
+  store.set('mtto_folder',id);return id;
+}
+async function upload(name,blob,t){
+  const parent=await folderId(t),b='mtto'+Date.now();
+  const body=new Blob(['--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name,parents:[parent]})+'\r\n--'+b+'\r\nContent-Type: '+XLSX_MIME+'\r\n\r\n',blob,'\r\n--'+b+'--']);
+  return drive('/upload/drive/v3/files?uploadType=multipart&fields=id,name',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body},t);
+}
+
+/* ===== Generador XLSX sin librerías (ZIP sin compresión) ===== */
+const crcT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t.push(c>>>0)}return t})();
+const crc=u=>{let c=-1;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(~c)>>>0};
+function zip(files){
+  const en=new TextEncoder(),parts=[],cd=[];let off=0,size=0;
+  for(const[n,txt]of files){
+    const nb=en.encode(n),d=en.encode(txt),c=crc(d),h=new DataView(new ArrayBuffer(30)),e=new DataView(new ArrayBuffer(46));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint32(14,c,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nb.length,true);
+    e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint32(16,c,true);e.setUint32(20,d.length,true);e.setUint32(24,d.length,true);e.setUint16(28,nb.length,true);e.setUint32(42,off,true);
+    parts.push(h,nb,d);cd.push(e,nb);off+=30+nb.length+d.length;size+=46+nb.length;
+  }
+  const z=new DataView(new ArrayBuffer(22));
+  z.setUint32(0,0x06054b50,true);z.setUint16(8,files.length,true);z.setUint16(10,files.length,true);z.setUint32(12,size,true);z.setUint32(16,off,true);
+  return new Blob([...parts,...cd,z],{type:XLSX_MIME});
+}
+function buildXlsx(rows){
+  const x=v=>String(v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const sd=rows.map((r,i)=>'<row r="'+(i+1)+'">'+r.slice(0,2).map((v,j)=>'<c r="'+'AB'[j]+(i+1)+'" t="inlineStr"><is><t xml:space="preserve">'+x(v)+'</t></is></c>').join('')+'</row>').join('');
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',R='http://schemas.openxmlformats.org/officeDocument/2006/relationships',M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',P='http://schemas.openxmlformats.org/package/2006/relationships';
+  return zip([
+    ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+    ['_rels/.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml',H+'<workbook xmlns="'+M+'" xmlns:r="'+R+'"><sheets><sheet name="Reporte" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
+    ['xl/worksheets/sheet1.xml',H+'<worksheet xmlns="'+M+'"><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="55" customWidth="1"/></cols><sheetData>'+sd+'</sheetData></worksheet>']
+  ]);
+}
+
+/* Sesión */
+async function signIn(){
+  const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Conectando…';$('loginErr').textContent='';
+  try{
+    const t=await authToken(true);
+    const u=await(await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+t}})).json();
+    S.demo=false;store.set('mtto_demo','false');store.set('mtto_user',u.email||'');store.set('mtto_session','true');
+    root('menu');
+  }catch(e){$('loginErr').textContent=e.message||'No se pudo iniciar sesión.'}
+  finally{b.disabled=false;b.textContent='Entrar con Google'}
+}
+function signInDemo(){S.demo=true;store.set('mtto_demo','true');store.del('mtto_user');store.set('mtto_session','true');root('menu')}
+function logout(){
+  store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
+  try{const p=GA();p&&p.signOut()}catch(e){}
+  history.replaceState({s:'login'},'');show('login');
+}
+function toggleDemo(){S.demo=!S.demo;store.set('mtto_demo',String(S.demo));$('demoSw').setAttribute('aria-checked',S.demo);toast(S.demo?'Modo demo activado':'Modo demo desactivado')}
+
+/* Flujo */
+function pick(name,code){
+  S.area=name;S.code=code;
+  $('fTitle').innerHTML=esc(name)+'<small>Paso 1 de 2</small>';
+  setNow(); $('ph').hidden=true; $('ext').innerHTML=isExt()?buildExt():buildMq(); $('ext').hidden=false; loadDraft(); go('form'); buzz(10);
+}
+function choose(g,btn){
+  const box=$(g);
+  box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
+  box.dataset.v=btn.textContent; box.classList.remove('bad'); buzz(8); saveDraft();
+}
+function review(){
+  const d=$('d').value,t=$('t').value;
+  const type=$('gType').dataset.v,st=$('gStatus').dataset.v;
+  let bad=null;
+  if(!d||!t){toast('Indica la fecha y la hora.');bad=$(!d?'d':'t')}
+  if(!type){$('gType').classList.add('bad');bad=bad||$('gType')}
+  if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
+  if(!$('ext').hidden){
+    document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||isNaN(x)){i.classList.add('bad');bad=bad||i}});
+    document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
+  }
+  if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
+  const rows=[['Área',S.area+' ('+S.code+')'],['Fecha',fmtD(d)],['Hora',t],['Tipo',type],['Estado',st],['Observaciones',$('obs').value.trim()||'—']];
+  rows.splice(5,0,...(isExt()?extRows():mqRows()));
+  S.rows=[['Campo','Valor']].concat(rows,[['Reportó',store.get('mtto_user','')||'—']]);
+  $('sum').innerHTML=rows.map(r=>r[2]?'<div class="h2" style="margin:16px 0 2px">'+esc(r[0])+'</div>':'<div class="row"><span>'+esc(r[0])+'</span><b'+(/^(NO|Falla)$/.test(r[1])?' style="color:var(--err)"':'')+'>'+esc(r[1])+'</b></div>').join('');
+  $('fn').textContent=fileName();
+  go('confirm');
+}
+const fileName=()=>S.code+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
+
+async function send(){
+  const b=$('sendBtn');b.disabled=true;const name=fileName();
+  try{
+    if(S.demo){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900))}
+    else{
+      b.innerHTML='<span class="spin"></span>Subiendo a Drive…';
+      const t=await authToken(false);
+      await upload(name,buildXlsx(S.rows),t);
+    }
+    $('rFile').textContent=name;
+    $('rTitle').textContent=S.demo?'Reporte simulado':'Reporte subido';
+    $('rMsg').textContent=S.demo?'En modo demo no se sube nada a Google Drive.':'El archivo ya está en la carpeta '+CONFIG.FOLDER+' de tu Google Drive.';
+    addRecent({n:name,a:S.area,w:fmtD($('d').value)+' '+$('t').value,demo:S.demo});
+    store.del('mtto_draft');buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
+  }catch(e){toast(e.message||'No se pudo subir. Revisa tu conexión.');buzz([30,40,30])}
+  finally{b.disabled=false;b.textContent='Generar y subir'}
+}
+function finish(){
+  $('obs').value='';extLoad({});['gType','gStatus'].forEach(g=>{const x=$(g);x.dataset.v='';x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'))});
+  history.replaceState({s:'menu'},'');show('menu');
+}
+
+/* Borrador: si la app se cierra no se pierde lo escrito */
+function saveDraft(){store.set('mtto_draft',JSON.stringify({c:S.code,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
+function loadDraft(){
+  let dr=null;try{dr=JSON.parse(store.get('mtto_draft','null'))}catch(e){}
+  const ok=dr&&dr.c===S.code;
+  [['gType',ok?dr.t:''],['gStatus',ok?dr.s:'']].forEach(([g,v])=>{const x=$(g);x.dataset.v=v||'';x.classList.remove('bad');x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
+  $('obs').value=ok?dr.o:'';
+  extLoad(ok&&dr.x?dr.x:{});
+}
+
+/* ===== Extrusoras (E1 y E2) ===== */
+const ZONAS=['Zona 1','Zona 2','Zona 3','Zona 4 (Porta malla)','Zona 5 (Porta malla)','Zona 6 (Porta malla)','Codo Portamalla','Cabezal','Motor Principal'];
+const SOPL=['Soplador 1','Soplador 2','Soplador 3','Soplador 4','Luminaria'];
+const CHECK=[['Motor y reductor','Verificar ruidos, temperatura, nivel de aceite y fugas.'],['Tornillo y barril','Inspeccionar desgaste, limpieza y alineación.'],['Calentadores y termopares','Revisar resistencia, conexiones y lecturas.'],['Enfriamiento','Verificar ventiladores, ductos y flujo de aire.'],['Sistema hidráulico (si aplica)','Revisar nivel de aceite, mangueras y fugas.'],['Tablero eléctrico','Revisar conexiones, protecciones y limpieza.'],['Bandas/cadenas de arrastre','Revisar tensión y desgaste.'],['Sensores y alarmas','Verificar funcionamiento.'],['Lubricación general','Aplicar lubricante en puntos indicados.'],['Pruebas de operación y parámetros de proceso','Verificar la operación y los parámetros de proceso.']];
+const isExt=()=>S.code==='E1'||S.code==='E2';
+function buildExt(){
+  const seg=(id,o)=>'<div class="seg" id="'+id+'" data-v="">'+o.map(x=>'<button type="button" aria-pressed="false" onclick="choose(\''+id+'\',this)">'+x+'</button>').join('')+'</div>';
+  let h='<div class="card"><h3>Temperatura y consumo</h3><div class="two hd"><span>Temperatura (°C)</span><span>Consumo (A)</span></div>';
+  ZONAS.forEach((z,i)=>{h+='<div class="zr"><b>'+z+'</b><div class="two"><input id="z'+i+'t" inputmode="decimal" placeholder="°C" aria-label="'+z+' temperatura" oninput="ei(this)"><input id="z'+i+'a" inputmode="decimal" placeholder="A" aria-label="'+z+' amperes" oninput="ei(this)"></div></div>'});
+  h+='</div><div class="card"><h3>Prueba operativa</h3>';
+  SOPL.forEach((n,i)=>{h+='<div class="zr"><b>'+n+'</b>'+seg('p'+i,['OK','NO'])+'</div>'});
+  h+='<button class="link" onclick="allOk(\'p\')">Marcar todo en OK</button></div><div class="card"><h3>Puntos de verificación</h3>';
+  CHECK.forEach((c,i)=>{h+='<div class="zr"><b>'+(i+1)+'. '+c[0]+'</b><small>'+c[1]+'</small>'+seg('c'+i,['OK','Falla','N/A'])+'</div>'});
+  return h+'<button class="link" onclick="allOk(\'c\')">Marcar todo en OK</button></div>';
+}
+function ei(i){i.classList.remove('bad');saveDraft()}
+function allOk(pre){document.querySelectorAll('#ext .seg[id^="'+pre+'"]').forEach(g=>choose(g.id,g.children[0]))}
+function extState(){const o={};document.querySelectorAll('#ext input').forEach(i=>o[i.id]=i.value);document.querySelectorAll('#ext .seg').forEach(g=>o[g.id]=g.dataset.v);return o}
+function extLoad(o){
+  document.querySelectorAll('#ext input').forEach(i=>{i.value=o[i.id]||'';i.classList.remove('bad')});
+  document.querySelectorAll('#ext .seg').forEach(g=>{const v=o[g.id]||'';g.dataset.v=v;g.classList.remove('bad');g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
+}
+function extRows(){
+  const v=id=>$(id).value.trim().replace(',','.');
+  const r=[['Temperatura y consumo','',1]];
+  ZONAS.forEach((z,i)=>r.push([z,v('z'+i+'t')+' °C · '+v('z'+i+'a')+' A']));
+  r.push(['Prueba operativa','',1]);
+  SOPL.forEach((n,i)=>r.push([n,$('p'+i).dataset.v]));
+  r.push(['Puntos de verificación','',1]);
+  CHECK.forEach((c,i)=>r.push([(i+1)+'. '+c[0],$('c'+i).dataset.v]));
+  return r;
+}
+
+/* ===== CAM, DIM y BSL ===== */
+const MQ=[
+ ['Sistema neumático',['Nivel y calidad del aceite del sistema','Fugas y ajuste del sistema completo de aire','Pruebas de respuesta de electroválvulas']],
+ ['Motor y transmisión',['Cables expuestos','Rodamientos y guardas funcionando bien']],
+ ['Cadenas y bandas',['Levas y opresores bien sujetos','Alineación de cadenas y piñones']],
+ ['Rodillos y guías',['Rótulas bien puestas','Pandeos, desgaste o golpes en los ejes']],
+ ['Sistema eléctrico',['Sopleteo de tablero y módulos eléctricos','Revisión de resistencias y termopares']],
+ ['Sistema electrónico',['Limpieza de la óptica','Reajuste de conectores de los módulos']],
+ ['Lubricación general',['Rodamientos lineales y chumaceras','Cadenas y engranajes']],
+ ['Tornillería y estructura',['Tornillos completos','Vibración o estructura mal ajustada']],
+ ['Limpieza general',['Charcos de aceite, sopleteo y barrido de la zona de la máquina']],
+ ['Pruebas de funcionamiento',[]]
+];
+function buildMq(){
+  let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
+  MQ.forEach((g,n)=>{
+    const items=g[1].length?g[1]:[g[0]];
+    h+='<div class="card"><h3>'+(n+1)+'. '+g[0]+'</h3>';
+    items.forEach(t=>{
+      h+='<div class="zr">'+(g[1].length?'<b>'+t+'</b>':'')+'<div class="seg" id="m'+k+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\'m'+k+'\',this)">'+x+'</button>').join('')+'</div></div>';
+      k++;
+    });
+    h+='</div>';
+  });
+  return h;
+}
+function mqRows(){
+  const r=[];let k=0;
+  MQ.forEach((g,n)=>{
+    if(g[1].length){r.push([(n+1)+'. '+g[0],'',1]);g[1].forEach(t=>r.push([t,$('m'+(k++)).dataset.v]))}
+    else r.push([(n+1)+'. '+g[0],$('m'+(k++)).dataset.v]);
+  });
+  return r;
+}
+
+/* Recientes */
+function addRecent(r){let l=getRecent();l.unshift(r);store.set('mtto_hist',JSON.stringify(l.slice(0,5)))}
+function getRecent(){try{return JSON.parse(store.get('mtto_hist','[]'))}catch(e){return[]}}
+function renderRecent(){
+  const l=getRecent();
+  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.demo?'Demo':'Generado')+'</span></div>').join('')
+    :'<div class="empty">Aún no hay reportes. Toca un área para empezar.</div>';
+}
+
+/* Inicio */
+setTimeout(()=>{ if(isIn()) root('menu'); else root('login'); }, 600);
+</script>
+</body>
+</html>
