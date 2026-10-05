@@ -23,7 +23,13 @@ input,textarea,button{font:inherit;color:inherit}
 input,textarea{-webkit-user-select:text;user-select:text}
 button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.app{max-width:520px;margin:0 auto;height:100%;position:relative;overflow:hidden;background:var(--bg)}
+.app{width:100%;max-width:none;margin:0 auto;height:100dvh;min-height:100%;position:relative;overflow:hidden;background:var(--bg)}
+.screen>.body{width:100%;max-width:1180px;margin:0 auto}
+.screen>.bar{width:100%}
+@media(min-width:700px){.app{max-width:1180px;box-shadow:0 0 32px rgba(22,35,46,.12)}.body{padding:24px 28px 32px}.bar{padding-left:28px;padding-right:28px}.dock{padding-left:28px;padding-right:28px}.areas{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1000px;margin:0 auto}.area.wide{grid-column:auto}.area{min-height:120px}.card{padding:20px}}
+@media(min-width:980px){.app{max-width:1280px}.areas{grid-template-columns:repeat(5,minmax(0,1fr));max-width:1180px}.area.wide{grid-column:auto}#form .body>.card,#form .body>#ext{max-width:1120px;margin-left:auto;margin-right:auto}#ext{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}#ext>.card{margin-bottom:0}}
+@media(max-width:699px){.bar{padding-left:16px;padding-right:16px}.dock{padding-left:16px;padding-right:16px}}
+@media(max-height:620px) and (orientation:landscape){.bar{padding-top:calc(var(--st) + 8px);padding-bottom:8px}.bar h1{font-size:18px}.iconbtn{width:40px;height:40px}.body{padding-top:12px;padding-bottom:16px}.dock{padding-top:8px;padding-bottom:calc(var(--sb) + 8px)}}
 .screen{position:absolute;inset:0;display:none;flex-direction:column}
 .screen.active{display:flex;animation:in .22s ease-out}
 @keyframes in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
@@ -275,23 +281,29 @@ textarea{resize:none;min-height:110px;line-height:1.4}
 
 <script>
 const $=id=>document.getElementById(id);
-const S={area:'',code:'',demo:false};
+const AppState={session:false,user:'',settings:{},history:[]};
+const Runtime={mode:'real',area:'',code:'',rows:[],draftKey:''};
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
   set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
   del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
-S.demo=store.get('mtto_demo','false')==='true';
+function isDemo(){return Runtime.mode==='demo'}
+function stateKey(base){return isDemo()?base+'_demo':base}
+function currentUser(){return AppState.user||store.get('mtto_user','')}
+function setMode(mode){Runtime.mode=mode;$('demoBanner').hidden=!isDemo();$('demoSw').setAttribute('aria-checked',isDemo())}
+function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
+AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
 
 /* Navegación con soporte del botón Atrás de Android */
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  $('demoBanner').hidden=!S.demo;
-  $('demoSw').setAttribute('aria-checked',S.demo);
+  $('demoBanner').hidden=!isDemo();
+  $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu') renderRecent();
-  if(id==='tools') $('acct').textContent=store.get('mtto_user','')?'Cuenta: '+store.get('mtto_user',''):'Sin cuenta de Google (modo demo)';
+  if(id==='tools') $('acct').textContent=isDemo()?'Sesión local de demostración (sin modificar la cuenta real)':currentUser()?'Cuenta: '+currentUser():'Sin cuenta de Google';
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function root(id){history.replaceState({s:id},'');show(id)}
@@ -301,7 +313,7 @@ addEventListener('popstate',e=>{
   if(s==='done'){ show('menu'); return; }
   show(s);
 });
-const isIn=()=>store.get('mtto_session','false')==='true';
+const isIn=()=>AppState.session || store.get('mtto_session','false')==='true';
 
 /* Utilidades */
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400)}
@@ -393,22 +405,25 @@ async function signIn(){
   try{
     const t=await authToken(true);
     const u=await(await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+t}})).json();
-    S.demo=false;store.set('mtto_demo','false');store.set('mtto_user',u.email||'');store.set('mtto_session','true');
+    setMode('real');
+    AppState.session=true;AppState.user=u.email||'';
+    store.set('mtto_user',AppState.user);store.set('mtto_session','true');
+    Runtime.area='';Runtime.code='';Runtime.rows=[];
     root('menu');
   }catch(e){$('loginErr').textContent=e.message||'No se pudo iniciar sesión.'}
   finally{b.disabled=false;b.textContent='Entrar con Google'}
 }
-function signInDemo(){S.demo=true;store.set('mtto_demo','true');store.del('mtto_user');store.set('mtto_session','true');root('menu')}
+function signInDemo(){setMode('demo');Runtime.area='';Runtime.code='';Runtime.rows=[];root('menu')}
 function logout(){
-  store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
+  AppState.session=false;AppState.user='';setMode('real');store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
   try{const p=GA();p&&p.signOut()}catch(e){}
   history.replaceState({s:'login'},'');show('login');
 }
-function toggleDemo(){S.demo=!S.demo;store.set('mtto_demo',String(S.demo));$('demoSw').setAttribute('aria-checked',S.demo);toast(S.demo?'Modo demo activado':'Modo demo desactivado')}
+function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
 
 /* Flujo */
 function pick(name,code){
-  S.area=name;S.code=code;
+  Runtime.area=name;Runtime.code=code;Runtime.draftKey=stateKey('mtto_draft');
   $('fTitle').innerHTML=esc(name)+'<small>Paso 1 de 2</small>';
   setNow(); $('ph').hidden=true; $('ext').innerHTML=isExt()?buildExt():buildMq(); $('ext').hidden=false; loadDraft(); go('form'); buzz(10);
 }
@@ -429,29 +444,29 @@ function review(){
     document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
-  const rows=[['Área',S.area+' ('+S.code+')'],['Fecha',fmtD(d)],['Hora',t],['Tipo',type],['Estado',st],['Observaciones',$('obs').value.trim()||'—']];
+  const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Fecha',fmtD(d)],['Hora',t],['Tipo',type],['Estado',st],['Observaciones',$('obs').value.trim()||'—']];
   rows.splice(5,0,...(isExt()?extRows():mqRows()));
-  S.rows=[['Campo','Valor']].concat(rows,[['Reportó',store.get('mtto_user','')||'—']]);
+  Runtime.rows=[['Campo','Valor']].concat(rows,[['Reportó',currentUser()||'—']]);
   $('sum').innerHTML=rows.map(r=>r[2]?'<div class="h2" style="margin:16px 0 2px">'+esc(r[0])+'</div>':'<div class="row"><span>'+esc(r[0])+'</span><b'+(/^(NO|Falla)$/.test(r[1])?' style="color:var(--err)"':'')+'>'+esc(r[1])+'</b></div>').join('');
   $('fn').textContent=fileName();
   go('confirm');
 }
-const fileName=()=>S.code+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
+const fileName=()=>Runtime.code+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
 
 async function send(){
   const b=$('sendBtn');b.disabled=true;const name=fileName();
   try{
-    if(S.demo){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900))}
+    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900))}
     else{
       b.innerHTML='<span class="spin"></span>Subiendo a Drive…';
       const t=await authToken(false);
-      await upload(name,buildXlsx(S.rows),t);
+      await upload(name,buildXlsx(Runtime.rows),t);
     }
     $('rFile').textContent=name;
-    $('rTitle').textContent=S.demo?'Reporte simulado':'Reporte subido';
-    $('rMsg').textContent=S.demo?'En modo demo no se sube nada a Google Drive.':'El archivo ya está en la carpeta '+CONFIG.FOLDER+' de tu Google Drive.';
-    addRecent({n:name,a:S.area,w:fmtD($('d').value)+' '+$('t').value,demo:S.demo});
-    store.del('mtto_draft');buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
+    $('rTitle').textContent=isDemo()?'Reporte simulado':'Reporte subido';
+    $('rMsg').textContent=isDemo()?'En modo demo no se sube nada a Google Drive.':'El archivo ya está en la carpeta '+CONFIG.FOLDER+' de tu Google Drive.';
+    addRecent({n:name,a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,demo:isDemo()});
+    store.del(stateKey('mtto_draft'));buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo subir. Revisa tu conexión.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar y subir'}
 }
@@ -461,10 +476,10 @@ function finish(){
 }
 
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function saveDraft(){store.set('mtto_draft',JSON.stringify({c:S.code,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
+function saveDraft(){store.set(stateKey('mtto_draft'),JSON.stringify({c:Runtime.code,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
 function loadDraft(){
-  let dr=null;try{dr=JSON.parse(store.get('mtto_draft','null'))}catch(e){}
-  const ok=dr&&dr.c===S.code;
+  let dr=null;try{dr=JSON.parse(store.get(stateKey('mtto_draft'),'null'))}catch(e){}
+  const ok=dr&&dr.c===Runtime.code;
   [['gType',ok?dr.t:''],['gStatus',ok?dr.s:'']].forEach(([g,v])=>{const x=$(g);x.dataset.v=v||'';x.classList.remove('bad');x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
   $('obs').value=ok?dr.o:'';
   extLoad(ok&&dr.x?dr.x:{});
@@ -474,7 +489,7 @@ function loadDraft(){
 const ZONAS=['Zona 1','Zona 2','Zona 3','Zona 4 (Porta malla)','Zona 5 (Porta malla)','Zona 6 (Porta malla)','Codo Portamalla','Cabezal','Motor Principal'];
 const SOPL=['Soplador 1','Soplador 2','Soplador 3','Soplador 4','Luminaria'];
 const CHECK=[['Motor y reductor','Verificar ruidos, temperatura, nivel de aceite y fugas.'],['Tornillo y barril','Inspeccionar desgaste, limpieza y alineación.'],['Calentadores y termopares','Revisar resistencia, conexiones y lecturas.'],['Enfriamiento','Verificar ventiladores, ductos y flujo de aire.'],['Sistema hidráulico (si aplica)','Revisar nivel de aceite, mangueras y fugas.'],['Tablero eléctrico','Revisar conexiones, protecciones y limpieza.'],['Bandas/cadenas de arrastre','Revisar tensión y desgaste.'],['Sensores y alarmas','Verificar funcionamiento.'],['Lubricación general','Aplicar lubricante en puntos indicados.'],['Pruebas de operación y parámetros de proceso','Verificar la operación y los parámetros de proceso.']];
-const isExt=()=>S.code==='E1'||S.code==='E2';
+const isExt=()=>Runtime.code==='E1'||Runtime.code==='E2';
 function buildExt(){
   const seg=(id,o)=>'<div class="seg" id="'+id+'" data-v="">'+o.map(x=>'<button type="button" aria-pressed="false" onclick="choose(\''+id+'\',this)">'+x+'</button>').join('')+'</div>';
   let h='<div class="card"><h3>Temperatura y consumo</h3><div class="two hd"><span>Temperatura (°C)</span><span>Consumo (A)</span></div>';
@@ -539,8 +554,8 @@ function mqRows(){
 }
 
 /* Recientes */
-function addRecent(r){let l=getRecent();l.unshift(r);store.set('mtto_hist',JSON.stringify(l.slice(0,5)))}
-function getRecent(){try{return JSON.parse(store.get('mtto_hist','[]'))}catch(e){return[]}}
+function addRecent(r){const key=stateKey('mtto_hist');let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
+function getRecent(){try{return JSON.parse(store.get(stateKey('mtto_hist'),'[]'))}catch(e){return[]}}
 function renderRecent(){
   const l=getRecent();
   $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.demo?'Demo':'Generado')+'</span></div>').join('')
@@ -548,7 +563,7 @@ function renderRecent(){
 }
 
 /* Inicio */
-setTimeout(()=>{ if(isIn()) root('menu'); else root('login'); }, 600);
+setTimeout(()=>{syncAppState();if(isIn()){setMode('real');root('menu')}else root('login')},600);
 </script>
 </body>
 </html>
