@@ -595,15 +595,64 @@ const MQ=[
  ['Limpieza general',['Charcos de aceite, sopleteo y barrido de la zona de la máquina']],
  ['Pruebas de funcionamiento',[]]
 ];
-const MQ_BY_AREA={CAM:MQ,DIM:MQ,BSL:MQ};
+const DIM_CHECK=[
+  ['ZONA MECÁNICA',[
+    'ESTADO DE RODILLOS',
+    'ESTADO DE CABEZAL SUPERIOR E INFERIOR',
+    'ESTADO DE ROTULAS',
+    'ESTADO DE ESTRUCTURA Y TORNILLERÍA',
+    'ESTADO DE LA BANDA',
+    'ESTADO DE BALEROS',
+    'ESTADO DEL MOTOR',
+    'ESTADO DE LA MEDIA LUNA',
+    'ESTADO DEL CHUC',
+    'ESTADO DE LAS CUCHILLAS',
+    'ESTADO DEL PISADOR'
+  ]],
+  ['ZONA NEUMÁTICA E HIDRÁULICA',[
+    'ESTADO DE LOS PISTONES',
+    'ESTADO DE LAS VÁLVULAS',
+    'ESTADO DE LAS MANGUERAS',
+    'ESTADO DEL ACEITE',
+    'ESTADO DE LAS ELECTROVÁLVULAS',
+    'ESTADO DEL CHILLER'
+  ]],
+  ['ZONA ELÉCTRICA',[
+    'ESTADO DE LOS CABLES Y TERMINALES',
+    'ESTADO DE LOS CONTACTORES',
+    'ESTADO DE LAS PASTILLAS TÉRMICAS',
+    'ESTADO DE LOS GUARDAMOTORES',
+    'ESTADO DE LOS ESTADOS SÓLIDOS',
+    'ESTADO DE LOS PIROMETROS',
+    'ESTADO DEL INVERSOR',
+    'ESTADO DEL PLC',
+    'ESTADO DE LAS RESISTENCIAS',
+    'ESTADO DEL DISPLAY',
+    'ESTADO DE SENSORES',
+    'ESTADO FOTOCELDAS'
+  ]]
+];
+const MQ_BY_AREA={CAM:MQ,BSL:MQ};
 function buildMq(){
+  if(Runtime.code==='DIM'){
+    let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\\'m\\')">Marcar todo en OK</button>';
+    DIM_CHECK.forEach((g,n)=>{
+      h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\\'m'+n+'-\\')">Marcar zona en OK</button>';
+      g[1].forEach(t=>{
+        const id='m'+n+'-'+k++;
+        h+='<div class="zr"><b>'+t+'</b><div class="seg" id="'+id+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\\''+id+'\\',this)">'+x+'</button>').join('')+'</div></div>';
+      });
+      h+='</div>';
+    });
+    return h;
+  }
   const groups=MQ_BY_AREA[Runtime.code]||MQ;
-  let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
+  let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\\'m\\')">Marcar todo en OK</button>';
   groups.forEach((g,n)=>{
     const items=g[1].length?g[1]:[g[0]];
     h+='<div class="card"><h3>'+(n+1)+'. '+g[0]+'</h3>';
     items.forEach(t=>{
-      h+='<div class="zr">'+(g[1].length?'<b>'+t+'</b>':'')+'<div class="seg" id="m'+k+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\'m'+k+'\',this)">'+x+'</button>').join('')+'</div></div>';
+      h+='<div class="zr">'+(g[1].length?'<b>'+t+'</b>':'')+'<div class="seg" id="m'+k+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\\'m'+k+'\\',this)">'+x+'</button>').join('')+'</div></div>';
       k++;
     });
     h+='</div>';
@@ -611,6 +660,14 @@ function buildMq(){
   return h;
 }
 function mqRows(){
+  if(Runtime.code==='DIM'){
+    const r=[];let k=0;
+    DIM_CHECK.forEach((g,n)=>{
+      r.push([g[0],'',1]);
+      g[1].forEach(t=>r.push([t,$('m'+n+'-'+k++).dataset.v]));
+    });
+    return r;
+  }
   const groups=MQ_BY_AREA[Runtime.code]||MQ;
   const r=[];let k=0;
   groups.forEach((g,n)=>{
