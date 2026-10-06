@@ -101,6 +101,7 @@ textarea{resize:none;min-height:110px;line-height:1.4}
 .seg.bad button{border-color:var(--err)}
 .err{color:var(--err);font-size:13px;font-weight:600;margin-top:6px;display:none}
 .bad+.err,.bad~.err{display:block}
+input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .link{color:var(--muted);font-weight:700;font-size:14px;padding:8px 0;text-decoration:underline}
 .ph{border:2px dashed var(--line);border-radius:12px;padding:14px;color:var(--muted);font-size:13px;line-height:1.4;margin-bottom:18px}
 
@@ -186,6 +187,22 @@ textarea{resize:none;min-height:110px;line-height:1.4}
   </div>
 </section>
 
+<!-- Selección de chequeo para extrusoras -->
+<section id="checkType" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Tipo de chequeo<small id="checkArea"></small></h1>
+  </header>
+  <div class="body">
+    <button class="area" style="width:100%;margin-bottom:12px" onclick="startCheck('daily')">
+      <b style="font-size:20px">Chequeo diario</b><span>Temperatura y amperaje de zonas y motor principal.</span>
+    </button>
+    <button class="area" style="width:100%" onclick="startCheck('preventive')">
+      <b style="font-size:20px">Mantenimiento preventivo</b><span>Abrir el formulario de mantenimiento existente.</span>
+    </button>
+  </div>
+</section>
+
 <!-- Formulario -->
 <section id="form" class="screen">
   <header class="bar">
@@ -196,10 +213,10 @@ textarea{resize:none;min-height:110px;line-height:1.4}
   <div class="body">
     <div class="card">
       <div class="two">
-        <div class="f"><label for="d">Fecha</label><input type="date" id="d"></div>
-        <div class="f"><label for="t">Hora</label><input type="time" id="t"></div>
+        <div class="f"><label for="d">Fecha</label><input type="date" id="d" onchange="this.classList.remove('bad');saveDraft()"></div>
+        <div class="f"><label for="t">Hora</label><input type="time" id="t" onchange="this.classList.remove('bad');saveDraft()"></div>
       </div>
-      <button class="link" onclick="setNow()">Usar fecha y hora actuales</button>
+      <button class="link" onclick="setNow();saveDraft()">Usar fecha y hora actuales</button>
     </div>
 
     <div id="ext" hidden></div>
@@ -208,20 +225,22 @@ textarea{resize:none;min-height:110px;line-height:1.4}
            Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
       <div class="ph" id="ph"><b>Campos del área pendientes.</b> Los campos reales se agregarán aquí.</div>
 
-      <div class="f"><span class="lbl">Tipo<em>*</em></span>
-        <div class="seg" id="gType" data-v="">
-          <button type="button" aria-pressed="false" onclick="choose('gType',this)">PREVENTIVO</button>
-          <button type="button" aria-pressed="false" onclick="choose('gType',this)">CORRECTIVO</button>
+      <div id="maintenanceFields">
+        <div class="f"><span class="lbl">Tipo<em>*</em></span>
+          <div class="seg" id="gType" data-v="">
+            <button type="button" aria-pressed="false" onclick="choose('gType',this)">PREVENTIVO</button>
+            <button type="button" aria-pressed="false" onclick="choose('gType',this)">CORRECTIVO</button>
+          </div>
+          <div class="err">Elige el tipo de mantenimiento.</div>
         </div>
-        <div class="err">Elige el tipo de mantenimiento.</div>
-      </div>
-      <div class="f"><span class="lbl">Estado<em>*</em></span>
-        <div class="seg" id="gStatus" data-v="">
-          <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">ENTREGADO</button>
-          <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PROCESO</button>
-          <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PARO</button>
+        <div class="f"><span class="lbl">Estado<em>*</em></span>
+          <div class="seg" id="gStatus" data-v="">
+            <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">ENTREGADO</button>
+            <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PROCESO</button>
+            <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PARO</button>
+          </div>
+          <div class="err">Elige el estado del equipo.</div>
         </div>
-        <div class="err">Elige el estado del equipo.</div>
       </div>
       <div class="f"><label for="obs">Observaciones</label>
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
@@ -282,7 +301,7 @@ textarea{resize:none;min-height:110px;line-height:1.4}
 <script>
 const $=id=>document.getElementById(id);
 const AppState={session:false,user:'',settings:{},history:[]};
-const Runtime={mode:'real',area:'',code:'',rows:[],draftKey:''};
+const Runtime={mode:'real',area:'',code:'',checkType:'preventive',rows:[]};
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
   set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
@@ -308,6 +327,7 @@ function show(id){
 function go(id){history.pushState({s:id},'');show(id)}
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
+  if(!isDemo()&&!isIn()){root('login');return}
   const s=e.state&&e.state.s;
   if(!s||s==='splash'||s==='login'){ if(isIn()) show('menu'); return; }
   if(s==='done'){ show('menu'); return; }
@@ -321,7 +341,7 @@ function buzz(n){try{navigator.vibrate&&navigator.vibrate(n||15)}catch(e){}}
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const fmtD=v=>{if(!v)return'—';const[y,m,d]=v.split('-');return d+'/'+m+'/'+y};
 const pad=n=>String(n).padStart(2,'0');
-function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes())}
+function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes());$('d').classList.remove('bad');$('t').classList.remove('bad')}
 
 /* ===== CONFIGURACIÓN GOOGLE ===== */
 const CONFIG={
@@ -419,14 +439,27 @@ function logout(){
   try{const p=GA();p&&p.signOut()}catch(e){}
   history.replaceState({s:'login'},'');show('login');
 }
-function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
+function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');store.del('mtto_draft_daily_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
 
 /* Flujo */
 function pick(name,code){
-  Runtime.area=name;Runtime.code=code;Runtime.draftKey=stateKey('mtto_draft');
-  $('fTitle').innerHTML=esc(name)+'<small>Paso 1 de 2</small>';
-  setNow(); $('ph').hidden=true; $('ext').innerHTML=isExt()?buildExt():buildMq(); $('ext').hidden=false; loadDraft(); go('form'); buzz(10);
+  Runtime.area=name;Runtime.code=code;
+  if(isExt()){
+    $('checkArea').textContent=name;
+    go('checkType');buzz(10);return;
+  }
+  startCheck('preventive');
 }
+function startCheck(kind){
+  Runtime.checkType=kind;
+  $('fTitle').innerHTML=esc(Runtime.area)+(isDaily()?' · Diario':'')+'<small>Paso 1 de 2</small>';
+  setNow();$('ph').hidden=true;
+  $('ext').innerHTML=isDaily()?buildDaily():isExt()?buildExt():buildMq();
+  $('ext').hidden=false;$('maintenanceFields').hidden=isDaily();
+  loadDraft();go('form');buzz(10);
+}
+const isDaily=()=>Runtime.checkType==='daily';
+const draftStorageKey=()=>stateKey(isDaily()?'mtto_draft_daily':'mtto_draft');
 function choose(g,btn){
   const box=$(g);
   box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
@@ -437,21 +470,25 @@ function review(){
   const type=$('gType').dataset.v,st=$('gStatus').dataset.v;
   let bad=null;
   if(!d||!t){toast('Indica la fecha y la hora.');bad=$(!d?'d':'t')}
-  if(!type){$('gType').classList.add('bad');bad=bad||$('gType')}
-  if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
+  if(!isDaily()){
+    if(!type){$('gType').classList.add('bad');bad=bad||$('gType')}
+    if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
+  }
   if(!$('ext').hidden){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||isNaN(x)){i.classList.add('bad');bad=bad||i}});
-    document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
+    if(!isDaily())document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
-  const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Fecha',fmtD(d)],['Hora',t],['Tipo',type],['Estado',st],['Observaciones',$('obs').value.trim()||'—']];
-  rows.splice(5,0,...(isExt()?extRows():mqRows()));
+  const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Fecha',fmtD(d)],['Hora',t]];
+  if(isDaily())rows.push(['Tipo de chequeo','DIARIO'],...dailyRows());
+  else rows.push(['Tipo',type],['Estado',st],...(isExt()?extRows():mqRows()));
+  rows.push(['Observaciones',$('obs').value.trim()||'—']);
   Runtime.rows=[['Campo','Valor']].concat(rows,[['Reportó',currentUser()||'—']]);
   $('sum').innerHTML=rows.map(r=>r[2]?'<div class="h2" style="margin:16px 0 2px">'+esc(r[0])+'</div>':'<div class="row"><span>'+esc(r[0])+'</span><b'+(/^(NO|Falla)$/.test(r[1])?' style="color:var(--err)"':'')+'>'+esc(r[1])+'</b></div>').join('');
   $('fn').textContent=fileName();
   go('confirm');
 }
-const fileName=()=>Runtime.code+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
+const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
 
 async function send(){
   const b=$('sendBtn');b.disabled=true;const name=fileName();
@@ -463,10 +500,10 @@ async function send(){
       await upload(name,buildXlsx(Runtime.rows),t);
     }
     $('rFile').textContent=name;
-    $('rTitle').textContent=isDemo()?'Reporte simulado':'Reporte subido';
+    $('rTitle').textContent=isDaily()?(isDemo()?'Chequeo diario simulado':'Chequeo diario subido'):isDemo()?'Reporte simulado':'Reporte subido';
     $('rMsg').textContent=isDemo()?'En modo demo no se sube nada a Google Drive.':'El archivo ya está en la carpeta '+CONFIG.FOLDER+' de tu Google Drive.';
-    addRecent({n:name,a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,demo:isDemo()});
-    store.del(stateKey('mtto_draft'));buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
+    addRecent({n:name,a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
+    store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo subir. Revisa tu conexión.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar y subir'}
 }
@@ -476,10 +513,13 @@ function finish(){
 }
 
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function saveDraft(){store.set(stateKey('mtto_draft'),JSON.stringify({c:Runtime.code,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
+function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
 function loadDraft(){
-  let dr=null;try{dr=JSON.parse(store.get(stateKey('mtto_draft'),'null'))}catch(e){}
-  const ok=dr&&dr.c===Runtime.code;
+  let dr=null;try{dr=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
+  const ok=dr&&dr.c===Runtime.code&&(isDaily()?dr.k==='daily':!dr.k||dr.k==='preventive');
+  $('d').value=ok&&dr.d?dr.d:$('d').value;
+  $('t').value=ok&&dr.h?dr.h:$('t').value;
+  $('d').classList.remove('bad');$('t').classList.remove('bad');
   [['gType',ok?dr.t:''],['gStatus',ok?dr.s:'']].forEach(([g,v])=>{const x=$(g);x.dataset.v=v||'';x.classList.remove('bad');x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
   $('obs').value=ok?dr.o:'';
   extLoad(ok&&dr.x?dr.x:{});
@@ -488,6 +528,7 @@ function loadDraft(){
 /* ===== Extrusoras (E1 y E2) ===== */
 const ZONAS=['Zona 1','Zona 2','Zona 3','Zona 4 (Porta malla)','Zona 5 (Porta malla)','Zona 6 (Porta malla)','Codo Portamalla','Cabezal','Motor Principal'];
 const SOPL=['Soplador 1','Soplador 2','Soplador 3','Soplador 4','Luminaria'];
+const DAILY_POINTS=['Zona 1','Zona 2','Zona 3','Zona 4 (Porta malla)','Zona 5 (Porta malla)','Motor Principal'];
 const CHECK=[['Motor y reductor','Verificar ruidos, temperatura, nivel de aceite y fugas.'],['Tornillo y barril','Inspeccionar desgaste, limpieza y alineación.'],['Calentadores y termopares','Revisar resistencia, conexiones y lecturas.'],['Enfriamiento','Verificar ventiladores, ductos y flujo de aire.'],['Sistema hidráulico (si aplica)','Revisar nivel de aceite, mangueras y fugas.'],['Tablero eléctrico','Revisar conexiones, protecciones y limpieza.'],['Bandas/cadenas de arrastre','Revisar tensión y desgaste.'],['Sensores y alarmas','Verificar funcionamiento.'],['Lubricación general','Aplicar lubricante en puntos indicados.'],['Pruebas de operación y parámetros de proceso','Verificar la operación y los parámetros de proceso.']];
 const isExt=()=>Runtime.code==='E1'||Runtime.code==='E2';
 function buildExt(){
@@ -499,6 +540,22 @@ function buildExt(){
   h+='<button class="link" onclick="allOk(\'p\')">Marcar todo en OK</button></div><div class="card"><h3>Puntos de verificación</h3>';
   CHECK.forEach((c,i)=>{h+='<div class="zr"><b>'+(i+1)+'. '+c[0]+'</b><small>'+c[1]+'</small>'+seg('c'+i,['OK','Falla','N/A'])+'</div>'});
   return h+'<button class="link" onclick="allOk(\'c\')">Marcar todo en OK</button></div>';
+}
+function buildDaily(){
+  let h='<div class="card"><h3>Mediciones del chequeo diario</h3><div class="two hd"><span>Temperatura (°C)</span><span>Amperaje (A)</span></div>';
+  DAILY_POINTS.forEach((point,i)=>{
+    h+='<div class="zr"><b>'+point+'</b><div class="two"><input id="daily'+i+'t" inputmode="decimal" placeholder="°C" aria-label="'+point+' temperatura" oninput="ei(this)"><input id="daily'+i+'a" inputmode="decimal" placeholder="A" aria-label="'+point+' amperaje" oninput="ei(this)"></div></div>';
+  });
+  return h+'</div>';
+}
+function dailyRows(){
+  const value=id=>$(id).value.trim().replace(',','.');
+  const rows=[['Mediciones diarias','',1]];
+  DAILY_POINTS.forEach((point,i)=>{
+    rows.push([point+' — Temperatura',value('daily'+i+'t')+' °C']);
+    rows.push([point+' — Amperaje',value('daily'+i+'a')+' A']);
+  });
+  return rows;
 }
 function ei(i){i.classList.remove('bad');saveDraft()}
 function allOk(pre){document.querySelectorAll('#ext .seg[id^="'+pre+'"]').forEach(g=>choose(g.id,g.children[0]))}
@@ -531,9 +588,11 @@ const MQ=[
  ['Limpieza general',['Charcos de aceite, sopleteo y barrido de la zona de la máquina']],
  ['Pruebas de funcionamiento',[]]
 ];
+const MQ_BY_AREA={CAM:MQ,DIM:MQ,BSL:MQ};
 function buildMq(){
+  const groups=MQ_BY_AREA[Runtime.code]||MQ;
   let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
-  MQ.forEach((g,n)=>{
+  groups.forEach((g,n)=>{
     const items=g[1].length?g[1]:[g[0]];
     h+='<div class="card"><h3>'+(n+1)+'. '+g[0]+'</h3>';
     items.forEach(t=>{
@@ -545,8 +604,9 @@ function buildMq(){
   return h;
 }
 function mqRows(){
+  const groups=MQ_BY_AREA[Runtime.code]||MQ;
   const r=[];let k=0;
-  MQ.forEach((g,n)=>{
+  groups.forEach((g,n)=>{
     if(g[1].length){r.push([(n+1)+'. '+g[0],'',1]);g[1].forEach(t=>r.push([t,$('m'+(k++)).dataset.v]))}
     else r.push([(n+1)+'. '+g[0],$('m'+(k++)).dataset.v]);
   });
@@ -558,7 +618,7 @@ function addRecent(r){const key=stateKey('mtto_hist');let l=getRecent();l.unshif
 function getRecent(){try{return JSON.parse(store.get(stateKey('mtto_hist'),'[]'))}catch(e){return[]}}
 function renderRecent(){
   const l=getRecent();
-  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.demo?'Demo':'Generado')+'</span></div>').join('')
+  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':r.demo?'Demo':'Preventivo')+'</span></div>').join('')
     :'<div class="empty">Aún no hay reportes. Toca un área para empezar.</div>';
 }
 
