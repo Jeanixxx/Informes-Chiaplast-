@@ -536,14 +536,14 @@ const EXT_CHECK=[
 ];
 const isExt=()=>Runtime.code==='E1'||Runtime.code==='E2';
 function buildExt(){
-  const seg=(id,o)=>'<div class="seg" id="'+id+'" data-v="">'+o.map(x=>'<button type="button" aria-pressed="false" onclick="choose(\\''+id+'\\',this)">'+x+'</button>').join('')+'</div>';
+  const seg=(id,o)=>'<div class="seg" id="'+id+'" data-v="">'+o.map(x=>'<button type="button" aria-pressed="false" onclick="choose(\''+id+'\',this)">'+x+'</button>').join('')+'</div>';
   let h='<div class="card"><h3>Temperatura y consumo</h3><div class="two hd"><span>Temperatura (°C)</span><span>Consumo (A)</span></div>';
   ZONAS.forEach((z,i)=>{h+='<div class="zr"><b>'+z+'</b><div class="two"><input id="z'+i+'t" inputmode="decimal" placeholder="°C" aria-label="'+z+' temperatura" oninput="ei(this)"><input id="z'+i+'a" inputmode="decimal" placeholder="A" aria-label="'+z+' amperes" oninput="ei(this)"></div></div>'});
   h+='</div><div class="card"><h3>Prueba operativa</h3>';
-  SOPL.forEach((n,i)=>{h+='<div class="zr"><b>'+n+'</b>'+seg('p'+i,['OK','NO'])+'</div>});
-  h+='<button class="link" onclick="allOk(\\'p\\')">Marcar todo en OK</button></div>';
+  SOPL.forEach((n,i)=>{h+='<div class="zr"><b>'+n+'</b>'+seg('p'+i,['OK','NO'])+'</div>'});
+  h+='<button class="link" onclick="allOk(\'p\')">Marcar todo en OK</button></div>';
   EXT_CHECK.forEach((zone,zi)=>{
-    h+='<div class="card"><h3>'+zone[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\\'e'+zi+'-\\')">Marcar zona en OK</button>';
+    h+='<div class="card"><h3>'+zone[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\'e'+zi+'-\')">Marcar zona en OK</button>';
     zone[1].forEach((item,ii)=>{const id='e'+zi+'-'+ii;h+='<div class="zr"><b>'+item+'</b>'+seg(id,['OK','Falla','N/A'])+'</div>';});
     h+='</div>';
   });
@@ -640,36 +640,36 @@ const DIM_CHECK=[
 const MQ_BY_AREA={CAM:MQ,BSL:MQ};
 function buildMq(){
   if(Runtime.code==='CAM'){
-    let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\\'cm\\')">Marcar todo en OK</button>';
+    let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'cm\')">Marcar todo en OK</button>';
     CAM_CHECK.forEach((g,n)=>{
-      h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\\'cm'+n+'-\\')">Marcar zona en OK</button>';
+      h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\'cm'+n+'-\')">Marcar zona en OK</button>';
       g[1].forEach(t=>{
         const id='cm'+n+'-'+k++;
-        h+='<div class="zr"><b>'+t+'</b><div class="seg" id="'+id+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\\''+id+'\\',this)">'+x+'</button>').join('')+'</div></div>';
+        h+='<div class="zr"><b>'+t+'</b><div class="seg" id="'+id+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\''+id+'\',this)">'+x+'</button>').join('')+'</div></div>';
       });
       h+='</div>';
     });
     return h;
   }
   if(Runtime.code==='DIM'){
-    let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\\'m\\')">Marcar todo en OK</button>';
+    let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
     DIM_CHECK.forEach((g,n)=>{
-      h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\\'m'+n+'-\\')">Marcar zona en OK</button>';
+      h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\'m'+n+'-\')">Marcar zona en OK</button>';
       g[1].forEach(t=>{
         const id='m'+n+'-'+k++;
-        h+='<div class="zr"><b>'+t+'</b><div class="seg" id="'+id+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\\''+id+'\\',this)">'+x+'</button>').join('')+'</div></div>';
+        h+='<div class="zr"><b>'+t+'</b><div class="seg" id="'+id+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\''+id+'\',this)">'+x+'</button>').join('')+'</div></div>';
       });
       h+='</div>';
     });
     return h;
   }
   const groups=MQ_BY_AREA[Runtime.code]||MQ;
-  let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\\'m\\')">Marcar todo en OK</button>';
+  let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
   groups.forEach((g,n)=>{
     const items=g[1].length?g[1]:[g[0]];
     h+='<div class="card"><h3>'+(n+1)+'. '+g[0]+'</h3>';
     items.forEach(t=>{
-      h+='<div class="zr">'+(g[1].length?'<b>'+t+'</b>':'')+'<div class="seg" id="m'+k+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\\'m'+k+'\\',this)">'+x+'</button>').join('')+'</div></div>';
+      h+='<div class="zr">'+(g[1].length?'<b>'+t+'</b>':'')+'<div class="seg" id="m'+k+'" data-v="">'+['OK','Falla','N/A'].map(x=>'<button type="button" aria-pressed="false" onclick="choose(\'m'+k+'\',this)">'+x+'</button>').join('')+'</div></div>';
       k++;
     });
     h+='</div>';
