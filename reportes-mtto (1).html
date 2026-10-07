@@ -25,7 +25,7 @@ input,textarea,button{font:inherit;color:inherit}
 input,textarea{-webkit-user-select:text;user-select:text}
 button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.app{width:100%;max-width:none;margin:0 auto;height:100dvh;min-height:100%;position:relative;overflow:hidden;background:transparent}
+.app{width:100%;max-width:none;margin:0 auto;height:100vh;height:100dvh;min-height:100%;position:relative;overflow:hidden;background:transparent}
 .screen>.body{width:100%;max-width:1180px;margin:0 auto}
 .screen>.bar{width:100%}
 @media(min-width:700px){.app{max-width:1180px;box-shadow:0 0 30px rgba(11,18,25,.12);border-left:1px solid rgba(17,27,38,.04);border-right:1px solid rgba(17,27,38,.04)}.body{padding:24px 28px 32px}.bar{padding-left:28px;padding-right:28px}.dock{padding-left:28px;padding-right:28px}.areas{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1000px;margin:0 auto}.area.wide{grid-column:auto}.area{min-height:120px}.card{padding:20px}}
@@ -43,7 +43,7 @@ button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 .bar small{display:block;font-size:13px;font-weight:500;opacity:.75;margin-top:2px}
 .iconbtn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 18px rgba(0,0,0,.12)}
 .iconbtn:active{background:rgba(255,255,255,.18)}
-.body{flex:1;overflow-y:auto;padding:16px 16px 24px;-webkit-overflow-scrolling:touch}
+.body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch}
 .dock{flex:0 0 auto;padding:12px 16px calc(var(--sb) + 12px);background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
 
 /* Botones */
@@ -503,12 +503,44 @@ function review(){
   go('confirm');
 }
 const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
-function downloadBlob(blob,name){
+function blobBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result).split(',',2)[1]);
+    reader.onerror=()=>reject(reader.error||new Error('No se pudo preparar el archivo para Android.'));
+    reader.readAsDataURL(blob);
+  });
+}
+async function exportReport(blob,name){
+  const plugins=window.Capacitor&&window.Capacitor.Plugins;
+  const fs=plugins&&plugins.Filesystem,share=plugins&&plugins.Share;
+  if(fs&&typeof fs.writeFile==='function'&&typeof fs.getUri==='function'&&share&&typeof share.share==='function'){
+    const directory=fs.Directory&&fs.Directory.Cache||'CACHE';
+    const options={path:name,directory};
+    await fs.writeFile({...options,data:await blobBase64(blob)});
+    const file=await fs.getUri(options);
+    if(!file||!file.uri)throw new Error('Android no devolvió la ubicación del reporte.');
+    await share.share({title:name,text:'Reporte de mantenimiento listo para guardar en Drive.',url:file.uri,dialogTitle:'Guardar o compartir reporte'});
+    return 'android-share';
+  }
+  if(!isDemo()&&typeof File==='function'&&navigator.share&&navigator.canShare){
+    const report=new File([blob],name,{type:XLSX_MIME});
+    if(navigator.canShare({files:[report]})){
+      try{
+        await navigator.share({title:name,files:[report]});
+        return 'android-share';
+      }catch(e){
+        if(!e||e.name!=='AbortError')throw e;
+      }
+    }
+  }
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;a.download=name;a.rel='noopener';
+  a.style.display='none';
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+  return 'download';
 }
 
 async function send(){
@@ -517,10 +549,14 @@ async function send(){
     if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900));}
     b.innerHTML='<span class="spin"></span>Generando…';
     const blob=buildXlsx(Runtime.rows);
-    downloadBlob(blob,name);
+    const exportMode=await exportReport(blob,name);
     $('rFile').textContent=name;
     $('rTitle').textContent=isDaily()?(isDemo()?'Chequeo diario simulado':'Chequeo diario generado'):(isDemo()?'Reporte simulado':'Reporte generado');
-    $('rMsg').textContent=isDemo()?'En modo demo se generó una vista local de prueba. El archivo se descarga igual que en producción.':'El archivo está listo. Descárgalo y súbelo manualmente a la carpeta Reportes Mantenimiento de Google Drive.';
+    $('rMsg').textContent=isDemo()
+      ?'En modo demo se generó una vista local de prueba. El archivo se exporta igual que en producción.'
+      :exportMode==='android-share'
+        ?'El archivo está listo. En el menú de Android, elige Drive para subirlo a la carpeta Reportes Mantenimiento.'
+        :'El archivo está listo en tus descargas. Súbelo manualmente a la carpeta Reportes Mantenimiento de Google Drive.';
     addRecent({n:name,a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
