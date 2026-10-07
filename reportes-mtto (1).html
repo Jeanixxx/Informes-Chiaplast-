@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#16232e">
-<title>Reportes MTTO</title>
+<title>Reportes Mantenimiento</title>
 <style>
 :root{
   --bg:#eef1f3; --surface:#fff; --ink:#16232e; --muted:#5d6b77; --line:#d5dce1;
@@ -52,17 +52,20 @@ button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 .btn[disabled]{opacity:.6}
 
 /* Splash y login */
-.splash{background:var(--steel);color:#fff;align-items:center;justify-content:center;text-align:center;padding:24px}
+.splash{background:var(--steel);color:#fff;align-items:center;justify-content:center;text-align:center;padding:24px;position:relative;overflow:hidden}
 .mark{font-size:40px;font-weight:900;letter-spacing:3px;line-height:1}
-.rule{display:block;width:64px;height:6px;background:var(--accent);margin:16px 0 14px}
+.rule{display:block;width:64px;height:6px;background:var(--accent);margin:16px 0 14px;position:relative;z-index:1}
 .splash .rule{margin:16px auto 14px}
 .sub{font-size:15px;opacity:.75}
-.login{background:var(--steel);color:#fff;justify-content:space-between}
-.login .top{padding:calc(var(--st) + 56px) 28px 28px}
+.login{background:var(--steel);color:#fff;justify-content:space-between;position:relative;overflow:hidden}
+.login .top{padding:calc(var(--st) + 56px) 28px 28px;position:relative;z-index:1}
 .login h1{margin:0 0 12px;font-size:32px;line-height:1.12;letter-spacing:-.6px}
 .login p{margin:0;opacity:.75;font-size:16px;line-height:1.45}
-.stripe{height:14px;background:repeating-linear-gradient(-45deg,var(--accent) 0 14px,#16232e 14px 28px)}
+.stripe{height:14px;background:repeating-linear-gradient(-45deg,var(--accent) 0 14px,#16232e 14px 28px);background-size:200% 100%;animation:stripeShift 14s linear infinite;position:relative;z-index:1}
 .sheet{background:var(--surface);color:var(--ink);padding:24px 24px calc(var(--sb) + 24px)}
+@keyframes stripeShift{from{background-position:0% 0%}to{background-position:200% 0%}}
+.corner-tools{position:absolute;top:18px;right:18px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:18px;display:grid;place-items:center;z-index:2}
+.corner-tools:active{background:rgba(255,255,255,.22)}
 .sheet .btn{width:100%;flex:none;display:block}
 .sheet .link{display:block;margin:12px auto 0}
 .sheet small{display:block;color:var(--err);min-height:18px;margin-top:8px;font-size:13px;line-height:1.4;text-align:center}
@@ -149,11 +152,13 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 
 <!-- Splash -->
 <section id="splash" class="screen splash active">
+  <button class="corner-tools" onclick="go('tools')" aria-label="Herramientas">⚙</button>
   <div><div class="mark">CHIAPLAST</div><i class="rule"></i><div class="sub">Mantenimiento</div></div>
 </section>
 
 <!-- Login -->
 <section id="login" class="screen login">
+  <button class="corner-tools" onclick="go('tools')" aria-label="Herramientas">⚙</button>
   <div class="top">
     <div class="mark" style="font-size:30px">CHIAPLAST</div><i class="rule"></i>
     <h1>Departamento de Mantenimiento</h1>
@@ -161,7 +166,7 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   </div>
   <div class="stripe"></div>
   <div class="sheet">
-    <button class="btn btn-p" id="loginBtn" onclick="signIn()">Entrar con Google</button>
+    <button class="btn btn-p" id="loginBtn" onclick="signIn()">Continuar</button>
     <button class="link" onclick="signInDemo()">Entrar en modo demo</button>
     <small id="loginErr" role="alert"></small>
   </div>
@@ -171,7 +176,7 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 <section id="menu" class="screen">
   <header class="bar">
     <h1>Nuevo reporte<small>¿Qué área vas a reportar?</small></h1>
-    <button class="iconbtn" onclick="go('tools')" aria-label="Herramientas">⚙</button>
+    <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Herramientas">⚙</button>
   </header>
   <div class="body">
     <div id="demoBanner" class="demo" hidden><i></i>Modo demo: no se sube nada a Drive</div>
@@ -263,7 +268,7 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   </div>
   <div class="dock">
     <button class="btn btn-s" onclick="history.back()">Editar</button>
-    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar y subir</button>
+    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar archivo</button>
   </div>
 </section>
 
@@ -285,13 +290,13 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   <div class="body">
     <div class="card">
       <div class="drive" id="acct" style="margin-bottom:14px"></div><div class="tool">
-        <div><b>Modo demo</b><span>Simula la generación y subida del archivo.</span></div>
+        <div><b>Modo demo</b><span>Simula la generación del archivo sin guardar nada.</span></div>
         <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
       </div>
-      <button class="btn btn-s" style="width:100%;margin-bottom:10px" onclick="document.getElementById('drv').hidden=!document.getElementById('drv').hidden">Configuración de Google Drive</button>
-      <div class="drive" id="drv" hidden>Los reportes se suben como Excel a la carpeta <b>Reportes MTTO</b> de tu Google Drive. La app solo puede ver los archivos que ella misma crea (permiso <code>drive.file</code>).</div>
+      <button class="btn btn-s" style="width:100%;margin-bottom:10px" onclick="document.getElementById('drv').hidden=!document.getElementById('drv').hidden">Configuración del archivo</button>
+      <div class="drive" id="drv" hidden>Los reportes se generan como archivo Excel y debes subirlo manualmente a la carpeta <b>Reportes Mantenimiento</b> de Google Drive.</div>
     </div>
-    <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar sesión</button>
+    <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
   </div>
 </section>
 
@@ -322,7 +327,7 @@ function show(id){
   $('demoBanner').hidden=!isDemo();
   $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu') renderRecent();
-  if(id==='tools') $('acct').textContent=isDemo()?'Sesión local de demostración (sin modificar la cuenta real)':currentUser()?'Cuenta: '+currentUser():'Sin cuenta de Google';
+  if(id==='tools') $('acct').textContent=isDemo()?'Sesión local de demostración (sin modificar archivos del equipo)':currentUser()?'Archivo local para: '+currentUser():'Generación local del reporte';
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function root(id){history.replaceState({s:id},'');show(id)}
@@ -346,7 +351,7 @@ function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getM
 /* ===== CONFIGURACIÓN GOOGLE ===== */
 const CONFIG={
   WEB_CLIENT_ID:'PEGA_AQUI_TU_WEB_CLIENT_ID.apps.googleusercontent.com', // OAuth "Aplicación web"
-  FOLDER:'Reportes MTTO'
+  FOLDER:'Reportes Mantenimiento'
 };
 const SCOPES=['profile','email','https://www.googleapis.com/auth/drive.file'];
 const XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -421,23 +426,21 @@ function buildXlsx(rows){
 
 /* Sesión */
 async function signIn(){
-  const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Conectando…';$('loginErr').textContent='';
+  const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Abriendo…';$('loginErr').textContent='';
   try{
-    const t=await authToken(true);
-    const u=await(await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+t}})).json();
     setMode('real');
-    AppState.session=true;AppState.user=u.email||'';
+    AppState.session=true;AppState.user='Usuario local';
     store.set('mtto_user',AppState.user);store.set('mtto_session','true');
     Runtime.area='';Runtime.code='';Runtime.rows=[];
     root('menu');
-  }catch(e){$('loginErr').textContent=e.message||'No se pudo iniciar sesión.'}
-  finally{b.disabled=false;b.textContent='Entrar con Google'}
+  }catch(e){$('loginErr').textContent=e.message||'No se pudo abrir la app.'}
+  finally{b.disabled=false;b.textContent='Continuar'}
 }
 function signInDemo(){setMode('demo');Runtime.area='';Runtime.code='';Runtime.rows=[];root('menu')}
 function logout(){
   AppState.session=false;AppState.user='';setMode('real');store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
   try{const p=GA();p&&p.signOut()}catch(e){}
-  history.replaceState({s:'login'},'');show('login');
+  history.replaceState({s:'menu'},'');show('menu');
 }
 function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');store.del('mtto_draft_daily_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
 
@@ -489,23 +492,28 @@ function review(){
   go('confirm');
 }
 const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
+function downloadBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=name;a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 
 async function send(){
   const b=$('sendBtn');b.disabled=true;const name=fileName();
   try{
-    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900))}
-    else{
-      b.innerHTML='<span class="spin"></span>Subiendo a Drive…';
-      const t=await authToken(false);
-      await upload(name,buildXlsx(Runtime.rows),t);
-    }
+    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900));}
+    b.innerHTML='<span class="spin"></span>Generando…';
+    const blob=buildXlsx(Runtime.rows);
+    downloadBlob(blob,name);
     $('rFile').textContent=name;
-    $('rTitle').textContent=isDaily()?(isDemo()?'Chequeo diario simulado':'Chequeo diario subido'):isDemo()?'Reporte simulado':'Reporte subido';
-    $('rMsg').textContent=isDemo()?'En modo demo no se sube nada a Google Drive.':'El archivo ya está en la carpeta '+CONFIG.FOLDER+' de tu Google Drive.';
+    $('rTitle').textContent=isDaily()?(isDemo()?'Chequeo diario simulado':'Chequeo diario generado'):(isDemo()?'Reporte simulado':'Reporte generado');
+    $('rMsg').textContent=isDemo()?'En modo demo se generó una vista local de prueba. El archivo se descarga igual que en producción.':'El archivo está listo. Descárgalo y súbelo manualmente a la carpeta Reportes Mantenimiento de Google Drive.';
     addRecent({n:name,a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
-  }catch(e){toast(e.message||'No se pudo subir. Revisa tu conexión.');buzz([30,40,30])}
-  finally{b.disabled=false;b.textContent='Generar y subir'}
+  }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
+  finally{b.disabled=false;b.textContent='Generar archivo'}
 }
 function finish(){
   $('obs').value='';extLoad({});['gType','gStatus'].forEach(g=>{const x=$(g);x.dataset.v='';x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'))});
@@ -712,7 +720,7 @@ function renderRecent(){
 }
 
 /* Inicio */
-setTimeout(()=>{syncAppState();if(isIn()){setMode('real');root('menu')}else root('login')},600);
+setTimeout(()=>{syncAppState();AppState.session=true;store.set('mtto_session','true');setMode('real');root('menu')},600);
 </script>
 </body>
 </html>
