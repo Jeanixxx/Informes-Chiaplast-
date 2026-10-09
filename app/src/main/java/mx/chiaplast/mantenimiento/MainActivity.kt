@@ -56,11 +56,30 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest) =
                 assetLoader.shouldInterceptRequest(request.url)
+
+            override fun onPageFinished(view: WebView, url: String) {
+                super.onPageFinished(view, url)
+                handleNotificationIntent(intent)
+            }
         }
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(ChiaplastBridge(this), "ChiaplastNative")
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html")
         requestNotificationPermissionIfNeeded()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (::webView.isInitialized) handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(source: Intent?) {
+        val id = source?.getStringExtra("open_reminder_id") ?: return
+        source.removeExtra("open_reminder_id")
+        webView.post {
+            webView.evaluateJavascript("window.openReminderFromNotification && window.openReminderFromNotification(${JSONObject.quote(id)})", null)
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -115,13 +134,13 @@ class MainActivity : AppCompatActivity() {
                 val file = File(dir, "evidence_${System.currentTimeMillis()}.jpg")
                 pendingCameraFile = file
                 val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
-                cameraCapture.launch(uri)
+                runOnUiThread { cameraCapture.launch(uri) }
                 "ok"
             } catch (_: Exception) { "error" }
         }
 
         @JavascriptInterface fun pickPhoto(reminderId: String): String {
-            imagePicker.launch(arrayOf("image/*"))
+            runOnUiThread { imagePicker.launch(arrayOf("image/*")) }
             return "ok"
         }
     }
