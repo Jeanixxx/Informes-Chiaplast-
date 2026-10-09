@@ -688,6 +688,7 @@ function completeReminder(id){
 function deleteReminder(id){
   if(!confirm('¿Eliminar este recordatorio?'))return;
   writeToolList(TOOL_KEYS.reminders,readToolList(TOOL_KEYS.reminders).filter(x=>x.id!==id));
+  writeToolList(TOOL_KEYS.kanban,readToolList(TOOL_KEYS.kanban).filter(x=>x.reminderId!==id));
   if(nativeAndroid()&&!isDemo())nativeCall('cancelReminder',id);renderReminders();renderKanban();
 }
 function renderReminders(){
@@ -703,7 +704,14 @@ function createKanbanTask(event){
 }
 function moveKanban(id,status){
   const list=readToolList(TOOL_KEYS.kanban),item=list.find(x=>x.id===id);if(!item)return;
-  item.status=status;item.updatedAt=Date.now();writeToolList(TOOL_KEYS.kanban,list);renderKanban();
+  item.status=status;item.updatedAt=Date.now();writeToolList(TOOL_KEYS.kanban,list);
+  if(item.reminderId){
+    const reminders=readToolList(TOOL_KEYS.reminders),rem=reminders.find(x=>x.id===item.reminderId);
+    if(rem){rem.status=status==='done'?'done':'pending';rem.updatedAt=Date.now();writeToolList(TOOL_KEYS.reminders,reminders);
+      if(nativeAndroid()&&!isDemo()){if(rem.status==='done')nativeCall('cancelReminder',rem.id);else if(new Date(rem.when).getTime()>Date.now())nativeCall('scheduleReminder',JSON.stringify(rem));}
+    }
+  }
+  renderKanban();renderReminders();
 }
 function deleteKanban(id){
   if(!confirm('¿Eliminar esta tarjeta del tablero?'))return;
