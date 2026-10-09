@@ -137,6 +137,27 @@ class MainActivity : AppCompatActivity() {
             return "ok"
         }
 
+        @JavascriptInterface fun shareReport(fileName: String, mime: String, base64: String): String {
+            return try {
+                val dir = File(cacheDir, "share_reports")
+                if (!dir.exists()) dir.mkdirs()
+                val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_").take(120)
+                val file = File(dir, safeName.ifBlank { "reporte.xlsx" })
+                val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+                FileOutputStream(file).use { it.write(bytes) }
+                val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = mime.ifBlank { "application/octet-stream" }
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_TITLE, safeName)
+                    clipData = android.content.ClipData.newUri(contentResolver, "Reporte Chiaplast", uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread { startActivity(Intent.createChooser(send, "Guardar o compartir reporte")) }
+                "ok"
+            } catch (_: Exception) { "error" }
+        }
+
         @JavascriptInterface fun takePhoto(reminderId: String): String {
             return try {
                 val dir = File(filesDir, "evidence")
