@@ -939,6 +939,11 @@ async function exportReport(blob,name,mime){
     await share.share({title:name,text:'Reporte de mantenimiento listo para guardar en Drive.',url:file.uri,dialogTitle:'Guardar o compartir reporte'});
     return 'android-share';
   }
+  if(!isDemo()&&window.ChiaplastNative&&typeof window.ChiaplastNative.shareReport==='function'){
+    const result=nativeCall('shareReport',name,mime,await blobBase64(blob));
+    if(result==='ok')return 'android-share';
+    throw new Error('Android no pudo preparar el reporte para compartir.');
+  }
   if(!isDemo()&&typeof File==='function'&&navigator.share&&navigator.canShare){
     const report=new File([blob],name,{type:mime});
     if(navigator.canShare({files:[report]})){
