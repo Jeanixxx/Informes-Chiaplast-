@@ -191,16 +191,13 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   </header>
   <div class="body">
     <div id="demoBanner" class="demo" hidden><i></i>Modo demo: no se sube nada a Drive</div>
-    <button class="area wide" style="width:100%;margin-bottom:14px;border-color:var(--accent)" onclick="beginDailyBatch()">
-      <b style="font-size:19px">Reportes diarios</b><span>Registra varias máquinas y genera un solo Excel al terminar.</span>
+    <p class="empty" style="margin:4px 0 14px">Primero selecciona el tipo de trabajo. Después elige el área y la máquina que vas a revisar.</p>
+    <button class="area wide" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
+      <b style="font-size:20px">Chequeo diario</b><span>Registrar mediciones diarias de las máquinas y reunir varios reportes en un Excel.</span>
     </button>
-    <div class="areas">
-      <button class="area" onclick="pick('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
-      <button class="area" onclick="pick('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
-      <button class="area" onclick="pick('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
-      <button class="area" onclick="pick('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
-      <button class="area wide" onclick="pick('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
-    </div>
+    <button class="area wide" style="width:100%;margin-bottom:18px;border-left-color:var(--accent)" onclick="startWorkflow('preventive')">
+      <b style="font-size:20px">Mantenimiento preventivo</b><span>Elegir una máquina del catálogo y completar su lista de inspección.</span>
+    </button>
     <div class="h2">Últimos reportes</div>
     <div id="recent"></div>
   </div>
@@ -219,6 +216,35 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
     <button class="area" style="width:100%" onclick="startCheck('preventive')">
       <b style="font-size:20px">Mantenimiento preventivo</b><span>Abrir el formulario de mantenimiento existente.</span>
     </button>
+  </div>
+</section>
+
+<!-- Selección de área para mantenimiento preventivo -->
+<section id="preventiveArea" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="root('menu')" aria-label="Atrás">‹</button>
+    <h1>Mantenimiento preventivo<small>1. Elige el área</small></h1>
+  </header>
+  <div class="body">
+    <p class="empty">Selecciona el área para ver únicamente las máquinas registradas en ella.</p>
+    <div class="areas">
+      <button class="area" onclick="choosePreventiveArea('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
+      <button class="area" onclick="choosePreventiveArea('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
+      <button class="area" onclick="choosePreventiveArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="choosePreventiveArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
+      <button class="area wide" onclick="choosePreventiveArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+    </div>
+  </div>
+</section>
+
+<section id="preventiveMachine" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('preventiveArea')" aria-label="Atrás">‹</button>
+    <h1>Elegir máquina<small id="preventiveMachineSubtitle"></small></h1>
+  </header>
+  <div class="body">
+    <p class="empty">Selecciona la máquina que recibirá el mantenimiento preventivo.</p>
+    <div id="preventiveMachineChoices" class="areas"></div>
   </div>
 </section>
 
@@ -372,28 +398,45 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 <script>
 const $=id=>document.getElementById(id);
 const AppState={session:false,user:'',settings:{},history:[]};
-const Runtime={mode:'real',area:'',code:'',checkType:'preventive',rows:[],machine:'',batchMode:false};
+const Runtime={mode:'real',area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false};
 const DailyBatch={active:false,area:'',code:'',machine:'',reports:[],editIndex:-1};
 const dailyBatchKey=()=>stateKey('mtto_daily_batch');
 function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveDailyBatch(){store.set(dailyBatchKey(),JSON.stringify(DailyBatch.reports))}
+/* Catálogo único de máquinas: lo comparten chequeo diario y mantenimiento preventivo. */
+const MACHINE_DB={
+  E1:{area:'Extrusión 1',machines:['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','EXT-N1','EXT-N2','FUELLADORA','EXT-A3']},
+  E2:{area:'Extrusión 2',machines:['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2']},
+  CAM:{area:'CAM',machines:['BK-1','BK-2','BK-3','BK-4','BK-5','BK-6','BK-7','BK-8','BNG-1','BNG-2','BC-1','IMP-1','IMP-2','IMP-3']},
+  DIM:{area:'DIM',machines:['BM-1','BM-2','BM-3','BM-4','BM-5','BD-1','BD-2','BD-3','SELLADORA M1','SELLADORA M2','SELLADORA M3','SELLADORA M4','SELLADORA M5','HORNO M','FLEJADORA']},
+  BSL:{area:'BSL',machines:['BW-1','BN-1','BN-2','BN-3','BN-4','B-02','B-03','B-06','BSL-1','BSL-2','BSL-3','BSL-4','BSL-5','BSL-6','BD-4']}
+};
+function startWorkflow(kind){
+  Runtime.workflow=kind;Runtime.checkType=kind==='daily'?'daily':'preventive';
+  if(kind==='daily')beginDailyBatch();else go('preventiveArea');
+}
+function choosePreventiveArea(area,code){
+  Runtime.area=area;Runtime.code=code;Runtime.machine='';
+  const data=MACHINE_DB[code];if(!data){toast('No se encontró el área en el catálogo.');return}
+  $('preventiveMachineSubtitle').textContent=area+' · '+data.machines.length+' máquinas';
+  $('preventiveMachineChoices').innerHTML=data.machines.map(name=>'<button class="area" onclick="choosePreventiveMachine(&quot;'+esc(name)+'&quot;,&quot;'+esc(code)+'&quot;)"><b>'+esc(name)+'</b><span>Iniciar mantenimiento preventivo</span></button>').join('');
+  go('preventiveMachine');
+}
+function choosePreventiveMachine(machine,code){
+  Runtime.area=MACHINE_DB[code].area;Runtime.code=code;Runtime.machine=machine;Runtime.workflow='preventive';Runtime.batchMode=false;
+  startCheck('preventive');
+}
 function beginDailyBatch(){
   DailyBatch.active=true;DailyBatch.reports=loadDailyBatch();DailyBatch.editIndex=-1;
   renderDailyBatch();go('dailyArea');
 }
 function chooseDailyArea(area,code){
+  const dbCode=code==='E1AREA'?'E1':code==='E2AREA'?'E2':code;
   DailyBatch.area=area;DailyBatch.code=code;
-  const machines={
-    E1AREA:['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','EXT-N1','EXT-N2','FUELLADORA','EXT-A3'].map(name=>({name,code:'E1'})),
-    E2AREA:['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2'].map(name=>({name,code:'E2'})),
-    CAM:['BK-1','BK-2','BK-3','BK-4','BK-5','BK-6','BK-7','BK-8','BNG-1','BNG-2','BC-1','IMP-1','IMP-2','IMP-3'].map(name=>({name,code:'CAM'})),
-    DIM:['BM-1','BM-2','BM-3','BM-4','BM-5','BD-1','BD-2','BD-3','SELLADORA M1','SELLADORA M2','SELLADORA M3','SELLADORA M4','SELLADORA M5','HORNO M','FLEJADORA'].map(name=>({name,code:'DIM'})),
-    BSL:['BW-1','BN-1','BN-2','BN-3','BN-4','B-02','B-03','B-06','BSL-1','BSL-2','BSL-3','BSL-4','BSL-5','BSL-6','BD-4'].map(name=>({name,code:'BSL'}))
-  };
-  const list=machines[code]||[];
-  $('dailyMachineSubtitle').textContent=area;
+  const data=MACHINE_DB[dbCode];const list=(data?data.machines:[]).map(name=>({name,code:dbCode}));
+  $('dailyMachineSubtitle').textContent=area+' · '+list.length+' máquinas';
   $('customMachine').value='';
-  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+'</b><span>Capturar informe diario</span></button>').join('');
+  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+'</b><span>Capturar chequeo diario</span></button>').join('');
   go('dailyMachine');
 }
 function chooseCustomDailyMachine(){
@@ -438,11 +481,11 @@ function leaveDailyBatch(){
   go('menu');
 }
 function batchExcelRows(){
-  const rows=[['Reportes diarios Chiaplast',''],['Fecha de generación',new Date().toLocaleString('es-MX')],['Total de informes',String(DailyBatch.reports.length)],['','']];
+  const rows=[['REPORTES DE CHEQUEO DIARIO CHIAPLAST',''],['Fecha de generación',new Date().toLocaleString('es-MX')],['Total de informes',String(DailyBatch.reports.length)],['','']];
   DailyBatch.reports.forEach((report,i)=>{
-    rows.push(['INFORME '+(i+1)+' — '+report.area+' — '+report.machine,'']);
-    rows.push(['Campo','Valor']);
-    report.rows.forEach(r=>rows.push([r[0],r[1]||'']));
+    rows.push(['INFORME '+(i+1)+' | '+report.area+' | '+report.machine,'']);
+    rows.push(['Campo / componente','Resultado / valor']);
+    report.rows.forEach(r=>rows.push([r[0],r[1]||'—']));
     rows.push(['','']);
   });
   return rows;
@@ -570,15 +613,27 @@ function zip(files){
   return new Blob([...parts,...cd,z],{type:XLSX_MIME});
 }
 function buildXlsx(rows){
-  const x=v=>String(v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const sd=rows.map((r,i)=>'<row r="'+(i+1)+'">'+r.slice(0,2).map((v,j)=>'<c r="'+'AB'[j]+(i+1)+'" t="inlineStr"><is><t xml:space="preserve">'+x(v)+'</t></is></c>').join('')+'</row>').join('');
+  const x=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const cell=(v,col,row,style)=>'<c r="'+col+row+'" s="'+style+'" t="inlineStr"><is><t xml:space="preserve">'+x(v==null?'':v)+'</t></is></c>';
+  const sd=rows.map((r,i)=>{
+    const n=i+1,first=String(r[0]||''),second=String(r[1]||'');
+    let style=0;
+    if(i===0)style=1;
+    else if(!first&&!second)style=0;
+    else if(/^INFORME\s|^ZONA\s|^PRUEBA OPERATIVA$|^TEMPERATURA Y CONSUMO$|^MEDICIONES DIARIAS$/.test(first.toUpperCase())&&second==='')style=3;
+    else if(first==='Campo / componente'||first==='Campo')style=2;
+    else if(second==='')style=4;
+    return '<row r="'+n+'" customHeight="'+(i===0?'1':'0')+'"'+(i===0?' ht="30"':'')+'>'+cell(r[0]||'', 'A',n,style)+cell(r[1]||'', 'B',n,style===1?1:style===2?2:style===3?3:style===4?4:0)+'</row>';
+  }).join('');
   const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',R='http://schemas.openxmlformats.org/officeDocument/2006/relationships',M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',P='http://schemas.openxmlformats.org/package/2006/relationships';
+  const styles=H+'<styleSheet xmlns="'+M+'"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="16"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF16232E"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2B705"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF2"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9E0E5"/></left><right style="thin"><color rgb="FFD9E0E5"/></right><top style="thin"><color rgb="FFD9E0E5"/></top><bottom style="thin"><color rgb="FFD9E0E5"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFill="1" applyFont="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="1" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="4" borderId="1" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
   return zip([
-    ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+    ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
     ['_rels/.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
     ['xl/workbook.xml',H+'<workbook xmlns="'+M+'" xmlns:r="'+R+'"><sheets><sheet name="Reporte" sheetId="1" r:id="rId1"/></sheets></workbook>'],
-    ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
-    ['xl/worksheets/sheet1.xml',H+'<worksheet xmlns="'+M+'"><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="55" customWidth="1"/></cols><sheetData>'+sd+'</sheetData></worksheet>']
+    ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+R+'/styles" Target="styles.xml"/></Relationships>'],
+    ['xl/styles.xml',styles],
+    ['xl/worksheets/sheet1.xml',H+'<worksheet xmlns="'+M+'"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="38" customWidth="1"/><col min="2" max="2" width="62" customWidth="1"/></cols><sheetData>'+sd+'</sheetData><autoFilter ref="A1:B'+rows.length+'"/></worksheet>']
   ]);
 }
 
