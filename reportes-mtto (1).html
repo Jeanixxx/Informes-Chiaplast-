@@ -607,8 +607,9 @@ AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.
    Las alarmas y las evidencias usan el puente Android nativo cuando existe. */
 const TOOL_KEYS={reminders:'chiaplast_reminders_v1',kanban:'chiaplast_kanban_v1'};
 let pendingEvidence=[];
-function readToolList(key){try{const v=JSON.parse(store.get(key,'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
-function writeToolList(key,list){store.set(key,JSON.stringify(list))}
+function toolStorageKey(key){return isDemo()?key+'_demo':key}
+function readToolList(key){try{const v=JSON.parse(store.get(toolStorageKey(key),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
+function writeToolList(key,list){store.set(toolStorageKey(key),JSON.stringify(list))}
 function nativeAndroid(){return !!(window.ChiaplastNative)}
 function nativeCall(name,...args){try{const f=window.ChiaplastNative&&window.ChiaplastNative[name];if(typeof f==='function')return f.apply(window.ChiaplastNative,args)}catch(e){toast('Función Android no disponible: '+name)}return null}
 function openReminders(){go('reminders');renderReminders()}
@@ -648,7 +649,11 @@ function saveReminder(event){
   const item={id,title,when,machine:$('remMachine').value.trim(),priority:$('remPriority').value,notes:$('remNotes').value.trim(),evidence:pendingEvidence.slice(),status:old?.status||'pending',createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
   const index=list.findIndex(x=>x.id===id);if(index>=0)list[index]=item;else list.push(item);
   writeToolList(TOOL_KEYS.reminders,list);
-  if(nativeAndroid()){
+  const cards=readToolList(TOOL_KEYS.kanban);let linked=cards.find(x=>x.reminderId===id);
+  if(!linked){linked={id:'task_'+id,title,machine:item.machine,status:item.status==='done'?'done':'todo',createdAt:Date.now(),reminderId:id};cards.push(linked)}
+  else {linked.title=title;linked.machine=item.machine;linked.status=item.status==='done'?'done':linked.status;linked.updatedAt=Date.now()}
+  writeToolList(TOOL_KEYS.kanban,cards);
+  if(nativeAndroid()&&!isDemo()){
     const result=nativeCall('scheduleReminder',JSON.stringify(item));
     if(result==='permission_required')toast('Activa el permiso de alarmas exactas en los ajustes de Android.');
     else if(result==='error')toast('Guardado localmente; no se pudo programar la notificación.');
@@ -666,13 +671,14 @@ function editReminder(id){
 function completeReminder(id){
   const list=readToolList(TOOL_KEYS.reminders),item=list.find(x=>x.id===id);if(!item)return;
   item.status=item.status==='done'?'pending':'done';item.updatedAt=Date.now();writeToolList(TOOL_KEYS.reminders,list);
-  if(item.status==='done')nativeCall('cancelReminder',id);else if(nativeAndroid())nativeCall('scheduleReminder',JSON.stringify(item));
+  const cards=readToolList(TOOL_KEYS.kanban);const linked=cards.find(x=>x.reminderId===id);if(linked){linked.status=item.status==='done'?'done':(linked.status==='done'?'todo':linked.status);linked.updatedAt=Date.now();writeToolList(TOOL_KEYS.kanban,cards)}
+  if(item.status==='done') { if(nativeAndroid()&&!isDemo()) nativeCall('cancelReminder',id); } else if(nativeAndroid()&&!isDemo()) nativeCall('scheduleReminder',JSON.stringify(item));
   renderReminders();renderKanban();
 }
 function deleteReminder(id){
   if(!confirm('¿Eliminar este recordatorio?'))return;
   writeToolList(TOOL_KEYS.reminders,readToolList(TOOL_KEYS.reminders).filter(x=>x.id!==id));
-  nativeCall('cancelReminder',id);renderReminders();renderKanban();
+  if(nativeAndroid()&&!isDemo())nativeCall('cancelReminder',id);renderReminders();renderKanban();
 }
 function renderReminders(){
   const box=$('reminderList');if(!box)return;
@@ -708,6 +714,8 @@ function show(id){
   $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu') renderRecent();
   if(id==='dailyBatch') renderDailyBatch();
+  if(id==='reminders') renderReminders();
+  if(id==='kanban') renderKanban();
   if(id==='tools') $('acct').textContent=isDemo()?'Sesión local de demostración (sin modificar archivos del equipo)':currentUser()?'Archivo local para: '+currentUser():'Generación local del reporte';
 }
 function go(id){history.pushState({s:id},'');show(id)}
