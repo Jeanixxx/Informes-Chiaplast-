@@ -1,9 +1,9 @@
+import org.gradle.api.tasks.Sync
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
-
-import org.gradle.api.tasks.Sync
 
 android {
     namespace = "mx.chiaplast.mantenimiento"
