@@ -404,15 +404,74 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
     <h1>Herramientas</h1>
   </header>
   <div class="body">
+    <div class="h2">Herramientas de mantenimiento</div>
+    <button class="area" style="width:100%;margin-bottom:12px;border-left-color:var(--accent)" onclick="openReminders()">
+      <b>Recordatorios</b><span>Agenda tareas, establece fecha y hora, y adjunta evidencia fotográfica.</span>
+    </button>
+    <button class="area" style="width:100%;margin-bottom:18px;border-left-color:#13804a" onclick="openKanban()">
+      <b>Tablero Kanban</b><span>Organiza pendientes, trabajos en curso y tareas terminadas.</span>
+    </button>
     <div class="card">
       <div class="drive" id="acct" style="margin-bottom:14px"></div><div class="tool">
         <div><b>Modo demo</b><span>Simula la generación del archivo sin guardar nada.</span></div>
         <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
       </div>
       <button class="btn btn-s" style="width:100%;margin-bottom:10px" onclick="document.getElementById('drv').hidden=!document.getElementById('drv').hidden">Configuración del archivo</button>
-      <div class="drive" id="drv" hidden>Los reportes se generan como archivo Excel y debes subirlo manualmente a la carpeta <b>Reportes Mantenimiento</b> de Google Drive.</div>
+      <div class="drive" id="drv" hidden>Los reportes se generan como archivo Excel y debes subirlo manualmente a la carpeta <b>Reportes Mantenimiento</b> de Google Drive. Los recordatorios y tareas de herramientas se guardan localmente en este dispositivo.</div>
     </div>
     <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
+  </div>
+</section>
+
+<!-- Recordatorios -->
+<section id="reminders" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('tools')" aria-label="Atrás">‹</button>
+    <h1>Recordatorios<small>Agenda local de mantenimiento</small></h1>
+  </header>
+  <div class="body">
+    <form class="card" onsubmit="saveReminder(event)">
+      <input id="remId" type="hidden">
+      <label for="remTitle">Título de la tarea</label>
+      <input id="remTitle" required maxlength="120" placeholder="Ej. Revisar termopar de BSL-1" style="width:100%;margin:6px 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+      <label for="remWhen">Fecha y hora del aviso</label>
+      <input id="remWhen" type="datetime-local" required style="width:100%;margin:6px 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+      <label for="remMachine">Máquina o área (opcional)</label>
+      <input id="remMachine" maxlength="100" placeholder="Ej. Extrusión 1 · EXT-19" style="width:100%;margin:6px 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+      <label for="remPriority">Prioridad</label>
+      <select id="remPriority" style="width:100%;margin:6px 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+        <option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
+      </select>
+      <label for="remNotes">Notas</label>
+      <textarea id="remNotes" rows="3" maxlength="1000" placeholder="Detalle del trabajo, repuestos o precauciones" style="width:100%;margin:6px 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <button type="button" class="btn btn-s" onclick="captureEvidence('camera')">Tomar foto</button>
+        <button type="button" class="btn btn-s" onclick="captureEvidence('picker')">Adjuntar imagen</button>
+      </div>
+      <div id="remEvidence" class="drive" style="margin-bottom:12px">Sin evidencia adjunta.</div>
+      <button class="btn btn-p" type="submit" style="width:100%">Guardar recordatorio</button>
+      <button class="btn btn-s" type="button" style="width:100%;margin-top:8px" onclick="resetReminderForm()">Limpiar formulario</button>
+    </form>
+    <div class="h2">Tareas programadas</div>
+    <div id="reminderList"></div>
+  </div>
+</section>
+
+<!-- Tablero Kanban -->
+<section id="kanban" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('tools')" aria-label="Atrás">‹</button>
+    <h1>Tablero Kanban<small>Seguimiento de mantenimiento</small></h1>
+  </header>
+  <div class="body">
+    <form class="card" onsubmit="createKanbanTask(event)">
+      <label for="kanbanTitle">Nueva tarea</label>
+      <input id="kanbanTitle" required maxlength="120" placeholder="Describe el trabajo pendiente" style="width:100%;margin:6px 0 10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+      <label for="kanbanMachine">Máquina o área (opcional)</label>
+      <input id="kanbanMachine" maxlength="100" placeholder="Ej. DIM · Selladora M2" style="width:100%;margin:6px 0 10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+      <button class="btn btn-p" type="submit" style="width:100%">Agregar al tablero</button>
+    </form>
+    <div id="kanbanBoard" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px"></div>
   </div>
 </section>
 
@@ -542,6 +601,103 @@ function currentUser(){return AppState.user||store.get('mtto_user','')}
 function setMode(mode){Runtime.mode=mode;$('demoBanner').hidden=!isDemo();$('demoSw').setAttribute('aria-checked',isDemo())}
 function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
 AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
+
+/* ===== Herramientas locales integradas =====
+   En APK, los datos web quedan en el almacenamiento privado de WebView.
+   Las alarmas y las evidencias usan el puente Android nativo cuando existe. */
+const TOOL_KEYS={reminders:'chiaplast_reminders_v1',kanban:'chiaplast_kanban_v1'};
+let pendingEvidence=[];
+function readToolList(key){try{const v=JSON.parse(store.get(key,'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
+function writeToolList(key,list){store.set(key,JSON.stringify(list))}
+function nativeAndroid(){return !!(window.ChiaplastNative)}
+function nativeCall(name,...args){try{const f=window.ChiaplastNative&&window.ChiaplastNative[name];if(typeof f==='function')return f.apply(window.ChiaplastNative,args)}catch(e){toast('Función Android no disponible: '+name)}return null}
+function openReminders(){go('reminders');renderReminders()}
+function openKanban(){go('kanban');renderKanban()}
+function resetReminderForm(){
+  $('remId').value='';$('remTitle').value='';$('remWhen').value='';$('remMachine').value='';
+  $('remPriority').value='normal';$('remNotes').value='';pendingEvidence=[];renderEvidence();
+}
+function renderEvidence(){
+  const box=$('remEvidence');if(!box)return;
+  if(!pendingEvidence.length){box.textContent='Sin evidencia adjunta.';return}
+  box.innerHTML=pendingEvidence.map((p,i)=>'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0"><span>'+esc(p.name||('Fotografía '+(i+1)))+'</span><button type="button" class="link" onclick="removeEvidence('+i+')">Quitar</button></div>').join('');
+}
+function removeEvidence(i){pendingEvidence.splice(i,1);renderEvidence()}
+function captureEvidence(mode){
+  if(!nativeAndroid()){
+    toast('La cámara y el selector de imágenes se habilitan en la versión APK de Android.');
+    return;
+  }
+  const fn=mode==='camera'?'takePhoto':'pickPhoto';
+  const result=nativeCall(fn,$('remId').value||'draft');
+  if(result===false)toast('No se pudo abrir la función de evidencia.');
+}
+window.onEvidenceCaptured=function(json){
+  try{const item=typeof json==='string'?JSON.parse(json):json;if(!item||!item.uri)return;
+    pendingEvidence.push({name:item.name||'Evidencia',uri:item.uri,createdAt:Date.now()});renderEvidence();
+  }catch(e){toast('No se pudo recibir la evidencia fotográfica.')}
+};
+function saveReminder(event){
+  event.preventDefault();
+  const title=$('remTitle').value.trim(),when=$('remWhen').value;
+  if(!title||!when){toast('Completa el título y la fecha del aviso.');return}
+  const at=new Date(when).getTime();
+  if(!Number.isFinite(at)||at<=Date.now()){toast('Elige una fecha y hora futura.');return}
+  const list=readToolList(TOOL_KEYS.reminders),id=$('remId').value||('rem_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7));
+  const old=list.find(x=>x.id===id);
+  const item={id,title,when,machine:$('remMachine').value.trim(),priority:$('remPriority').value,notes:$('remNotes').value.trim(),evidence:pendingEvidence.slice(),status:old?.status||'pending',createdAt:old?.createdAt||Date.now(),updatedAt:Date.now()};
+  const index=list.findIndex(x=>x.id===id);if(index>=0)list[index]=item;else list.push(item);
+  writeToolList(TOOL_KEYS.reminders,list);
+  if(nativeAndroid()){
+    const result=nativeCall('scheduleReminder',JSON.stringify(item));
+    if(result==='permission_required')toast('Activa el permiso de alarmas exactas en los ajustes de Android.');
+    else if(result==='error')toast('Guardado localmente; no se pudo programar la notificación.');
+    else toast('Recordatorio guardado en este dispositivo.');
+  }else toast('Guardado localmente. Las notificaciones requieren la versión APK.');
+  resetReminderForm();renderReminders();renderKanban();
+}
+function editReminder(id){
+  const item=readToolList(TOOL_KEYS.reminders).find(x=>x.id===id);if(!item)return;
+  $('remId').value=item.id;$('remTitle').value=item.title;$('remWhen').value=item.when;
+  $('remMachine').value=item.machine||'';$('remPriority').value=item.priority||'normal';$('remNotes').value=item.notes||'';
+  pendingEvidence=Array.isArray(item.evidence)?item.evidence.slice():[];renderEvidence();
+  document.querySelector('#reminders .body').scrollTop=0;
+}
+function completeReminder(id){
+  const list=readToolList(TOOL_KEYS.reminders),item=list.find(x=>x.id===id);if(!item)return;
+  item.status=item.status==='done'?'pending':'done';item.updatedAt=Date.now();writeToolList(TOOL_KEYS.reminders,list);
+  if(item.status==='done')nativeCall('cancelReminder',id);else if(nativeAndroid())nativeCall('scheduleReminder',JSON.stringify(item));
+  renderReminders();renderKanban();
+}
+function deleteReminder(id){
+  if(!confirm('¿Eliminar este recordatorio?'))return;
+  writeToolList(TOOL_KEYS.reminders,readToolList(TOOL_KEYS.reminders).filter(x=>x.id!==id));
+  nativeCall('cancelReminder',id);renderReminders();renderKanban();
+}
+function renderReminders(){
+  const box=$('reminderList');if(!box)return;
+  const list=readToolList(TOOL_KEYS.reminders).sort((a,b)=>new Date(a.when)-new Date(b.when));
+  if(!list.length){box.innerHTML='<p class="empty">Todavía no hay recordatorios. Crea uno desde el formulario.</p>';return}
+  box.innerHTML=list.map(x=>'<article class="card" style="margin-bottom:10px;opacity:'+(x.status==='done'?'.68':'1')+'"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(x.title)+'</b><span class="chip">'+(x.status==='done'?'Completado':x.priority==='urgent'?'Urgente':x.priority==='high'?'Alta':'Normal')+'</span></div><p style="margin:8px 0;color:var(--muted);font-size:13px">'+esc(new Date(x.when).toLocaleString())+(x.machine?' · '+esc(x.machine):'')+'</p>'+(x.notes?'<p style="white-space:pre-wrap">'+esc(x.notes)+'</p>':'')+'<p class="drive">'+(x.evidence||[]).length+' evidencia(s)</p><div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn btn-s" onclick="editReminder(\''+esc(x.id)+'\')">Editar</button><button class="btn btn-s" onclick="completeReminder(\''+esc(x.id)+'\')">'+(x.status==='done'?'Reabrir':'Completar')+'</button><button class="btn btn-s" onclick="deleteReminder(\''+esc(x.id)+'\')">Eliminar</button></div></article>').join('');
+}
+function createKanbanTask(event){
+  event.preventDefault();const title=$('kanbanTitle').value.trim();if(!title)return;
+  const list=readToolList(TOOL_KEYS.kanban);list.push({id:'task_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),title,machine:$('kanbanMachine').value.trim(),status:'todo',createdAt:Date.now(),reminderId:null});
+  writeToolList(TOOL_KEYS.kanban,list);$('kanbanTitle').value='';$('kanbanMachine').value='';renderKanban();toast('Tarea agregada al tablero.');
+}
+function moveKanban(id,status){
+  const list=readToolList(TOOL_KEYS.kanban),item=list.find(x=>x.id===id);if(!item)return;
+  item.status=status;item.updatedAt=Date.now();writeToolList(TOOL_KEYS.kanban,list);renderKanban();
+}
+function deleteKanban(id){
+  if(!confirm('¿Eliminar esta tarjeta del tablero?'))return;
+  writeToolList(TOOL_KEYS.kanban,readToolList(TOOL_KEYS.kanban).filter(x=>x.id!==id));renderKanban();
+}
+function renderKanban(){
+  const box=$('kanbanBoard');if(!box)return;
+  const list=readToolList(TOOL_KEYS.kanban),cols=[['todo','Pendiente'],['doing','En curso'],['done','Terminado']];
+  box.innerHTML=cols.map(([status,label])=>'<section class="card" style="min-width:0"><h2 style="font-size:16px;margin:0 0 12px">'+label+' ('+list.filter(x=>x.status===status).length+')</h2>'+list.filter(x=>x.status===status).map(x=>'<article style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px"><b>'+esc(x.title)+'</b>'+(x.machine?'<p style="font-size:13px;color:var(--muted)">'+esc(x.machine)+'</p>':'')+'<label for="move_'+esc(x.id)+'">Mover a</label><select id="move_'+esc(x.id)+'" onchange="moveKanban(\''+esc(x.id)+'\',this.value)" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:6px 0 8px">'+cols.map(([v,t])=>'<option value="'+v+'" '+(v===x.status?'selected':'')+'>'+t+'</option>').join('')+'</select><button class="link" onclick="deleteKanban(\''+esc(x.id)+'\')">Eliminar tarjeta</button></article>').join('')+'</section>').join('');
+}
 
 /* Navegación con soporte del botón Atrás de Android */
 function show(id){
