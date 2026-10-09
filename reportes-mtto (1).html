@@ -196,7 +196,7 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
     <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Herramientas">⚙</button>
   </header>
   <div class="body">
-    <div id="demoBanner" class="demo" hidden><i></i>Modo demo: no se sube nada a Drive</div>
+    <div id="demoBanner" class="demo" hidden><i></i>Modo demo: los datos de prueba se mantienen separados</div>
     <p class="empty" style="margin:4px 0 14px">Primero selecciona el tipo de trabajo. Después elige el área y la máquina que vas a revisar.</p>
     <button class="area wide" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
       <b style="font-size:20px">Chequeo diario</b><span>Registrar mediciones diarias de las máquinas y reunir varios reportes en un Excel.</span>
@@ -405,12 +405,23 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   </header>
   <div class="body">
     <div class="card">
-      <div class="drive" id="acct" style="margin-bottom:14px"></div><div class="tool">
-        <div><b>Modo demo</b><span>Simula la generación del archivo sin guardar nada.</span></div>
+      <div class="tool" style="margin-bottom:14px">
+        <div><b>Modo demo</b><span>Prueba la generación sin mezclar los datos reales.</span></div>
         <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
       </div>
-      <button class="btn btn-s" style="width:100%;margin-bottom:10px" onclick="document.getElementById('drv').hidden=!document.getElementById('drv').hidden">Configuración del archivo</button>
-      <div class="drive" id="drv" hidden>Los reportes se generan como archivo Excel y debes subirlo manualmente a la carpeta <b>Reportes Mantenimiento</b> de Google Drive.</div>
+      <p class="muted">Los reportes se generan localmente y no se conectan a servicios externos.</p>
+    <div class="card" id="remindersCard" style="margin-top:14px">
+      <h2 style="margin-top:0">Recordatorios de mantenimiento</h2>
+      <p class="muted">Programa pendientes por fecha y hora. Los avisos funcionan mientras Chiaplast está abierta; el navegador puede limitar las notificaciones en segundo plano.</p>
+      <div class="f"><label for="reminderText">Pendiente</label><input id="reminderText" maxlength="140" placeholder="Ej. Revisar resistencia de la BSL-3"></div>
+      <div class="two">
+        <div class="f"><label for="reminderDate">Fecha</label><input id="reminderDate" type="date"></div>
+        <div class="f"><label for="reminderTime">Hora</label><input id="reminderTime" type="time"></div>
+      </div>
+      <button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="addReminder()">Guardar recordatorio</button>
+      <button class="btn btn-s" style="width:100%;margin-bottom:12px" onclick="enableReminderNotifications()">Permitir notificaciones mientras esté abierta</button>
+      <div id="reminderList"></div>
+      <p class="muted" style="font-size:12px;margin-bottom:0">Importante: un HTML aislado no garantiza una alarma a la hora exacta si la app está cerrada o el teléfono bloqueado.</p>
     </div>
     <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
   </div>
@@ -524,7 +535,7 @@ async function finishDailyBatch(skipConfirm=false){
     $('rFile').textContent=results.map(r=>r.name).join(' · ');
     $('rTitle').textContent=isDemo()?'Reportes diarios de prueba generados':'Reportes diarios generados';
     const shared=results.some(r=>r.mode==='android-share');
-    $('rMsg').textContent='El lote contiene '+DailyBatch.reports.length+' informes. '+(isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'En cada menú de compartir de Android puedes elegir Drive.':'Los archivos están en tus descargas y puedes subirlos a Reportes Mantenimiento de Google Drive.');
+    $('rMsg').textContent='El lote contiene '+DailyBatch.reports.length+' informes. '+(isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.');
     addRecent({n:results.map(r=>r.name).join(', '),a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily',demo:isDemo()});
     DailyBatch.reports=[];DailyBatch.active=false;saveDailyBatch();store.del(dailyBatchKey());Runtime.batchMode=false;
     history.replaceState({s:'done'},'');show('done');
@@ -552,7 +563,7 @@ function show(id){
   $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu') renderRecent();
   if(id==='dailyBatch') renderDailyBatch();
-  if(id==='tools') $('acct').textContent=isDemo()?'Sesión local de demostración (sin modificar archivos del equipo)':currentUser()?'Archivo local para: '+currentUser():'Generación local del reporte';
+  if(id==='tools'){renderReminders();const d=new Date();$('reminderDate').min=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());if(!$('reminderDate').value)$('reminderDate').value=$('reminderDate').min;if(!$('reminderTime').value)$('reminderTime').value=pad(d.getHours())+':'+pad(d.getMinutes());}
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function root(id){history.replaceState({s:id},'');show(id)}
@@ -573,53 +584,8 @@ const fmtD=v=>{if(!v)return'—';const[y,m,d]=v.split('-');return d+'/'+m+'/'+y}
 const pad=n=>String(n).padStart(2,'0');
 function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes());$('d').classList.remove('bad');$('t').classList.remove('bad')}
 
-/* ===== CONFIGURACIÓN GOOGLE ===== */
-const CONFIG={
-  WEB_CLIENT_ID:'PEGA_AQUI_TU_WEB_CLIENT_ID.apps.googleusercontent.com', // OAuth "Aplicación web"
-  FOLDER:'Reportes Mantenimiento'
-};
-const SCOPES=['profile','email','https://www.googleapis.com/auth/drive.file'];
+/* Exportación local; no se solicita acceso a cuentas externas. */
 const XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const GA=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.GoogleAuth;
-let tok={v:'',exp:0};
-
-function loadGIS(){return new Promise((ok,no)=>{if(window.google&&google.accounts)return ok();const e=document.createElement('script');e.src='https://accounts.google.com/gsi/client';e.onload=ok;e.onerror=()=>no(new Error('Sin conexión a internet.'));document.head.appendChild(e)})}
-async function authToken(interactive){
-  if(tok.v&&Date.now()<tok.exp-60000)return tok.v;
-  if(/PEGA_AQUI/.test(CONFIG.WEB_CLIENT_ID))throw new Error('Falta pegar el ID de cliente de Google en CONFIG.');
-  const p=GA();
-  if(p){ // APK con Capacitor
-    await p.initialize({clientId:CONFIG.WEB_CLIENT_ID,scopes:SCOPES,grantOfflineAccess:false});
-    let r=null; if(!interactive){try{r=await p.refresh()}catch(e){}}
-    if(!r||!r.accessToken)r=(await p.signIn()).authentication;
-    tok={v:r.accessToken,exp:Date.now()+3500000}; return tok.v;
-  }
-  await loadGIS(); // navegador (pruebas)
-  return new Promise((ok,no)=>{
-    const c=google.accounts.oauth2.initTokenClient({client_id:CONFIG.WEB_CLIENT_ID,scope:SCOPES.join(' '),
-      callback:r=>r.error?no(new Error('Acceso rechazado.')):(tok={v:r.access_token,exp:Date.now()+r.expires_in*1000},ok(tok.v)),
-      error_callback:e=>no(new Error('Inicio de sesión cancelado.'))});
-    c.requestAccessToken({prompt:interactive?'select_account':''});
-  });
-}
-async function drive(path,opt,t){
-  const r=await fetch('https://www.googleapis.com'+path,Object.assign({},opt,{headers:Object.assign({Authorization:'Bearer '+t},opt.headers||{})}));
-  if(!r.ok){if(r.status===401)tok.v='';let m='';try{m=(await r.json()).error.message}catch(e){}throw new Error('Drive '+r.status+(m?': '+m:''))}
-  return r.json();
-}
-async function folderId(t){
-  let id=store.get('mtto_folder','');
-  if(id){try{const f=await drive('/drive/v3/files/'+id+'?fields=id,trashed',{},t);if(!f.trashed)return id}catch(e){}}
-  const q=encodeURIComponent("name='"+CONFIG.FOLDER+"' and mimeType='application/vnd.google-apps.folder' and trashed=false");
-  const l=await drive('/drive/v3/files?q='+q+'&fields=files(id)',{},t);
-  id=l.files.length?l.files[0].id:(await drive('/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:CONFIG.FOLDER,mimeType:'application/vnd.google-apps.folder'})},t)).id;
-  store.set('mtto_folder',id);return id;
-}
-async function upload(name,blob,t){
-  const parent=await folderId(t),b='mtto'+Date.now();
-  const body=new Blob(['--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name,parents:[parent]})+'\r\n--'+b+'\r\nContent-Type: '+XLSX_MIME+'\r\n\r\n',blob,'\r\n--'+b+'--']);
-  return drive('/upload/drive/v3/files?uploadType=multipart&fields=id,name',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body},t);
-}
 
 /* ===== Generador XLSX sin librerías (ZIP sin compresión) ===== */
 const crcT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t.push(c>>>0)}return t})();
@@ -762,7 +728,7 @@ async function exportReport(blob,name,mime){
     await fs.writeFile({...options,data:await blobBase64(blob)});
     const file=await fs.getUri(options);
     if(!file||!file.uri)throw new Error('Android no devolvió la ubicación del reporte.');
-    await share.share({title:name,text:'Reporte de mantenimiento listo para guardar en Drive.',url:file.uri,dialogTitle:'Guardar o compartir reporte'});
+    await share.share({title:name,text:'Reporte de mantenimiento Chiaplast listo para guardar o compartir.',url:file.uri,dialogTitle:'Guardar o compartir reporte'});
     return 'android-share';
   }
   if(!isDemo()&&typeof File==='function'&&navigator.share&&navigator.canShare){
@@ -849,7 +815,7 @@ async function send(){
     $('rFile').textContent=results.map(r=>r.name).join(' · ');
     $('rTitle').textContent=isDemo()?'Reporte de prueba generado':'Reporte generado';
     const shared=results.some(r=>r.mode==='android-share');
-    $('rMsg').textContent=isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Se prepararon los archivos. En cada menú de compartir de Android puedes elegir Drive para guardarlos en Reportes Mantenimiento.':'Se generaron los archivos elegidos en tus descargas. Puedes subirlos a la carpeta Reportes Mantenimiento de Google Drive.';
+    $('rMsg').textContent=isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.';
     addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
@@ -1050,6 +1016,46 @@ function mqRows(){
   });
   return r;
 }
+
+/* ===== Recordatorios locales: comprobados solo mientras el HTML está activo ===== */
+const reminderKey=()=>stateKey('mtto_reminders');
+function loadReminders(){try{const v=JSON.parse(store.get(reminderKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
+function saveReminders(items){store.set(reminderKey(),JSON.stringify(items))}
+function renderReminders(){
+  const list=$('reminderList');if(!list)return;
+  const items=loadReminders().sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+  if(!items.length){list.innerHTML='<div class="empty">No hay recordatorios guardados.</div>';return}
+  list.innerHTML=items.map(r=>'<div class="rec"><div><b>'+esc(r.text)+'</b><span>'+esc(r.date)+' · '+esc(r.time)+(r.notified?' · Aviso mostrado':'')+'</span></div><button class="link" onclick="deleteReminder(&quot;'+esc(r.id)+'&quot;)">Eliminar</button></div>').join('');
+}
+function addReminder(){
+  const text=$('reminderText').value.trim(),date=$('reminderDate').value,time=$('reminderTime').value;
+  if(!text||!date||!time){toast('Completa el pendiente, la fecha y la hora.');return}
+  const due=new Date(date+'T'+time+':00');
+  if(Number.isNaN(due.getTime())){toast('La fecha u hora no es válida.');return}
+  if(due.getTime()<Date.now()-60000){toast('Elige una fecha y hora futuras.');return}
+  const items=loadReminders();items.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),text,date,time,due:due.toISOString(),notified:false});
+  saveReminders(items);$('reminderText').value='';renderReminders();toast('Recordatorio guardado en este dispositivo.');
+}
+function deleteReminder(id){saveReminders(loadReminders().filter(r=>r.id!==id));renderReminders();toast('Recordatorio eliminado.')}
+async function enableReminderNotifications(){
+  if(!('Notification' in window)){toast('Este entorno no permite notificaciones del navegador. Los avisos aparecerán dentro de Chiaplast mientras esté abierta.');return}
+  try{const permission=await Notification.requestPermission();toast(permission==='granted'?'Notificaciones permitidas mientras el entorno las admita.':'No se concedió permiso. Los avisos aparecerán dentro de Chiaplast mientras esté abierta.')}
+  catch(e){toast('No fue posible solicitar permiso de notificaciones en este entorno.')}
+}
+function checkReminders(){
+  if(document.hidden)return;
+  const now=Date.now(),items=loadReminders();let changed=false;
+  items.forEach(r=>{
+    const due=Date.parse(r.due);
+    if(!r.notified&&Number.isFinite(due)&&due<=now){
+      r.notified=true;changed=true;const msg='Mantenimiento pendiente: '+r.text;
+      if('Notification' in window&&Notification.permission==='granted'){try{new Notification('Chiaplast · Recordatorio',{body:msg,tag:'chiaplast-'+r.id})}catch(e){toast(msg)}}else toast(msg);
+    }
+  });
+  if(changed){saveReminders(items);renderReminders()}
+}
+setInterval(checkReminders,15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkReminders()});
 
 /* Recientes */
 function addRecent(r){const key=stateKey('mtto_hist');let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
