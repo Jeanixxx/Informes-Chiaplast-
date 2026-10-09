@@ -631,12 +631,17 @@ function captureEvidence(mode){
   }
   const fn=mode==='camera'?'takePhoto':'pickPhoto';
   const result=nativeCall(fn,$('remId').value||'draft');
-  if(result===false)toast('No se pudo abrir la función de evidencia.');
+  if(result===false||result==='error')toast('No se pudo abrir la función de evidencia.');
 }
 window.onEvidenceCaptured=function(json){
   try{const item=typeof json==='string'?JSON.parse(json):json;if(!item||!item.uri)return;
     pendingEvidence.push({name:item.name||'Evidencia',uri:item.uri,createdAt:Date.now()});renderEvidence();
   }catch(e){toast('No se pudo recibir la evidencia fotográfica.')}
+};
+window.syncNativeReminders=function(){
+  if(!nativeAndroid()||isDemo())return;
+  readToolList(TOOL_KEYS.reminders).filter(x=>x.status!=='done'&&new Date(x.when).getTime()>Date.now())
+    .forEach(x=>nativeCall('scheduleReminder',JSON.stringify(x)));
 };
 function saveReminder(event){
   event.preventDefault();
