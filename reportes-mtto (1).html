@@ -130,6 +130,11 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .zr input{width:100%;min-height:50px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);font-size:17px;outline:none}
 .zr input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .zr .seg button{min-height:46px}
+/* Formato de salida compartido por reportes individuales y lotes */
+.export-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.export-choice label{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:14px;font-weight:800;cursor:pointer}
+.export-choice input{accent-color:var(--accent);width:17px;height:17px;margin:0}
+.export-note{font-size:13px;color:var(--muted);line-height:1.45;margin:8px 0 0}
 /* Resumen */
 .row{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--line)}
 .row:last-child{border:0}
@@ -293,11 +298,20 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
       <p>Los informes se mantienen en este dispositivo mientras continúa la captura. Puedes agregar otras máquinas o quitar un informe antes de generar el Excel.</p>
       <div id="dailyBatchList"></div>
       <div id="dailyBatchEmpty" class="empty">Aún no has agregado informes.</div>
+      <div class="f" style="margin-top:18px;margin-bottom:0">
+        <span class="lbl">Formato de salida</span>
+        <div class="export-choice" role="radiogroup" aria-label="Formato de los reportes diarios">
+          <label><input type="radio" name="batchExportChoice" value="pdf"> PDF</label>
+          <label><input type="radio" name="batchExportChoice" value="excel" checked> Excel</label>
+          <label><input type="radio" name="batchExportChoice" value="both"> Ambos</label>
+        </div>
+        <p class="export-note">Se exportarán juntos únicamente los informes recopilados en este lote.</p>
+      </div>
     </div>
   </div>
   <div class="dock" style="gap:8px">
     <button class="btn btn-s" onclick="go('dailyArea')">Agregar informe</button>
-    <button class="btn btn-p" id="finishBatchBtn" onclick="finishDailyBatch()">Finalizar y guardar Excel</button>
+    <button class="btn btn-p" id="finishBatchBtn" onclick="finishDailyBatch()">Finalizar y guardar reportes</button>
   </div>
 </section>
 
@@ -356,7 +370,16 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   <div class="steps"><div class="on"></div><div class="on"></div></div>
   <div class="body">
     <div class="card"><div id="sum"></div>
-      <div class="fname"><span style="color:var(--muted)">Se guardará como</span><br><b id="fn"></b></div>
+      <div class="fname"><span style="color:var(--muted)">Nombre base del reporte</span><br><b id="fn"></b></div>
+      <div class="f" style="margin-top:16px;margin-bottom:0">
+        <span class="lbl">¿En qué formato deseas guardarlo?</span>
+        <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
+          <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
+          <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
+          <label><input type="radio" name="exportChoice" value="both"> Ambos</label>
+        </div>
+        <p class="export-note">PDF genera un documento listo para imprimir o compartir. Excel conserva los datos en celdas para analizarlos.</p>
+      </div>
     </div>
   </div>
   <div class="dock">
@@ -474,7 +497,7 @@ function removeDailyReport(i){
 }
 function leaveDailyBatch(){
   if(DailyBatch.reports.length){
-    if(confirm('Has recopilado '+DailyBatch.reports.length+' informe(s). ¿Deseas generar ahora un solo archivo Excel con todos ellos?')){
+    if(confirm('Has recopilado '+DailyBatch.reports.length+' informe(s). ¿Deseas generar ahora los archivos con el formato seleccionado?')){
       finishDailyBatch(true);return;
     }
     if(!confirm('Los informes quedarán guardados temporalmente en este dispositivo. ¿Deseas salir sin generar el Excel por ahora?'))return;
@@ -493,20 +516,20 @@ function batchExcelRows(){
 }
 async function finishDailyBatch(skipConfirm=false){
   if(!DailyBatch.reports.length){toast('Agrega al menos un informe antes de finalizar.');return}
-  if(!skipConfirm&&!confirm('¿Deseas guardar los '+DailyBatch.reports.length+' informes en un solo archivo Excel?'))return;
-  const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando Excel…';
+  if(!skipConfirm&&!confirm('¿Deseas generar los archivos con los '+DailyBatch.reports.length+' informes recopilados?'))return;
+  const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando reportes…';
   try{
-    const name='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','')+'.xlsx';
-    const blob=buildXlsx(batchExcelRows());
-    const exportMode=await exportReport(blob,name);
-    $('rFile').textContent=name;
-    $('rTitle').textContent=isDemo()?'Reportes diarios simulados':'Reportes diarios generados';
-    $('rMsg').textContent=isDemo()?'El Excel de prueba se generó localmente.':'El Excel contiene '+DailyBatch.reports.length+' informes. '+(exportMode==='android-share'?'Elige Drive en el menú para compartirlo.':'El archivo se descargó; puedes subirlo a la carpeta Reportes Mantenimiento de Drive.');
-    addRecent({n:name,a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily',demo:isDemo()});
+    const baseName='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','');
+    const results=await generateExports(batchExcelRows(),baseName,selectedExport('batchExportChoice'));
+    $('rFile').textContent=results.map(r=>r.name).join(' · ');
+    $('rTitle').textContent=isDemo()?'Reportes diarios de prueba generados':'Reportes diarios generados';
+    const shared=results.some(r=>r.mode==='android-share');
+    $('rMsg').textContent='El lote contiene '+DailyBatch.reports.length+' informes. '+(isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'En cada menú de compartir de Android puedes elegir Drive.':'Los archivos están en tus descargas y puedes subirlos a Reportes Mantenimiento de Google Drive.');
+    addRecent({n:results.map(r=>r.name).join(', '),a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily',demo:isDemo()});
     DailyBatch.reports=[];DailyBatch.active=false;saveDailyBatch();store.del(dailyBatchKey());Runtime.batchMode=false;
     history.replaceState({s:'done'},'');show('done');
-  }catch(e){toast(e.message||'No se pudo generar el Excel.')}
-  finally{b.disabled=false;b.textContent='Finalizar y guardar Excel';renderDailyBatch()}
+  }catch(e){toast(e.message||'No se pudieron generar los reportes.')}
+  finally{b.disabled=false;b.textContent='Finalizar y guardar reportes';renderDailyBatch()}
 }
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
@@ -720,7 +743,7 @@ function review(){
   $('fn').textContent=fileName();
   go('confirm');
 }
-const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'.xlsx';
+const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','');
 function blobBase64(blob){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -729,7 +752,8 @@ function blobBase64(blob){
     reader.readAsDataURL(blob);
   });
 }
-async function exportReport(blob,name){
+async function exportReport(blob,name,mime){
+  mime=mime||XLSX_MIME;
   const plugins=window.Capacitor&&window.Capacitor.Plugins;
   const fs=plugins&&plugins.Filesystem,share=plugins&&plugins.Share;
   if(fs&&typeof fs.writeFile==='function'&&typeof fs.getUri==='function'&&share&&typeof share.share==='function'){
@@ -742,7 +766,7 @@ async function exportReport(blob,name){
     return 'android-share';
   }
   if(!isDemo()&&typeof File==='function'&&navigator.share&&navigator.canShare){
-    const report=new File([blob],name,{type:XLSX_MIME});
+    const report=new File([blob],name,{type:mime});
     if(navigator.canShare({files:[report]})){
       try{
         await navigator.share({title:name,files:[report]});
@@ -761,24 +785,72 @@ async function exportReport(blob,name){
   return 'download';
 }
 
+const PDF_MIME='application/pdf';
+function pdfSafe(value){
+  return String(value==null?'':value).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^\x20-\x7E]/g,' ').replace(/\s+/g,' ').trim()
+    .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+}
+function buildPdf(rows){
+  const lines=[];
+  rows.forEach(row=>{
+    const a=String(row&&row[0]||'').trim(),b=String(row&&row[1]||'').trim();
+    const text=(a?(b?a+' — '+b:a):b)||' ';
+    const clean=pdfSafe(text),width=94;
+    for(let i=0;i<clean.length;i+=width)lines.push(clean.slice(i,i+width));
+  });
+  const pages=[];
+  for(let i=0;i<lines.length;i+=52)pages.push(lines.slice(i,i+52));
+  if(!pages.length)pages.push(['Reporte de mantenimiento Chiaplast']);
+  const objects=[];
+  objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
+  objects[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+  const pageRefs=[];
+  pages.forEach((page,index)=>{
+    const pageId=4+index*2,contentId=pageId+1;
+    pageRefs.push(pageId+' 0 R');
+    let stream='BT\n/F1 10 Tf\n48 794 Td\n';
+    page.forEach((line,j)=>{if(j)stream+='0 -14 Td\n';stream+='('+line+') Tj\n';});
+    stream+='ET';
+    objects[pageId]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>';
+    objects[contentId]='<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream';
+  });
+  objects[2]='<< /Type /Pages /Kids ['+pageRefs.join(' ')+'] /Count '+pages.length+' >>';
+  let pdf='%PDF-1.4\n%CHIA\n';const offsets=[0];
+  for(let i=1;i<objects.length;i++){offsets[i]=pdf.length;pdf+=i+' 0 obj\n'+objects[i]+'\nendobj\n';}
+  const xref=pdf.length;pdf+='xref\n0 '+objects.length+'\n0000000000 65535 f \n';
+  for(let i=1;i<objects.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+  pdf+='trailer\n<< /Size '+objects.length+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  return new Blob([pdf],{type:PDF_MIME});
+}
+function selectedExport(name){
+  const input=document.querySelector('input[name="'+name+'"]:checked');
+  return input?input.value:'excel';
+}
+async function generateExports(rows,baseName,choice){
+  const formats=choice==='both'?['excel','pdf']:[choice],results=[];
+  for(const format of formats){
+    const isPdf=format==='pdf',name=baseName+(isPdf?'.pdf':'.xlsx');
+    const blob=isPdf?buildPdf(rows):buildXlsx(rows);
+    const mode=await exportReport(blob,name,isPdf?PDF_MIME:XLSX_MIME);
+    results.push({name,format,mode});
+  }
+  return results;
+}
 async function send(){
-  const b=$('sendBtn');b.disabled=true;const name=fileName();
+  const b=$('sendBtn');b.disabled=true;const baseName=fileName();
   try{
-    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900));}
+    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,500));}
     b.innerHTML='<span class="spin"></span>Generando…';
     const exportRows=Runtime.rows[0]&&Runtime.rows[0][0]==='Campo'
       ?[['REPORTE DE MANTENIMIENTO CHIAPLAST',''],['Área',Runtime.area],['Máquina',Runtime.machine||Runtime.area],['Tipo de reporte',isDaily()?'Chequeo diario':'Mantenimiento preventivo'],['Fecha',fmtD($('d').value)],['Hora',$('t').value],['',''],['Campo / componente','Resultado / valor'],...Runtime.rows.slice(1)]
       :Runtime.rows;
-    const blob=buildXlsx(exportRows);
-    const exportMode=await exportReport(blob,name);
-    $('rFile').textContent=name;
-    $('rTitle').textContent=isDaily()?(isDemo()?'Chequeo diario simulado':'Chequeo diario generado'):(isDemo()?'Reporte simulado':'Reporte generado');
-    $('rMsg').textContent=isDemo()
-      ?'En modo demo se generó una vista local de prueba. El archivo se exporta igual que en producción.'
-      :exportMode==='android-share'
-        ?'El archivo está listo. En el menú de Android, elige Drive para subirlo a la carpeta Reportes Mantenimiento.'
-        :'El archivo está listo en tus descargas. Súbelo manualmente a la carpeta Reportes Mantenimiento de Google Drive.';
-    addRecent({n:name,a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
+    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'));
+    $('rFile').textContent=results.map(r=>r.name).join(' · ');
+    $('rTitle').textContent=isDemo()?'Reporte de prueba generado':'Reporte generado';
+    const shared=results.some(r=>r.mode==='android-share');
+    $('rMsg').textContent=isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Se prepararon los archivos. En cada menú de compartir de Android puedes elegir Drive para guardarlos en Reportes Mantenimiento.':'Se generaron los archivos elegidos en tus descargas. Puedes subirlos a la carpeta Reportes Mantenimiento de Google Drive.';
+    addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar archivo'}
@@ -988,8 +1060,13 @@ function renderRecent(){
     :'<div class="empty">Aún no hay reportes. Toca un área para empezar.</div>';
 }
 
-/* Inicio */
-setTimeout(()=>{syncAppState();AppState.session=true;store.set('mtto_session','true');setMode('real');root('menu')},600);
+/* Inicio: splash visible y restauración de sesión coherente */
+syncAppState();
+setMode('real');
+setTimeout(()=>{
+  syncAppState();
+  root(AppState.session?'menu':'login');
+},1500);
 </script>
 </body>
 </html>
