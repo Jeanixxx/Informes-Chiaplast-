@@ -231,7 +231,8 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   <div class="body">
     <p class="muted">Selecciona el área donde se encuentra la máquina que vas a revisar.</p>
     <div class="areas">
-      <button class="area" onclick="chooseDailyArea('Extrusión','EXT')"><b>EXT</b><span>Extrusión</span></button>
+      <button class="area" onclick="chooseDailyArea('Extrusión 1','E1AREA')"><b>E1</b><span>Extrusión 1</span></button>
+      <button class="area" onclick="chooseDailyArea('Extrusión 2','E2AREA')"><b>E2</b><span>Extrusión 2</span></button>
       <button class="area" onclick="chooseDailyArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
       <button class="area" onclick="chooseDailyArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
       <button class="area wide" onclick="chooseDailyArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
@@ -383,10 +384,11 @@ function beginDailyBatch(){
 function chooseDailyArea(area,code){
   DailyBatch.area=area;DailyBatch.code=code;
   const machines={
-    EXT:[{name:'Extrusión 1',code:'E1'},{name:'Extrusión 2',code:'E2'}],
-    CAM:[{name:'CAM (registro general)',code:'CAM'}],
-    DIM:['M1','M2','M3','M4','M5','M6','D1','D2','D3','Selladora M1','Selladora M2','Selladora M3','Selladora M4','Selladora M5','Selladora M6','Horno 1','Horno 2','Horno 3','Flejadora 1','Flejadora 2'].map(name=>({name,code:'DIM'})),
-    BSL:['BW1','B1','B2','B3','B4','BN1','BN2','BN3','BN4','B02','B03','B06','D4'].map(name=>({name,code:'BSL'}))
+    E1AREA:['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','EXT-N1','EXT-N2','FUELLADORA','EXT-A3'].map(name=>({name,code:'E1'})),
+    E2AREA:['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2'].map(name=>({name,code:'E2'})),
+    CAM:['BK-1','BK-2','BK-3','BK-4','BK-5','BK-6','BK-7','BK-8','BNG-1','BNG-2','BC-1','IMP-1','IMP-2','IMP-3'].map(name=>({name,code:'CAM'})),
+    DIM:['BM-1','BM-2','BM-3','BM-4','BM-5','BD-1','BD-2','BD-3','SELLADORA M1','SELLADORA M2','SELLADORA M3','SELLADORA M4','SELLADORA M5','HORNO M','FLEJADORA'].map(name=>({name,code:'DIM'})),
+    BSL:['BW-1','BN-1','BN-2','BN-3','BN-4','B-02','B-03','B-06','BSL-1','BSL-2','BSL-3','BSL-4','BSL-5','BSL-6','BD-4'].map(name=>({name,code:'BSL'}))
   };
   const list=machines[code]||[];
   $('dailyMachineSubtitle').textContent=area;
@@ -397,7 +399,7 @@ function chooseDailyArea(area,code){
 function chooseCustomDailyMachine(){
   const name=$('customMachine').value.trim();
   if(!name){toast('Escribe el nombre de la máquina.');$('customMachine').focus();return}
-  const code=DailyBatch.code==='EXT'?'E1':DailyBatch.code;
+  const code=DailyBatch.code==='E1AREA'?'E1':DailyBatch.code==='E2AREA'?'E2':DailyBatch.code;
   selectDailyMachine(name,code);
 }
 function selectDailyMachine(machine,code){
