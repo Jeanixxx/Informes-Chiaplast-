@@ -631,14 +631,14 @@ function review(){
   const type=$('gType').dataset.v,st=$('gStatus').dataset.v;
   let bad=null;
   if(!d||!t){toast('Indica la fecha y la hora.');bad=$(!d?'d':'t')}
-  const dailyMeasurements=isDaily()&&isExt();
-  if(!dailyMeasurements){
+  const dailyMeasurementsForValidation=isDaily()&&isExt();
+  if(!dailyMeasurementsForValidation){
     if(!type){$('gType').classList.add('bad');bad=bad||$('gType')}
     if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
   }
   if(!$('ext').hidden){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||isNaN(x)){i.classList.add('bad');bad=bad||i}});
-    if(!dailyMeasurements)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
+    if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
