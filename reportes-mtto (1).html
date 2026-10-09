@@ -765,7 +765,10 @@ async function send(){
   try{
     if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,900));}
     b.innerHTML='<span class="spin"></span>Generando…';
-    const blob=buildXlsx(Runtime.rows);
+    const exportRows=Runtime.rows[0]&&Runtime.rows[0][0]==='Campo'
+      ?[['REPORTE DE MANTENIMIENTO CHIAPLAST',''],['Área',Runtime.area],['Máquina',Runtime.machine||Runtime.area],['Tipo de reporte',isDaily()?'Chequeo diario':'Mantenimiento preventivo'],['Fecha',fmtD($('d').value)],['Hora',$('t').value],['',''],['Campo / componente','Resultado / valor'],...Runtime.rows.slice(1)]
+      :Runtime.rows;
+    const blob=buildXlsx(exportRows);
     const exportMode=await exportReport(blob,name);
     $('rFile').textContent=name;
     $('rTitle').textContent=isDaily()?(isDemo()?'Chequeo diario simulado':'Chequeo diario generado'):(isDemo()?'Reporte simulado':'Reporte generado');
