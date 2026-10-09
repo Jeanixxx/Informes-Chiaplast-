@@ -427,7 +427,12 @@ function removeDailyReport(i){
   DailyBatch.reports.splice(i,1);saveDailyBatch();renderDailyBatch();toast('Informe eliminado.');
 }
 function leaveDailyBatch(){
-  if(DailyBatch.reports.length&&!confirm('Hay '+DailyBatch.reports.length+' informe(s) recopilado(s). ¿Deseas salir sin generar el Excel? Los datos temporales se conservarán.'))return;
+  if(DailyBatch.reports.length){
+    if(confirm('Has recopilado '+DailyBatch.reports.length+' informe(s). ¿Deseas generar ahora un solo archivo Excel con todos ellos?')){
+      finishDailyBatch(true);return;
+    }
+    if(!confirm('Los informes quedarán guardados temporalmente en este dispositivo. ¿Deseas salir sin generar el Excel por ahora?'))return;
+  }
   go('menu');
 }
 function batchExcelRows(){
@@ -440,9 +445,9 @@ function batchExcelRows(){
   });
   return rows;
 }
-async function finishDailyBatch(){
+async function finishDailyBatch(skipConfirm=false){
   if(!DailyBatch.reports.length){toast('Agrega al menos un informe antes de finalizar.');return}
-  if(!confirm('¿Deseas guardar los '+DailyBatch.reports.length+' informes en un solo archivo Excel?'))return;
+  if(!skipConfirm&&!confirm('¿Deseas guardar los '+DailyBatch.reports.length+' informes en un solo archivo Excel?'))return;
   const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando Excel…';
   try{
     const name='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','')+'.xlsx';
