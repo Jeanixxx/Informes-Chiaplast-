@@ -191,6 +191,9 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
   </header>
   <div class="body">
     <div id="demoBanner" class="demo" hidden><i></i>Modo demo: no se sube nada a Drive</div>
+    <button class="area wide" style="width:100%;margin-bottom:14px;border-color:var(--accent)" onclick="beginDailyBatch()">
+      <b style="font-size:19px">Reportes diarios</b><span>Registra varias máquinas y genera un solo Excel al terminar.</span>
+    </button>
     <div class="areas">
       <button class="area" onclick="pick('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="pick('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
@@ -216,6 +219,57 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
     <button class="area" style="width:100%" onclick="startCheck('preventive')">
       <b style="font-size:20px">Mantenimiento preventivo</b><span>Abrir el formulario de mantenimiento existente.</span>
     </button>
+  </div>
+</section>
+
+<!-- Registro agrupado de reportes diarios -->
+<section id="dailyArea" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="leaveDailyBatch()" aria-label="Atrás">‹</button>
+    <h1>Reportes diarios<small>1. Elige el área</small></h1>
+  </header>
+  <div class="body">
+    <p class="muted">Selecciona el área donde se encuentra la máquina que vas a revisar.</p>
+    <div class="areas">
+      <button class="area" onclick="chooseDailyArea('Extrusión','EXT')"><b>EXT</b><span>Extrusión</span></button>
+      <button class="area" onclick="chooseDailyArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="chooseDailyArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
+      <button class="area wide" onclick="chooseDailyArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+    </div>
+  </div>
+</section>
+
+<section id="dailyMachine" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('dailyArea')" aria-label="Atrás">‹</button>
+    <h1>Elegir máquina<small id="dailyMachineSubtitle"></small></h1>
+  </header>
+  <div class="body">
+    <div id="dailyMachineChoices" class="areas"></div>
+    <div class="card" style="margin-top:14px">
+      <div class="f"><label for="customMachine">¿No aparece en la lista? Escribe el nombre de la máquina</label>
+        <input id="customMachine" placeholder="Nombre de la máquina" autocomplete="off">
+      </div>
+      <button class="btn btn-s" style="width:100%" onclick="chooseCustomDailyMachine()">Usar este nombre</button>
+    </div>
+  </div>
+</section>
+
+<section id="dailyBatch" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="leaveDailyBatch()" aria-label="Salir">‹</button>
+    <h1>Informes recopilados<small id="dailyBatchCount">0 informes guardados temporalmente</small></h1>
+  </header>
+  <div class="body">
+    <div class="card">
+      <p>Los informes se mantienen en este dispositivo mientras continúa la captura. Puedes agregar otras máquinas o quitar un informe antes de generar el Excel.</p>
+      <div id="dailyBatchList"></div>
+      <div id="dailyBatchEmpty" class="empty">Aún no has agregado informes.</div>
+    </div>
+  </div>
+  <div class="dock" style="gap:8px">
+    <button class="btn btn-s" onclick="go('dailyArea')">Agregar informe</button>
+    <button class="btn btn-p" id="finishBatchBtn" onclick="finishDailyBatch()">Finalizar y guardar Excel</button>
   </div>
 </section>
 
@@ -317,7 +371,92 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 <script>
 const $=id=>document.getElementById(id);
 const AppState={session:false,user:'',settings:{},history:[]};
-const Runtime={mode:'real',area:'',code:'',checkType:'preventive',rows:[]};
+const Runtime={mode:'real',area:'',code:'',checkType:'preventive',rows:[],machine:'',batchMode:false};
+const DailyBatch={active:false,area:'',code:'',machine:'',reports:[],editIndex:-1};
+const dailyBatchKey=()=>stateKey('mtto_daily_batch');
+function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
+function saveDailyBatch(){store.set(dailyBatchKey(),JSON.stringify(DailyBatch.reports))}
+function beginDailyBatch(){
+  DailyBatch.active=true;DailyBatch.reports=loadDailyBatch();DailyBatch.editIndex=-1;
+  renderDailyBatch();go('dailyArea');
+}
+function chooseDailyArea(area,code){
+  DailyBatch.area=area;DailyBatch.code=code;
+  const machines={
+    EXT:[{name:'Extrusión 1',code:'E1'},{name:'Extrusión 2',code:'E2'}],
+    CAM:[{name:'CAM (registro general)',code:'CAM'}],
+    DIM:['M1','M2','M3','M4','M5','M6','D1','D2','D3','Selladora M1','Selladora M2','Selladora M3','Selladora M4','Selladora M5','Selladora M6','Horno 1','Horno 2','Horno 3','Flejadora 1','Flejadora 2'].map(name=>({name,code:'DIM'})),
+    BSL:['BW1','B1','B2','B3','B4','BN1','BN2','BN3','BN4','B02','B03','B06','D4'].map(name=>({name,code:'BSL'}))
+  };
+  const list=machines[code]||[];
+  $('dailyMachineSubtitle').textContent=area;
+  $('customMachine').value='';
+  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+'</b><span>Capturar informe diario</span></button>').join('');
+  go('dailyMachine');
+}
+function chooseCustomDailyMachine(){
+  const name=$('customMachine').value.trim();
+  if(!name){toast('Escribe el nombre de la máquina.');$('customMachine').focus();return}
+  const code=DailyBatch.code==='EXT'?'E1':DailyBatch.code;
+  selectDailyMachine(name,code);
+}
+function selectDailyMachine(machine,code){
+  DailyBatch.machine=machine;Runtime.area=DailyBatch.area;Runtime.code=code;Runtime.machine=machine;Runtime.batchMode=true;
+  startCheck('daily');
+}
+function renderDailyBatch(){
+  const reports=DailyBatch.reports;
+  $('dailyBatchCount').textContent=reports.length+' '+(reports.length===1?'informe recopilado':'informes recopilados');
+  $('dailyBatchEmpty').hidden=reports.length>0;
+  $('dailyBatchList').innerHTML=reports.map((r,i)=>'<div class="rec"><div><b>'+esc(r.machine||r.area)+'</b><span>'+esc(r.area)+' · '+esc(r.date)+' '+esc(r.time)+'</span></div><div style="display:flex;gap:8px"><button class="link" onclick="editDailyReport('+i+')">Editar</button><button class="link" onclick="removeDailyReport('+i+')" aria-label="Eliminar informe de '+esc(r.machine||r.area)+'">Eliminar</button></div></div>').join('');
+  $('finishBatchBtn').disabled=reports.length===0;
+}
+function editDailyReport(i){
+  const report=DailyBatch.reports[i];if(!report)return;
+  DailyBatch.editIndex=i;DailyBatch.area=report.area;DailyBatch.code=report.code==='E1'||report.code==='E2'?'EXT':report.code;DailyBatch.machine=report.machine;
+  Runtime.area=report.area;Runtime.code=report.code;Runtime.machine=report.machine;Runtime.batchMode=true;
+  startCheck('daily');
+  $('d').value=report.draft.d||'';$('t').value=report.draft.t||'';
+  $('gType').dataset.v=report.draft.type||'';$('gStatus').dataset.v=report.draft.st||'';
+  ['gType','gStatus'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===$(id).dataset.v)));
+  $('obs').value=report.draft.obs||'';extLoad(report.draft.fields||{});
+  toast('Edita el informe y vuelve a agregarlo al lote.');
+}
+function removeDailyReport(i){
+  if(!confirm('¿Eliminar el informe de '+(DailyBatch.reports[i]?.machine||'esta máquina')+'?'))return;
+  DailyBatch.reports.splice(i,1);saveDailyBatch();renderDailyBatch();toast('Informe eliminado.');
+}
+function leaveDailyBatch(){
+  if(DailyBatch.reports.length&&!confirm('Hay '+DailyBatch.reports.length+' informe(s) recopilado(s). ¿Deseas salir sin generar el Excel? Los datos temporales se conservarán.'))return;
+  go('menu');
+}
+function batchExcelRows(){
+  const rows=[['Reportes diarios Chiaplast',''],['Fecha de generación',new Date().toLocaleString('es-MX')],['Total de informes',String(DailyBatch.reports.length)],['','']];
+  DailyBatch.reports.forEach((report,i)=>{
+    rows.push(['INFORME '+(i+1)+' — '+report.area+' — '+report.machine,'']);
+    rows.push(['Campo','Valor']);
+    report.rows.forEach(r=>rows.push([r[0],r[1]||'']));
+    rows.push(['','']);
+  });
+  return rows;
+}
+async function finishDailyBatch(){
+  if(!DailyBatch.reports.length){toast('Agrega al menos un informe antes de finalizar.');return}
+  if(!confirm('¿Deseas guardar los '+DailyBatch.reports.length+' informes en un solo archivo Excel?'))return;
+  const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando Excel…';
+  try{
+    const name='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','')+'.xlsx';
+    const blob=buildXlsx(batchExcelRows());
+    const exportMode=await exportReport(blob,name);
+    $('rFile').textContent=name;
+    $('rTitle').textContent=isDemo()?'Reportes diarios simulados':'Reportes diarios generados';
+    $('rMsg').textContent=isDemo()?'El Excel de prueba se generó localmente.':'El Excel contiene '+DailyBatch.reports.length+' informes. '+(exportMode==='android-share'?'Elige Drive en el menú para compartirlo.':'El archivo se descargó; puedes subirlo a la carpeta Reportes Mantenimiento de Drive.');
+    addRecent({n:name,a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily',demo:isDemo()});
+    DailyBatch.reports=[];DailyBatch.active=false;saveDailyBatch();store.del(dailyBatchKey());Runtime.batchMode=false;
+    history.replaceState({s:'done'},'');show('done');
+  }catch(e){toast(e.message||'No se pudo generar el Excel.')}
+  finally{b.disabled=false;b.textContent='Finalizar y guardar Excel';renderDailyBatch()}
+}
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
   set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
@@ -338,6 +477,7 @@ function show(id){
   $('demoBanner').hidden=!isDemo();
   $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu') renderRecent();
+  if(id==='dailyBatch') renderDailyBatch();
   if(id==='tools') $('acct').textContent=isDemo()?'Sesión local de demostración (sin modificar archivos del equipo)':currentUser()?'Archivo local para: '+currentUser():'Generación local del reporte';
 }
 function go(id){history.pushState({s:id},'');show(id)}
@@ -466,11 +606,18 @@ function pick(name,code){
 }
 function startCheck(kind){
   Runtime.checkType=kind;
-  $('fTitle').innerHTML=esc(Runtime.area)+(isDaily()?' · Diario':'')+'<small>Paso 1 de 2</small>';
+  const dailyMeasurements=isDaily()&&isExt();
+  $('fTitle').innerHTML=esc(Runtime.area)+(Runtime.batchMode?' · '+esc(Runtime.machine):'')+(isDaily()?' · Diario':'')+'<small>Paso 1 de 2</small>';
   setNow();$('ph').hidden=true;
-  $('ext').innerHTML=isDaily()?buildDaily():isExt()?buildExt():buildMq();
-  $('ext').hidden=false;$('maintenanceFields').hidden=isDaily();
-  loadDraft();go('form');buzz(10);
+  $('ext').innerHTML=dailyMeasurements?buildDaily():isExt()?buildExt():buildMq();
+  $('ext').hidden=false;$('maintenanceFields').hidden=dailyMeasurements;
+  if(Runtime.batchMode){
+    $('obs').value='';
+    $('gType').dataset.v='PREVENTIVO';$('gStatus').dataset.v='ENTREGADO';
+    ['gType','gStatus'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===$(id).dataset.v)));
+    extLoad({});
+  }else loadDraft();
+  go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
 const draftStorageKey=()=>stateKey(isDaily()?'mtto_draft_daily':'mtto_draft');
@@ -484,20 +631,28 @@ function review(){
   const type=$('gType').dataset.v,st=$('gStatus').dataset.v;
   let bad=null;
   if(!d||!t){toast('Indica la fecha y la hora.');bad=$(!d?'d':'t')}
-  if(!isDaily()){
+  const dailyMeasurementsForValidation=isDaily()&&isExt();
+  if(!dailyMeasurementsForValidation){
     if(!type){$('gType').classList.add('bad');bad=bad||$('gType')}
     if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
   }
   if(!$('ext').hidden){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||isNaN(x)){i.classList.add('bad');bad=bad||i}});
-    if(!isDaily())document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
+    if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
-  const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Fecha',fmtD(d)],['Hora',t]];
-  if(isDaily())rows.push(['Tipo de chequeo','DIARIO'],...dailyRows());
+  const dailyMeasurements=isDaily()&&isExt();
+  const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
+  if(dailyMeasurements)rows.push(['Tipo de chequeo','DIARIO'],...dailyRows());
   else rows.push(['Tipo',type],['Estado',st],...(isExt()?extRows():mqRows()));
   rows.push(['Observaciones',$('obs').value.trim()||'—']);
   Runtime.rows=[['Campo','Valor']].concat(rows,[['Reportó',currentUser()||'—']]);
+  if(Runtime.batchMode){
+    const report={area:Runtime.area,code:Runtime.code,machine:Runtime.machine,date:fmtD(d),time:t,rows:Runtime.rows.slice(1),draft:{d,t,type,st,obs:$('obs').value,fields:extState()},dailyMeasurements};
+    if(DailyBatch.editIndex>=0)DailyBatch.reports[DailyBatch.editIndex]=report;else DailyBatch.reports.push(report);
+    DailyBatch.editIndex=-1;saveDailyBatch();renderDailyBatch();$('obs').value='';extLoad({});
+    go('dailyBatch');toast('Informe agregado al lote.');return;
+  }
   $('sum').innerHTML=rows.map(r=>r[2]?'<div class="h2" style="margin:16px 0 2px">'+esc(r[0])+'</div>':'<div class="row"><span>'+esc(r[0])+'</span><b'+(/^(NO|Falla)$/.test(r[1])?' style="color:var(--err)"':'')+'>'+esc(r[1])+'</b></div>').join('');
   $('fn').textContent=fileName();
   go('confirm');
@@ -564,6 +719,7 @@ async function send(){
 }
 function finish(){
   $('obs').value='';extLoad({});['gType','gStatus'].forEach(g=>{const x=$(g);x.dataset.v='';x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'))});
+  Runtime.batchMode=false;Runtime.machine='';DailyBatch.active=false;
   history.replaceState({s:'menu'},'');show('menu');
 }
 
