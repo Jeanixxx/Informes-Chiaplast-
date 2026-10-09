@@ -82,6 +82,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::webView.isInitialized && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarm = getSystemService(ALARM_SERVICE) as android.app.AlarmManager
+            if (alarm.canScheduleExactAlarms()) {
+                webView.post { webView.evaluateJavascript("window.syncNativeReminders && window.syncNativeReminders()", null) }
+            }
+        }
+    }
+
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         webView.evaluateJavascript("history.back()", null)
@@ -114,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                 if (atMillis <= System.currentTimeMillis()) return "error"
                 val alarm = getSystemService(ALARM_SERVICE) as android.app.AlarmManager
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarm.canScheduleExactAlarms()) {
-                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+                    runOnUiThread { startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName"))) }
                     return "permission_required"
                 }
                 ReminderScheduler.schedule(context, item, atMillis)
