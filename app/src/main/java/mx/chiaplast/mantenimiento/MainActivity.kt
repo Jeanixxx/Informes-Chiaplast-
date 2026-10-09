@@ -86,8 +86,12 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (::webView.isInitialized && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarm = getSystemService(ALARM_SERVICE) as android.app.AlarmManager
-            if (alarm.canScheduleExactAlarms()) {
+            val statePrefs = getSharedPreferences("chiaplast_native_state", MODE_PRIVATE)
+            if (alarm.canScheduleExactAlarms() && !statePrefs.getBoolean("exact_alarm_permission", false)) {
                 webView.post { webView.evaluateJavascript("window.syncNativeReminders && window.syncNativeReminders()", null) }
+                statePrefs.edit().putBoolean("exact_alarm_permission", true).apply()
+            } else if (!alarm.canScheduleExactAlarms()) {
+                statePrefs.edit().putBoolean("exact_alarm_permission", false).apply()
             }
         }
     }
