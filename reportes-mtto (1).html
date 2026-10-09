@@ -391,7 +391,7 @@ function chooseDailyArea(area,code){
   const list=machines[code]||[];
   $('dailyMachineSubtitle').textContent=area;
   $('customMachine').value='';
-  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine('+JSON.stringify(m.name).replace(/'/g,"&#39;")+','+JSON.stringify(m.code).replace(/'/g,"&#39;")+')"><b>'+esc(m.name)+'</b><span>Capturar informe diario</span></button>').join('');
+  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+'</b><span>Capturar informe diario</span></button>').join('');
   go('dailyMachine');
 }
 function chooseCustomDailyMachine(){
@@ -408,8 +408,19 @@ function renderDailyBatch(){
   const reports=DailyBatch.reports;
   $('dailyBatchCount').textContent=reports.length+' '+(reports.length===1?'informe recopilado':'informes recopilados');
   $('dailyBatchEmpty').hidden=reports.length>0;
-  $('dailyBatchList').innerHTML=reports.map((r,i)=>'<div class="rec"><div><b>'+esc(r.machine||r.area)+'</b><span>'+esc(r.area)+' · '+esc(r.date)+' '+esc(r.time)+'</span></div><button class="link" onclick="removeDailyReport('+i+')" aria-label="Eliminar informe de '+esc(r.machine||r.area)+'">Eliminar</button></div>').join('');
+  $('dailyBatchList').innerHTML=reports.map((r,i)=>'<div class="rec"><div><b>'+esc(r.machine||r.area)+'</b><span>'+esc(r.area)+' · '+esc(r.date)+' '+esc(r.time)+'</span></div><div style="display:flex;gap:8px"><button class="link" onclick="editDailyReport('+i+')">Editar</button><button class="link" onclick="removeDailyReport('+i+')" aria-label="Eliminar informe de '+esc(r.machine||r.area)+'">Eliminar</button></div></div>').join('');
   $('finishBatchBtn').disabled=reports.length===0;
+}
+function editDailyReport(i){
+  const report=DailyBatch.reports[i];if(!report)return;
+  DailyBatch.editIndex=i;DailyBatch.area=report.area;DailyBatch.code=report.code==='E1'||report.code==='E2'?'EXT':report.code;DailyBatch.machine=report.machine;
+  Runtime.area=report.area;Runtime.code=report.code;Runtime.machine=report.machine;Runtime.batchMode=true;
+  startCheck('daily');
+  $('d').value=report.draft.d||'';$('t').value=report.draft.t||'';
+  $('gType').dataset.v=report.draft.type||'';$('gStatus').dataset.v=report.draft.st||'';
+  ['gType','gStatus'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===$(id).dataset.v)));
+  $('obs').value=report.draft.obs||'';extLoad(report.draft.fields||{});
+  toast('Edita el informe y vuelve a agregarlo al lote.');
 }
 function removeDailyReport(i){
   if(!confirm('¿Eliminar el informe de '+(DailyBatch.reports[i]?.machine||'esta máquina')+'?'))return;
@@ -600,8 +611,12 @@ function startCheck(kind){
   setNow();$('ph').hidden=true;
   $('ext').innerHTML=dailyMeasurements?buildDaily():isExt()?buildExt():buildMq();
   $('ext').hidden=false;$('maintenanceFields').hidden=dailyMeasurements;
-  if(Runtime.batchMode){$('gType').dataset.v='PREVENTIVO';$('gStatus').dataset.v='ENTREGADO';}
-  else loadDraft();
+  if(Runtime.batchMode){
+    $('obs').value='';
+    $('gType').dataset.v='PREVENTIVO';$('gStatus').dataset.v='ENTREGADO';
+    ['gType','gStatus'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===$(id).dataset.v)));
+    extLoad({});
+  }else loadDraft();
   go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
@@ -623,7 +638,7 @@ function review(){
   }
   if(!$('ext').hidden){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||isNaN(x)){i.classList.add('bad');bad=bad||i}});
-    if(!isDaily())document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
+    if(!dailyMeasurements)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
