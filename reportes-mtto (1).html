@@ -661,6 +661,11 @@ function saveReminder(event){
   }else toast('Guardado localmente. Las notificaciones requieren la versión APK.');
   resetReminderForm();renderReminders();renderKanban();
 }
+window.openReminderFromNotification=function(id){
+  go('reminders');renderReminders();
+  const found=readToolList(TOOL_KEYS.reminders).find(x=>x.id===id);
+  if(found) editReminder(id);
+};
 function editReminder(id){
   const item=readToolList(TOOL_KEYS.reminders).find(x=>x.id===id);if(!item)return;
   $('remId').value=item.id;$('remTitle').value=item.title;$('remWhen').value=item.when;
