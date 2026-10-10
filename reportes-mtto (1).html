@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#16232e">
-<title>Reportes Mantenimiento</title>
+<meta name="theme-color" content="#172b3a">
+<title>Chiaplast | Mantenimiento</title>
 <style>
 :root{
   --bg:#edf1f4; --surface:#f9fafb; --ink:#16232e; --muted:#5f6d79; --line:#d9e0e5;
@@ -162,6 +162,48 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .drive{font-size:14px;line-height:1.5;color:var(--muted)}
 .toast{position:absolute;left:16px;right:16px;bottom:calc(var(--sb) + 90px);background:var(--steel);color:#fff;padding:14px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:9;text-align:center}
 .toast.show{opacity:1;transform:none}
+
+/* ===== Refinamiento visual industrial Chiaplast ===== */
+:root{color-scheme:light dark;--bg:#f1f4f6;--surface:#fff;--ink:#172b3a;--muted:#60717e;--line:#d8e0e6;--steel:#172b3a;--steel-2:#213b4c;--accent:#efb900;--accent-2:#e0a900;--accent-ink:#17212a;--chip:#eaf0f4;--r:12px;--shadow:0 8px 24px rgba(23,43,58,.07)}
+@media(prefers-color-scheme:dark){:root{--bg:#111a22;--surface:#192630;--ink:#eaf0f4;--muted:#a5b4bf;--line:#2b3b47;--steel:#101b24;--steel-2:#1a2b37;--chip:#24343f;--shadow:0 8px 24px rgba(0,0,0,.18)}}
+html{background:var(--bg);scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;letter-spacing:.005em}
+.app{background:var(--bg);box-shadow:none}
+@media(min-width:700px){.app{max-width:1440px;border:0;box-shadow:0 0 36px rgba(23,43,58,.08)}}
+.bar{background:var(--steel);box-shadow:0 2px 10px rgba(0,0,0,.08);padding-bottom:16px}
+.bar h1{font-size:19px;letter-spacing:-.35px}.bar small{font-size:12px;letter-spacing:.01em;opacity:.78}
+.iconbtn{border-radius:10px;box-shadow:none}
+.body{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.body::-webkit-scrollbar{width:7px}.body::-webkit-scrollbar-thumb{background:var(--line);border-radius:20px}
+.btn{min-height:50px;border-radius:10px;font-size:15px;letter-spacing:.005em;box-shadow:none}
+.btn-p{background:var(--accent);color:var(--accent-ink);box-shadow:0 3px 0 rgba(120,87,0,.12)}
+.btn-p:hover{background:#f6c629}.btn-s{box-shadow:none}
+.btn:focus-visible,.area:focus-visible,.iconbtn:focus-visible,.seg button:focus-visible{outline:3px solid #1769aa;outline-offset:3px}
+.area{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;box-shadow:var(--shadow);min-height:104px;padding:16px;transition:border-color .15s,box-shadow .15s,transform .15s}
+.area:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(23,43,58,.10)}
+.area b{font-size:23px;letter-spacing:-.4px}.area span{line-height:1.4}.area.wide{min-height:94px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px rgba(23,43,58,.035);padding:18px}
+.card h3{font-size:16px;letter-spacing:-.15px;margin-bottom:10px}
+.h2{font-size:11px;letter-spacing:.12em;margin:24px 2px 10px}
+.empty,.muted{color:var(--muted);line-height:1.55}
+.rec{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:none;align-items:center}
+.rec b{font-size:14px}.rec span{line-height:1.4}
+.f>label,.f>.lbl{font-size:14px;line-height:1.4}
+input[type=date],input[type=time],input:not([type=radio]),textarea,.zr input{border-radius:9px;border-color:var(--line);background:var(--bg);color:var(--ink)}
+input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0 3px rgba(239,185,0,.17)}
+.seg{gap:7px}.seg button{border-radius:9px;min-height:46px;font-size:13px}.seg button[aria-pressed=true]{background:var(--steel);border-color:var(--accent)}
+.steps div{height:4px}.dock{background:var(--surface);box-shadow:0 -3px 12px rgba(23,43,58,.035);gap:10px}
+.export-choice label{border-radius:9px;background:var(--bg);font-size:13px}
+.demo{background:#fff7d8;color:#463600;border:1px solid #ead18a;box-shadow:none;border-radius:9px}
+.toast{border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.login .sheet{background:var(--surface);color:var(--ink)}.login .sheet .link{color:var(--muted)}
+.login .stripe{height:6px;animation:none;background:var(--accent)}
+.login h1{font-size:clamp(27px,4vw,34px);max-width:620px}.mark{letter-spacing:2.5px}
+.splash .rule,.login .rule{box-shadow:none}.done .tick{width:64px;height:64px;font-size:34px;box-shadow:none}.done h2{font-size:22px}
+.tool{padding:8px 0 16px}.sw{border:0}button:disabled{cursor:wait;opacity:.62}
+@media(max-width:420px){.body{padding:14px 12px 20px}.bar{padding-left:12px;padding-right:12px}.dock{padding-left:12px;padding-right:12px}.card{padding:14px}.two{gap:8px}.area{padding:13px;min-height:92px}.export-choice{gap:6px}.export-choice label{font-size:12px;padding:7px 4px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.area,.btn{transition:none}}
+
 </style>
 </head>
 <body>
@@ -410,6 +452,7 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
         <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
       </div>
       <p class="muted">Los reportes se generan localmente y no se conectan a servicios externos.</p>
+    </div>
     <div class="card" id="remindersCard" style="margin-top:14px">
       <h2 style="margin-top:0">Recordatorios de mantenimiento</h2>
       <p class="muted">Programa pendientes por fecha y hora. Los avisos funcionan mientras Chiaplast está abierta; el navegador puede limitar las notificaciones en segundo plano.</p>
@@ -542,9 +585,19 @@ async function finishDailyBatch(skipConfirm=false){
   }catch(e){toast(e.message||'No se pudieron generar los reportes.')}
   finally{b.disabled=false;b.textContent='Finalizar y guardar reportes';renderDailyBatch()}
 }
+let storageWarningShown=false;
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
-  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  set(k,v){
+    try{localStorage.setItem(k,v);return true}
+    catch(e){
+      if(!storageWarningShown){
+        storageWarningShown=true;
+        setTimeout(()=>toast('El dispositivo no permitió guardar los datos. Exporta el reporte antes de salir.'),0);
+      }
+      return false;
+    }
+  },
   del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
 function isDemo(){return Runtime.mode==='demo'}
@@ -643,7 +696,7 @@ function signInDemo(){setMode('demo');Runtime.area='';Runtime.code='';Runtime.ro
 function logout(){
   AppState.session=false;AppState.user='';setMode('real');store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
   try{const p=GA();p&&p.signOut()}catch(e){}
-  history.replaceState({s:'menu'},'');show('menu');
+  history.replaceState({s:'login'},'');show('login');
 }
 function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');store.del('mtto_draft_daily_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
 
@@ -689,7 +742,7 @@ function review(){
     if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
   }
   if(!$('ext').hidden){
-    document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||isNaN(x)){i.classList.add('bad');bad=bad||i}});
+    document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||!Number.isFinite(Number(x))){i.classList.add('bad');bad=bad||i}});
     if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
