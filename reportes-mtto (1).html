@@ -693,7 +693,7 @@ function show(id){
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function openReminders(){go('tools');const card=$('remindersCard');if(card)card.scrollIntoView({block:'start',behavior:'smooth'})}
-function openNotes(area,machine){if(area)$('noteArea').value=area;if(machine)$('noteMachine').value=machine;go('notes')}
+function openNotes(area,machine){$('noteArea').value=area||'General';$('noteMachine').value=machine||'';go('notes')}
 function openNoteForCurrentContext(){openNotes(Runtime.area||'General',Runtime.machine||'')}
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
