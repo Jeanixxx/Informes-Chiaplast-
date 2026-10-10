@@ -80,8 +80,8 @@ button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 .sheet .link{display:block;margin:12px auto 0}
 .sheet small{display:block;color:var(--err);min-height:18px;margin-top:8px;font-size:13px;line-height:1.4;text-align:center}
 /* Menú */
-.demo{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff7d5,#fce7a3);color:#4a3a00;border:1px solid rgba(201,140,0,.2);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;margin-bottom:14px;box-shadow:0 8px 20px rgba(242,183,5,.12)}
-.demo i{width:10px;height:10px;border-radius:50%;background:#d49a00;flex:0 0 auto;box-shadow:0 0 0 4px rgba(212,154,0,.12)}
+
+
 .h2{font-size:13px;font-weight:700;color:var(--muted);margin:20px 4px 10px;letter-spacing:.08em;text-transform:uppercase}
 .areas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .area{background:linear-gradient(180deg,#ffffff,#f4f7f9);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:var(--r);min-height:92px;padding:14px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow);transition:transform .12s ease,box-shadow .2s ease}
@@ -201,7 +201,7 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 .seg{gap:7px}.seg button{border-radius:9px;min-height:46px;font-size:13px}.seg button[aria-pressed=true]{background:var(--steel);border-color:var(--accent)}
 .steps div{height:4px}.dock{background:var(--surface);box-shadow:0 -3px 12px rgba(23,43,58,.035);gap:10px}
 .export-choice label{border-radius:9px;background:var(--bg);font-size:13px}
-.demo{background:#fff7d8;color:#463600;border:1px solid #ead18a;box-shadow:none;border-radius:9px}
+
 .toast{border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .login .sheet{background:var(--surface);color:var(--ink)}.login .sheet .link{color:var(--muted)}
 .login .stripe{height:6px;animation:none;background:var(--accent)}
@@ -235,15 +235,14 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 /* Capa de coherencia visual y uso en planta */
 body{background:var(--bg);color:var(--ink)}
 .bar{background:linear-gradient(135deg,var(--steel) 0%,var(--steel-2) 100%);box-shadow:inset 0 -1px 0 rgba(255,255,255,.07)}
-.menu-intro{margin:4px 0 16px;max-width:760px}
-.workflow-primary{min-height:112px;border-radius:12px;box-shadow:0 4px 14px rgba(17,27,38,.07);justify-content:center;gap:8px}
-.workflow-primary b{font-size:18px;letter-spacing:-.2px}
-.workflow-primary span{max-width:760px;font-size:14px;line-height:1.45;color:var(--muted)}
+#menu .bar h1{font-size:22px;letter-spacing:-.35px}
+#menu .h2{margin:22px 0 10px;font-size:17px;letter-spacing:-.2px;text-transform:none}
+.workflow-primary{min-height:94px;border-radius:12px;box-shadow:0 4px 14px rgba(17,27,38,.07);justify-content:center;gap:8px}
+.workflow-primary b{font-size:21px;letter-spacing:-.3px}
 .menu-tools{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 22px}
-.menu-tool{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:11px;min-height:82px;padding:13px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:none;text-align:left}
-.menu-tool .mi{grid-row:1 / span 2;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;background:var(--steel);color:var(--accent);font:700 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
-.menu-tool>span:not(.mi){font-size:14px;line-height:1.25;font-weight:750}
-.menu-tool small{grid-column:2;font-size:11px;line-height:1.35;color:var(--muted);font-weight:500}
+.menu-tool{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:1fr;align-items:center;column-gap:11px;min-height:72px;padding:13px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:none;text-align:left}
+.menu-tool .mi{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;background:var(--steel);color:var(--accent);font:700 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
+.menu-tool>span:not(.mi){font-size:16px;line-height:1.25;font-weight:750}
 .context-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
 .context-actions .btn{min-height:48px;padding:8px 10px;font-size:13px;box-shadow:none}
 #remindersCard .f:last-of-type{margin-bottom:12px}
@@ -265,7 +264,7 @@ body{background:var(--bg);color:var(--ink)}
   .menu-tools{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .menu-tool{min-height:78px;padding:10px;column-gap:8px}
   .menu-tool:last-child{grid-column:1/-1}
-  .workflow-primary{min-height:104px}
+  .workflow-primary{min-height:94px}
   .context-actions{grid-template-columns:1fr}
   .kanban-columns{grid-auto-flow:column;grid-auto-columns:minmax(82vw,1fr);grid-template-columns:none;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:2px 2px 12px}
   .kanban-column{scroll-snap-align:start}
@@ -293,7 +292,7 @@ body{background:var(--bg);color:var(--ink)}
   <div class="stripe"></div>
   <div class="sheet">
     <button class="btn btn-p" id="loginBtn" onclick="signIn()">Continuar</button>
-    <button class="link" onclick="signInDemo()">Entrar en modo demo</button>
+    
     <small id="loginErr" role="alert"></small>
   </div>
 </section>
@@ -301,24 +300,22 @@ body{background:var(--bg);color:var(--ink)}
 <!-- Menú -->
 <section id="menu" class="screen">
   <header class="bar">
-    <h1>Centro de mantenimiento<small>Reportes y seguimiento de planta</small></h1>
+    <h1>Centro de mantenimiento</h1>
     <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
   </header>
   <div class="body">
-    <div id="demoBanner" class="demo" hidden><i></i>Modo demo: los datos de prueba se mantienen separados</div>
-    <p class="empty menu-intro">Registra inspecciones, documenta hallazgos y da seguimiento a cada máquina.</p>
-    <div class="h2">Reportes operativos</div>
+    <div class="h2">Reportes</div>
     <button class="area wide workflow-primary" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
-      <b>Chequeo diario</b><span>Captura temperatura y amperaje; reúne varios equipos en un solo reporte.</span>
+      <b>Chequeo diario</b>
     </button>
     <button class="area wide workflow-primary" style="width:100%;margin-bottom:18px;border-left-color:var(--accent)" onclick="startWorkflow('preventive')">
-      <b>Mantenimiento preventivo</b><span>Selecciona área y máquina para completar la inspección.</span>
+      <b>Mantenimiento preventivo</b>
     </button>
-    <div class="h2">Seguimiento del trabajo</div>
+    <div class="h2">Seguimiento</div>
     <div class="menu-tools" aria-label="Seguimiento de mantenimiento">
-      <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span><small id="menuReminderCount" aria-live="polite">Avisos por máquina y fecha</small></button>
-      <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite">Pendientes y trabajos en curso</small></button>
-      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span><small>Hallazgos, fotos y PDF</small></button>
+      <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span></button>
+      <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span></button>
+      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span></button>
     </div>
     <div class="h2">Últimos reportes</div>
     <div id="recent"></div>
@@ -448,11 +445,6 @@ body{background:var(--bg);color:var(--ink)}
     </div>
 
     <div id="ext" hidden></div>
-    <div class="context-actions" aria-label="Acciones de seguimiento para esta máquina">
-      <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
-      <button class="btn btn-s" type="button" onclick="openReminderForCurrentContext()">＋ Programar recordatorio</button>
-      <button class="btn btn-s" type="button" onclick="openNoteForCurrentContext()">＋ Agregar nota técnica</button>
-    </div>
     <div class="card">
       <!-- ZONA RESERVADA: aquí irán los campos reales de cada área (E1, E2, CAM, DIM, BSL).
            Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
@@ -477,6 +469,11 @@ body{background:var(--bg);color:var(--ink)}
       </div>
       <div class="f"><label for="obs">Observaciones</label>
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
+    </div>
+    <div class="context-actions" aria-label="Acciones de seguimiento para esta máquina">
+      <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
+      <button class="btn btn-s" type="button" onclick="openReminderForCurrentContext()">＋ Programar recordatorio</button>
+      <button class="btn btn-s" type="button" onclick="openNoteForCurrentContext()">＋ Agregar nota técnica</button>
     </div>
   </div>
   <div class="dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
@@ -521,7 +518,7 @@ body{background:var(--bg);color:var(--ink)}
 <!-- Tablero Kanban -->
 <section id="reminders" class="screen">
   <header class="bar">
-    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <button class="iconbtn" onclick="closeReminderScreen()" aria-label="Volver">‹</button>
     <h1>Recordatorios<small>Seguimiento por máquina y fecha</small></h1>
   </header>
   <div class="body">
@@ -559,7 +556,7 @@ body{background:var(--bg);color:var(--ink)}
       <div class="kanban-column"><h3>En proceso</h3><div id="kanbanDoing"></div></div>
       <div class="kanban-column"><h3>Terminado</h3><div id="kanbanDone"></div></div>
     </div>
-    <p class="muted" style="font-size:12px">Las tareas se guardan en este dispositivo y se mantienen separadas del modo demo.</p>
+    <p class="muted" style="font-size:12px">Las tareas se guardan en este dispositivo.</p>
   </div>
 </section>
 
@@ -587,13 +584,7 @@ body{background:var(--bg);color:var(--ink)}
     <h1>Configuración<small>Preferencias de uso local</small></h1>
   </header>
   <div class="body">
-    <div class="card">
-      <div class="tool" style="margin-bottom:14px">
-        <div><b>Modo demo</b><span>Prueba la generación sin mezclar los datos reales.</span></div>
-        <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
-      </div>
-      <p class="muted">Los reportes, tareas y recordatorios se guardan localmente en este dispositivo; no se conectan a servicios externos.</p>
-    </div>
+    <div class="card"><p class="muted">Los reportes, tareas y recordatorios se guardan localmente en este dispositivo.</p></div>
     <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
   </div>
 </section>
@@ -604,7 +595,7 @@ body{background:var(--bg);color:var(--ink)}
 <script>
 const $=id=>document.getElementById(id);
 const AppState={session:false,user:'',settings:{},history:[]};
-const Runtime={mode:'real',area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false};
+const Runtime={area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false};
 const DailyBatch={active:false,area:'',code:'',machine:'',reports:[],editIndex:-1};
 const dailyBatchKey=()=>stateKey('mtto_daily_batch');
 function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
@@ -704,10 +695,10 @@ async function finishDailyBatch(skipConfirm=false){
     const baseName='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','');
     const results=await generateExports(batchExcelRows(),baseName,selectedExport('batchExportChoice'));
     $('rFile').textContent=results.map(r=>r.name).join(' · ');
-    $('rTitle').textContent=isDemo()?'Reportes diarios de prueba generados':'Reportes diarios generados';
+    $('rTitle').textContent='Reportes diarios generados';
     const shared=results.some(r=>r.mode==='android-share');
-    $('rMsg').textContent='El lote contiene '+DailyBatch.reports.length+' informes. '+(isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.');
-    addRecent({n:results.map(r=>r.name).join(', '),a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily',demo:isDemo()});
+    $('rMsg').textContent='El lote contiene '+DailyBatch.reports.length+' informes. '+(shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.');
+    addRecent({n:results.map(r=>r.name).join(', '),a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily'});
     DailyBatch.reports=[];DailyBatch.active=false;saveDailyBatch();store.del(dailyBatchKey());Runtime.batchMode=false;
     history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudieron generar los reportes.')}
@@ -728,10 +719,8 @@ const store={
   },
   del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
-function isDemo(){return Runtime.mode==='demo'}
-function stateKey(base){return isDemo()?base+'_demo':base}
+function stateKey(base){return base}
 function currentUser(){return AppState.user||store.get('mtto_user','')}
-function setMode(mode){Runtime.mode=mode;$('demoBanner').hidden=!isDemo();$('demoSw').setAttribute('aria-checked',isDemo())}
 function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
 AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
 
@@ -740,9 +729,7 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  $('demoBanner').hidden=!isDemo();
-  $('demoSw').setAttribute('aria-checked',isDemo());
-  if(id==='menu'){renderRecent();renderHomeFollowup()}
+  if(id==='menu')renderRecent()
   if(id==='dailyBatch') renderDailyBatch();
   if(id==='kanban') renderKanban();
   if(id==='notes') renderNotes();
@@ -754,10 +741,11 @@ function show(id){
     $('reminderModeHint').textContent=window.ChiaplastNative?'Las alarmas se programan en Android. Vincula cada aviso con un área o máquina.':'Los avisos del navegador dependen de que Chiaplast permanezca abierta; en la APK se programan en Android.';
     renderReminders();syncNativeReminders();
   }
-  if(id==='tools') $('demoSw').setAttribute('aria-checked',isDemo());
 }
 function go(id){history.pushState({s:id},'');show(id)}
-function openReminders(){go('reminders')}
+let reminderReturnScreen='menu',reminderReturnAfterSave=false;
+function openReminders(){reminderReturnScreen='menu';reminderReturnAfterSave=false;go('reminders')}
+function closeReminderScreen(){const destination=reminderReturnScreen||'menu';reminderReturnAfterSave=false;history.replaceState({s:destination},'');show(destination)}
 function openNotes(area,machine){$('noteArea').value=area||'General';$('noteMachine').value=machine||'';go('notes')}
 function openNoteForCurrentContext(){openNotes(Runtime.area||'General',Runtime.machine||'')}
 function openKanbanForCurrentContext(){
@@ -769,11 +757,13 @@ function openKanbanForCurrentContext(){
 }
 function reminderDefault(){const d=new Date(Date.now()+60*60*1000),p=n=>String(n).padStart(2,'0');return{date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes())}}
 function openReminderForCurrentContext(){
+  reminderReturnScreen='form';reminderReturnAfterSave=true;
   const when=reminderDefault(),machine=[Runtime.area,Runtime.machine&&Runtime.machine!==Runtime.area?Runtime.machine:''].filter(Boolean).join(' · ');
   go('reminders');$('reminderId').value='';$('reminderTaskId').value='';$('reminderText').value='Seguimiento · '+(Runtime.machine||Runtime.area||'mantenimiento');
   $('reminderMachine').value=machine;$('reminderDate').value=when.date;$('reminderTime').value=when.time;$('reminderText').focus();
 }
 function openReminderForKanbanTask(id){
+  reminderReturnScreen='kanban';reminderReturnAfterSave=true;
   const task=loadKanban().find(t=>t.id===id);if(!task)return;
   const when=reminderDefault(),existing=loadReminders().find(r=>r.taskId===id||r.id===task.reminderId),future=existing&&Date.parse(existing.due)>Date.now();
   const dueDate=task.due&&task.due>=when.date?task.due:when.date;
@@ -783,7 +773,7 @@ function openReminderForKanbanTask(id){
 }
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
-  if(!isDemo()&&!isIn()){root('login');return}
+  if(!isIn()){root('login');return}
   const s=e.state&&e.state.s;
   if(!s||s==='splash'||s==='login'){ if(isIn()) show('menu'); return; }
   if(s==='done'){ show('menu'); return; }
@@ -846,7 +836,7 @@ function buildXlsx(rows){
 async function signIn(){
   const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Abriendo…';$('loginErr').textContent='';
   try{
-    setMode('real');
+    
     AppState.session=true;AppState.user='Usuario local';
     store.set('mtto_user',AppState.user);store.set('mtto_session','true');
     Runtime.area='';Runtime.code='';Runtime.rows=[];
@@ -854,13 +844,11 @@ async function signIn(){
   }catch(e){$('loginErr').textContent=e.message||'No se pudo abrir la app.'}
   finally{b.disabled=false;b.textContent='Continuar'}
 }
-function signInDemo(){setMode('demo');Runtime.area='';Runtime.code='';Runtime.rows=[];root('menu')}
 function logout(){
-  AppState.session=false;AppState.user='';setMode('real');store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
+  AppState.session=false;AppState.user='';store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
   try{const p=GA();p&&p.signOut()}catch(e){}
   history.replaceState({s:'login'},'');show('login');
 }
-function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');store.del('mtto_draft_daily_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
 
 /* Flujo */
 function pick(name,code){
@@ -935,7 +923,7 @@ function blobBase64(blob){
 }
 async function exportReport(blob,name,mime){
   mime=mime||XLSX_MIME;
-  if(!isDemo()&&window.ChiaplastNative&&typeof window.ChiaplastNative.shareReport==='function'){
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.shareReport==='function'){
     const result=window.ChiaplastNative.shareReport(name,mime,await blobBase64(blob));
     if(result!=='ok')throw new Error('Android no pudo preparar el reporte para compartir.');
     return 'android-share';
@@ -951,7 +939,7 @@ async function exportReport(blob,name,mime){
     await share.share({title:name,text:'Reporte de mantenimiento Chiaplast listo para guardar o compartir.',url:file.uri,dialogTitle:'Guardar o compartir reporte'});
     return 'android-share';
   }
-  if(!isDemo()&&typeof File==='function'&&navigator.share&&navigator.canShare){
+  if(typeof File==='function'&&navigator.share&&navigator.canShare){
     const report=new File([blob],name,{type:mime});
     if(navigator.canShare({files:[report]})){
       try{
@@ -1026,17 +1014,16 @@ async function generateExports(rows,baseName,choice){
 async function send(){
   const b=$('sendBtn');b.disabled=true;const baseName=fileName();
   try{
-    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,500));}
     b.innerHTML='<span class="spin"></span>Generando…';
     const exportRows=Runtime.rows[0]&&Runtime.rows[0][0]==='Campo'
       ?[['REPORTE DE MANTENIMIENTO CHIAPLAST',''],['Área',Runtime.area],['Máquina',Runtime.machine||Runtime.area],['Tipo de reporte',isDaily()?'Chequeo diario':'Mantenimiento preventivo'],['Fecha',fmtD($('d').value)],['Hora',$('t').value],['',''],['Campo / componente','Resultado / valor'],...Runtime.rows.slice(1)]
       :Runtime.rows;
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'));
     $('rFile').textContent=results.map(r=>r.name).join(' · ');
-    $('rTitle').textContent=isDemo()?'Reporte de prueba generado':'Reporte generado';
+    $('rTitle').textContent='Reporte generado';
     const shared=results.some(r=>r.mode==='android-share');
-    $('rMsg').textContent=isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.';
-    addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
+    $('rMsg').textContent=shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.';
+    addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar archivo'}
@@ -1279,13 +1266,13 @@ function moveKanbanTask(id,status){
     if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function'&&linked.status==='done')window.ChiaplastNative.cancelReminder(linked.id);
     else if(linked.status!=='done'&&Date.parse(linked.due)>Date.now())scheduleNativeReminder(linked);
   }
-  renderKanban();renderReminders();renderHomeFollowup();
+  renderKanban();renderReminders();
 }
 function deleteKanbanTask(id){
   const tasks=loadKanban(),task=tasks.find(x=>x.id===id);saveKanban(tasks.filter(t=>t.id!==id));
   const reminders=loadReminders(),linked=reminders.find(r=>r.taskId===id||r.id===task?.reminderId);
   if(linked){delete linked.taskId;saveReminders(reminders)}
-  renderKanban();renderReminders();renderHomeFollowup();toast('Tarea eliminada; sus avisos se conservaron.');
+  renderKanban();renderReminders();toast('Tarea eliminada; sus avisos se conservaron.');
 }
 function renderKanban(){
   const tasks=loadKanban(),cols={todo:$('kanbanTodo'),doing:$('kanbanDoing'),done:$('kanbanDone')};if(!cols.todo)return;
@@ -1295,7 +1282,7 @@ function renderKanban(){
   });
 }
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
-const NOTES_DB=()=> 'chiaplast-notes-v1'+(isDemo()?'-demo':''),NOTES_STORE='notes';
+const NOTES_DB=()=> 'chiaplast-notes-v1',NOTES_STORE='notes';
 let notePhotosDraft=[];
 function openNotesDB(){
   return new Promise((resolve,reject)=>{
@@ -1431,6 +1418,7 @@ function syncNativeReminders(){
 }
 window.syncNativeReminders=syncNativeReminders;
 window.openReminderFromNotification=function(id){
+  reminderReturnScreen='menu';reminderReturnAfterSave=false;
   const items=loadReminders(),item=items.find(r=>r.id===id);
   if(item){item.notified=true;saveReminders(items)}
   root('reminders');renderReminders();
@@ -1453,7 +1441,9 @@ function addReminder(event){
   let message='Recordatorio guardado en este dispositivo. En navegador, el aviso requiere mantener Chiaplast abierta.';
   if(window.ChiaplastNative){const result=scheduleNativeReminder(item);if(result==='permission_required')message='Guardado. Autoriza las alarmas exactas en Ajustes para recibir el aviso puntual.';else if(result==='error')message='Guardado localmente; Android no pudo programar la notificación.';else message='Recordatorio guardado y programado en Android.'}
   $('reminderId').value='';$('reminderTaskId').value='';$('reminderText').value='';$('reminderMachine').value='';
-  renderReminders();renderKanban();renderHomeFollowup();toast(message);
+  renderReminders();renderKanban();
+  if(reminderReturnAfterSave)closeReminderScreen();
+  toast(message);
 }
 function editReminder(id){
   const item=loadReminders().find(r=>r.id===id);if(!item)return;
@@ -1471,13 +1461,13 @@ function toggleReminderStatus(id){
   if(task){task.status=item.status==='done'?'done':'todo';saveKanban(tasks)}
   if(item.status==='done'&&window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
   else if(item.status!=='done'&&Date.parse(item.due)>Date.now())scheduleNativeReminder(item);
-  renderReminders();renderKanban();renderHomeFollowup();
+  renderReminders();renderKanban();
 }
 function deleteReminder(id){
   const items=loadReminders(),item=items.find(r=>r.id===id);saveReminders(items.filter(r=>r.id!==id));
   if(item&&item.taskId){const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId);if(task)delete task.reminderId;saveKanban(tasks)}
   if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
-  renderReminders();renderKanban();renderHomeFollowup();toast('Recordatorio eliminado.');
+  renderReminders();renderKanban();toast('Recordatorio eliminado.');
 }
 async function enableReminderNotifications(){
   if(!('Notification' in window)){toast('Este entorno no permite notificaciones del navegador. Los avisos aparecerán dentro de Chiaplast mientras esté abierta.');return}
@@ -1494,7 +1484,7 @@ function checkReminders(){
       if('Notification' in window&&Notification.permission==='granted'){try{new Notification('Chiaplast · Recordatorio',{body:msg,tag:'chiaplast-'+item.id})}catch(e){toast(msg)}}else toast(msg);
     }
   });
-  if(changed){saveReminders(items);renderReminders();renderHomeFollowup()}
+  if(changed){saveReminders(items);renderReminders()}
 }
 setInterval(checkReminders,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkReminders()});
@@ -1502,19 +1492,14 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkRemin
 /* Recientes */
 function addRecent(r){const key=stateKey('mtto_hist');let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
 function getRecent(){try{return JSON.parse(store.get(stateKey('mtto_hist'),'[]'))}catch(e){return[]}}
-function renderHomeFollowup(){
-  const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount');
-  if(reminderBox){const count=loadReminders().filter(r=>r.status!=='done').length;reminderBox.textContent=count?count+' aviso'+(count===1?' pendiente':'s pendientes'):'Sin avisos pendientes'}
-  if(taskBox){const count=loadKanban().filter(t=>(t.status||'todo')!=='done').length;taskBox.textContent=count?count+' tarea'+(count===1?' abierta':'s abiertas'):'Sin tareas abiertas'}
-}
 function renderRecent(){
   const l=getRecent();
-  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':r.demo?'Demo':'Preventivo')+'</span></div>').join('')
-    :'<div class="empty">Tus reportes recientes aparecerán aquí.</div>';
+  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></div>').join('')
+    :'<div class="empty">Sin reportes recientes.</div>';
 }
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();
-setMode('real');
+
 setTimeout(()=>{
   syncAppState();
   root(AppState.session?'menu':'login');
