@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#16232e">
-<title>Reportes Mantenimiento</title>
+<meta name="theme-color" content="#172b3a">
+<title>Chiaplast | Mantenimiento</title>
 <style>
 :root{
   --bg:#edf1f4; --surface:#f9fafb; --ink:#16232e; --muted:#5f6d79; --line:#d9e0e5;
@@ -585,9 +585,19 @@ async function finishDailyBatch(skipConfirm=false){
   }catch(e){toast(e.message||'No se pudieron generar los reportes.')}
   finally{b.disabled=false;b.textContent='Finalizar y guardar reportes';renderDailyBatch()}
 }
+let storageWarningShown=false;
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
-  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  set(k,v){
+    try{localStorage.setItem(k,v);return true}
+    catch(e){
+      if(!storageWarningShown){
+        storageWarningShown=true;
+        setTimeout(()=>toast('El dispositivo no permitió guardar los datos. Exporta el reporte antes de salir.'),0);
+      }
+      return false;
+    }
+  },
   del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
 function isDemo(){return Runtime.mode==='demo'}
