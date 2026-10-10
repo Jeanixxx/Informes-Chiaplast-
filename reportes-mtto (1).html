@@ -482,6 +482,7 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
       <div class="f"><label for="kanbanDetails">Detalle (opcional)</label><textarea id="kanbanDetails" rows="2" maxlength="500" placeholder="Materiales, causa, responsable…"></textarea></div>
       <button class="btn btn-p" style="width:100%;flex:none" onclick="addKanbanTask()">Agregar al tablero</button>
     </div>
+    <button class="btn btn-s" style="width:100%;margin:0 0 12px;flex:none" onclick="openNotes(&quot;Kanban&quot;,&quot;&quot;)">＋ Añadir nota con fotos</button>
     <div class="kanban-columns">
       <div class="kanban-column"><h3>Por hacer</h3><div id="kanbanTodo"></div></div>
       <div class="kanban-column"><h3>En proceso</h3><div id="kanbanDoing"></div></div>
@@ -522,6 +523,7 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
       </div>
       <p class="muted">Los reportes se generan localmente y no se conectan a servicios externos.</p>
     </div>
+    <button class="btn btn-s" style="width:100%;margin-top:14px;flex:none" onclick="openNotes(&quot;Recordatorios&quot;,&quot;&quot;)">＋ Nota con fotos para un recordatorio</button>
     <div class="card" id="remindersCard" style="margin-top:14px">
       <h2 style="margin-top:0">Recordatorios de mantenimiento</h2>
       <p class="muted">Programa pendientes por fecha y hora. Los avisos funcionan mientras Chiaplast está abierta; el navegador puede limitar las notificaciones en segundo plano.</p>
