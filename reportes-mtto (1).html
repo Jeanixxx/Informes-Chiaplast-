@@ -1184,12 +1184,12 @@ function renderKanban(){
 }
 
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
-const NOTES_DB='chiaplast-notes-v1',NOTES_STORE='notes';
+const NOTES_DB=()=> 'chiaplast-notes-v1'+(isDemo()?'-demo':''),NOTES_STORE='notes';
 let notePhotosDraft=[];
 function openNotesDB(){
   return new Promise((resolve,reject)=>{
     if(!('indexedDB' in window)){reject(new Error('Este dispositivo no permite el almacenamiento local de notas.'));return}
-    const req=indexedDB.open(NOTES_DB,1);
+    const req=indexedDB.open(NOTES_DB(),1);
     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(NOTES_STORE))db.createObjectStore(NOTES_STORE,{keyPath:'id'})};
     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacenamiento local.'));
   });
@@ -1249,7 +1249,7 @@ async function renderNotes(){
   }catch(e){list.innerHTML='<div class="empty">No se pudo acceder al almacenamiento local de notas. Comprueba que el navegador permita almacenamiento para esta aplicación.</div>'}
 }
 async function deleteNote(id){if(!confirm('¿Eliminar esta nota y sus fotografías? Esta acción no se puede deshacer.'))return;try{await notesDelete(id);await renderNotes();toast('Nota eliminada.')}catch(e){toast('No se pudo eliminar la nota.')}}
-async function printNote(id){
+async async function printNote(id){
   try{
     const n=(await notesAll()).find(x=>x.id===id);if(!n){toast('La nota ya no está disponible.');return}
     const w=window.open('','_blank');if(!w){toast('El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.');return}
@@ -1314,7 +1314,9 @@ setMode('real');
 setTimeout(()=>{
   syncAppState();
   root(AppState.session?'menu':'login');
+  purgeExpiredNotes().catch(()=>{});
 },1500);
+setInterval(()=>{if(!document.hidden)purgeExpiredNotes().catch(()=>{})},60*60*1000);
 </script>
 </body>
 </html>
