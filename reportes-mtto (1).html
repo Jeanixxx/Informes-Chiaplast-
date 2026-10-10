@@ -163,6 +163,13 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .toast{position:absolute;left:16px;right:16px;bottom:calc(var(--sb) + 90px);background:var(--steel);color:#fff;padding:14px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:9;text-align:center}
 .toast.show{opacity:1;transform:none}
 
+/* Engrasado preventivo de 23 chumaceras para máquinas BM y BD */
+.grease-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
+.grease-point{min-height:44px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font-weight:800;font-size:14px;transition:background .15s,border-color .15s,color .15s}
+.grease-point[aria-pressed="true"]{background:#13804a;border-color:#0d6539;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.grease-point:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.grease-help{color:var(--muted);font-size:13px;line-height:1.45;margin:4px 0 0}
+@media(max-width:420px){.grease-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.grease-point{min-height:42px;font-size:13px}}
 /* ===== Refinamiento visual industrial Chiaplast ===== */
 :root{color-scheme:light dark;--bg:#f1f4f6;--surface:#fff;--ink:#172b3a;--muted:#60717e;--line:#d8e0e6;--steel:#172b3a;--steel-2:#213b4c;--accent:#efb900;--accent-2:#e0a900;--accent-ink:#17212a;--chip:#eaf0f4;--r:12px;--shadow:0 8px 24px rgba(23,43,58,.07)}
 @media(prefers-color-scheme:dark){:root{--bg:#111a22;--surface:#192630;--ink:#eaf0f4;--muted:#a5b4bf;--line:#2b3b47;--steel:#101b24;--steel-2:#1a2b37;--chip:#24343f;--shadow:0 8px 24px rgba(0,0,0,.18)}}
@@ -725,7 +732,7 @@ function startCheck(kind){
   go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
-const draftStorageKey=()=>stateKey(isDaily()?'mtto_draft_daily':'mtto_draft');
+const draftStorageKey=()=>stateKey((isDaily()?'mtto_draft_daily':'mtto_draft')+((Runtime.code==='DIM'&&/^(BM|BD)-/i.test(Runtime.machine))?'_'+Runtime.machine.replace(/[^a-z0-9_-]/gi,'_'):''));
 function choose(g,btn){
   const box=$(g);
   box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
@@ -935,10 +942,12 @@ function dailyRows(){
 }
 function ei(i){i.classList.remove('bad');saveDraft()}
 function allOk(pre){document.querySelectorAll('#ext .seg[id^="'+pre+'"]').forEach(g=>choose(g.id,g.children[0]))}
-function extState(){const o={};document.querySelectorAll('#ext input').forEach(i=>o[i.id]=i.value);document.querySelectorAll('#ext .seg').forEach(g=>o[g.id]=g.dataset.v);return o}
+function extState(){const o={};document.querySelectorAll('#ext input').forEach(i=>o[i.id]=i.value);document.querySelectorAll('#ext .seg').forEach(g=>o[g.id]=g.dataset.v);document.querySelectorAll('#ext [data-grease]').forEach(b=>o['grease'+b.dataset.grease]=b.getAttribute('aria-pressed')==='true');return o}
 function extLoad(o){
   document.querySelectorAll('#ext input').forEach(i=>{i.value=o[i.id]||'';i.classList.remove('bad')});
   document.querySelectorAll('#ext .seg').forEach(g=>{const v=o[g.id]||'';g.dataset.v=v;g.classList.remove('bad');g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
+  document.querySelectorAll('#ext [data-grease]').forEach(b=>{const done=o['grease'+b.dataset.grease]===true||o['grease'+b.dataset.grease]==='true';b.setAttribute('aria-pressed',String(done))});
+  const points=document.querySelectorAll('#ext [data-grease]'),progress=$('greaseProgress');if(progress)progress.textContent=Array.from(points).filter(b=>b.getAttribute('aria-pressed')==='true').length+' de 23 chumaceras engrasadas';
 }
 function extRows(){
   const v=id=>$(id).value.trim().replace(',','.');
@@ -1020,7 +1029,13 @@ function buildMq(){
     return h;
   }
   if(Runtime.code==='DIM'){
-    let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
+    let k=0,h='';
+    if(/^(BM|BD)-/i.test(Runtime.machine)){
+      h+='<div class="card"><h3>Engrasado de chumaceras</h3><p class="grease-help">Marca cada punto al terminar de engrasarlo. Verde = engrasado. El avance se guarda en el borrador de esta máquina.</p><div class="grease-grid" role="group" aria-label="23 puntos de engrase">';
+      for(let p=1;p<=23;p++)h+='<button type="button" class="grease-point" data-grease="'+p+'" aria-pressed="false" aria-label="Chumacera '+p+'" onclick="toggleGrease(this)">'+p+'</button>';
+      h+='</div><p class="grease-help" id="greaseProgress">0 de 23 chumaceras engrasadas</p></div>';
+    }
+    h+='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
     DIM_CHECK.forEach((g,n)=>{
       h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\'m'+n+'-\')">Marcar zona en OK</button>';
       g[1].forEach(t=>{
@@ -1044,6 +1059,13 @@ function buildMq(){
   });
   return h;
 }
+function toggleGrease(button){
+  const done=button.getAttribute('aria-pressed')!=='true';
+  button.setAttribute('aria-pressed',String(done));
+  const points=document.querySelectorAll('#ext [data-grease]'),progress=$('greaseProgress');
+  if(progress)progress.textContent=Array.from(points).filter(b=>b.getAttribute('aria-pressed')==='true').length+' de 23 chumaceras engrasadas';
+  saveDraft();buzz(8);
+}
 function mqRows(){
   if(Runtime.code==='CAM'){
     const r=[];let k=0;
@@ -1055,6 +1077,13 @@ function mqRows(){
   }
   if(Runtime.code==='DIM'){
     const r=[];let k=0;
+    if(/^(BM|BD)-/i.test(Runtime.machine)){
+      r.push(['ENGRASADO DE CHUMACERAS','',1]);
+      for(let p=1;p<=23;p++){
+        const button=document.querySelector('#ext [data-grease="'+p+'"]');
+        r.push(['Chumacera '+p,button&&button.getAttribute('aria-pressed')==='true'?'ENGRASADA':'PENDIENTE']);
+      }
+    }
     DIM_CHECK.forEach((g,n)=>{
       r.push([g[0],'',1]);
       g[1].forEach(t=>r.push([t,$('m'+n+'-'+k++).dataset.v]));
