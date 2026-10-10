@@ -231,6 +231,46 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 .photo-preview button{position:absolute;right:3px;top:3px;background:#172b3a;color:white;border-radius:50%;width:25px;height:25px}
 @media(max-width:420px){.menu-tools{gap:6px}.menu-tool{padding:11px 8px;min-height:105px}.kanban-columns{gap:5px}.kanban-column{padding:5px}.kanban-column h3{font-size:11px}.kanban-item{padding:6px}.kanban-actions button{padding:5px 4px}}
 @media(min-width:700px){.kanban-columns{gap:14px}.kanban-column{padding:12px}.kanban-item{padding:12px}}
+
+/* Capa de coherencia visual y uso en planta */
+body{background:var(--bg);color:var(--ink)}
+.bar{background:linear-gradient(135deg,var(--steel) 0%,var(--steel-2) 100%);box-shadow:inset 0 -1px 0 rgba(255,255,255,.07)}
+.menu-intro{margin:4px 0 16px;max-width:760px}
+.workflow-primary{min-height:112px;border-radius:12px;box-shadow:0 4px 14px rgba(17,27,38,.07);justify-content:center;gap:8px}
+.workflow-primary b{font-size:18px;letter-spacing:-.2px}
+.workflow-primary span{max-width:760px;font-size:14px;line-height:1.45;color:var(--muted)}
+.menu-tools{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 22px}
+.menu-tool{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:11px;min-height:82px;padding:13px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:none;text-align:left}
+.menu-tool .mi{grid-row:1 / span 2;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;background:var(--steel);color:var(--accent);font:700 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
+.menu-tool>span:not(.mi){font-size:14px;line-height:1.25;font-weight:750}
+.menu-tool small{grid-column:2;font-size:11px;line-height:1.35;color:var(--muted);font-weight:500}
+.context-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.context-actions .btn{min-height:48px;padding:8px 10px;font-size:13px;box-shadow:none}
+#remindersCard .f:last-of-type{margin-bottom:12px}
+.reminder-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:start;padding:14px;margin:0 0 9px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:11px;background:var(--surface)}
+.reminder-item.is-done{border-left-color:var(--ok);opacity:.72}
+.reminder-item b{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.reminder-meta{grid-column:1/-1;color:var(--muted);font-size:12px;line-height:1.45}
+.reminder-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.reminder-actions .btn{min-height:42px;padding:0 12px;font-size:13px;box-shadow:none}
+.kanban-columns{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kanban-column{padding:12px;border-radius:12px}
+.kanban-column h3{font-size:13px;letter-spacing:.03em}
+.kanban-item{padding:12px;border-radius:10px}
+.kanban-item b{font-size:14px;line-height:1.4}
+.kanban-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.kanban-actions button{min-height:38px;padding:6px 7px;font-size:12px;line-height:1.25}
+@media(prefers-color-scheme:dark){body{background:var(--bg)}}
+@media(max-width:699px){
+  .menu-tools{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .menu-tool{min-height:78px;padding:10px;column-gap:8px}
+  .menu-tool:last-child{grid-column:1/-1}
+  .workflow-primary{min-height:104px}
+  .context-actions{grid-template-columns:1fr}
+  .kanban-columns{grid-auto-flow:column;grid-auto-columns:minmax(82vw,1fr);grid-template-columns:none;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:2px 2px 12px}
+  .kanban-column{scroll-snap-align:start}
+}
+@media(max-width:380px){.menu-tool{grid-template-columns:30px minmax(0,1fr);padding:9px}.menu-tool .mi{width:28px;height:28px;font-size:11px}.reminder-item{padding:11px}}
 </style>
 </head>
 <body>
@@ -261,23 +301,25 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 <!-- Menú -->
 <section id="menu" class="screen">
   <header class="bar">
-    <h1>Nuevo reporte<small>¿Qué área vas a reportar?</small></h1>
-    <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Herramientas">⚙</button>
+    <h1>Centro de mantenimiento<small>Reportes y seguimiento de planta</small></h1>
+    <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
   </header>
   <div class="body">
     <div id="demoBanner" class="demo" hidden><i></i>Modo demo: los datos de prueba se mantienen separados</div>
-    <p class="empty" style="margin:4px 0 14px">Primero selecciona el tipo de trabajo. Después elige el área y la máquina que vas a revisar.</p>
-    <div class="menu-tools" aria-label="Herramientas de trabajo">
-      <button class="menu-tool" onclick="openReminders()"><span class="mi">🔔</span><span>Recordatorios</span><small>Pendientes por fecha y hora</small></button>
-      <button class="menu-tool" onclick="go('kanban')"><span class="mi">▥</span><span>Tablero Kanban</span><small>Organizar tareas de mantenimiento</small></button>
-      <button class="menu-tool" onclick="openNotes()"><span class="mi">📝</span><span>Notas técnicas</span><small>Fotos, evidencias y PDF</small></button>
+    <p class="empty menu-intro">Registra inspecciones, documenta hallazgos y da seguimiento a cada máquina.</p>
+    <div class="h2">Reportes operativos</div>
+    <button class="area wide workflow-primary" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
+      <b>Chequeo diario</b><span>Captura temperatura y amperaje; reúne varios equipos en un solo reporte.</span>
+    </button>
+    <button class="area wide workflow-primary" style="width:100%;margin-bottom:18px;border-left-color:var(--accent)" onclick="startWorkflow('preventive')">
+      <b>Mantenimiento preventivo</b><span>Selecciona área y máquina para completar la inspección.</span>
+    </button>
+    <div class="h2">Seguimiento del trabajo</div>
+    <div class="menu-tools" aria-label="Seguimiento de mantenimiento">
+      <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span><small id="menuReminderCount" aria-live="polite">Avisos por máquina y fecha</small></button>
+      <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite">Pendientes y trabajos en curso</small></button>
+      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span><small>Hallazgos, fotos y PDF</small></button>
     </div>
-    <button class="area wide" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
-      <b style="font-size:20px">Chequeo diario</b><span>Registrar mediciones diarias de las máquinas y reunir varios reportes en un Excel.</span>
-    </button>
-    <button class="area wide" style="width:100%;margin-bottom:18px;border-left-color:var(--accent)" onclick="startWorkflow('preventive')">
-      <b style="font-size:20px">Mantenimiento preventivo</b><span>Elegir una máquina del catálogo y completar su lista de inspección.</span>
-    </button>
     <div class="h2">Últimos reportes</div>
     <div id="recent"></div>
   </div>
@@ -406,7 +448,11 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
     </div>
 
     <div id="ext" hidden></div>
-    <button class="btn btn-s" style="width:100%;margin:0 0 12px;flex:none" onclick="openNoteForCurrentContext()">＋ Nota con fotos de este apartado</button>
+    <div class="context-actions" aria-label="Acciones de seguimiento para esta máquina">
+      <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
+      <button class="btn btn-s" type="button" onclick="openReminderForCurrentContext()">＋ Programar recordatorio</button>
+      <button class="btn btn-s" type="button" onclick="openNoteForCurrentContext()">＋ Agregar nota técnica</button>
+    </div>
     <div class="card">
       <!-- ZONA RESERVADA: aquí irán los campos reales de cada área (E1, E2, CAM, DIM, BSL).
            Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
@@ -473,6 +519,31 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 </section>
 
 <!-- Tablero Kanban -->
+<section id="reminders" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <h1>Recordatorios<small>Seguimiento por máquina y fecha</small></h1>
+  </header>
+  <div class="body">
+    <p id="reminderModeHint" class="empty">Los avisos se guardan en este dispositivo.</p>
+    <form class="card" id="remindersCard" onsubmit="addReminder(event)">
+      <input id="reminderId" type="hidden">
+      <input id="reminderTaskId" type="hidden">
+      <div class="f"><label for="reminderText">Tarea de mantenimiento</label><input id="reminderText" maxlength="140" required placeholder="Ej. Revisar resistencia de la BSL-3"></div>
+      <div class="f"><label for="reminderMachine">Área / máquina</label><input id="reminderMachine" maxlength="100" placeholder="Ej. Extrusión 1 · EXT-19"></div>
+      <div class="two">
+        <div class="f"><label for="reminderDate">Fecha</label><input id="reminderDate" type="date" required></div>
+        <div class="f"><label for="reminderTime">Hora</label><input id="reminderTime" type="time" required></div>
+      </div>
+      <button class="btn btn-p" type="submit" style="width:100%;margin-bottom:10px">Guardar recordatorio</button>
+      <button class="btn btn-s" id="browserNotificationBtn" type="button" style="width:100%" onclick="enableReminderNotifications()">Permitir avisos del navegador</button>
+    </form>
+    <div class="h2">Avisos programados</div>
+    <div id="reminderList" aria-live="polite"></div>
+    <button class="btn btn-s" style="width:100%;margin-top:12px;flex:none" onclick="openNotes('Recordatorios','')">＋ Agregar nota técnica</button>
+  </div>
+</section>
+
 <section id="kanban" class="screen">
   <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban<small>Organiza el trabajo de mantenimiento</small></h1></header>
   <div class="body">
@@ -512,8 +583,8 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 <!-- Herramientas -->
 <section id="tools" class="screen">
   <header class="bar">
-    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <h1>Herramientas</h1>
+    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <h1>Configuración<small>Preferencias de uso local</small></h1>
   </header>
   <div class="body">
     <div class="card">
@@ -521,21 +592,7 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
         <div><b>Modo demo</b><span>Prueba la generación sin mezclar los datos reales.</span></div>
         <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
       </div>
-      <p class="muted">Los reportes se generan localmente y no se conectan a servicios externos.</p>
-    </div>
-    <button class="btn btn-s" style="width:100%;margin-top:14px;flex:none" onclick="openNotes(&quot;Recordatorios&quot;,&quot;&quot;)">＋ Nota con fotos para un recordatorio</button>
-    <div class="card" id="remindersCard" style="margin-top:14px">
-      <h2 style="margin-top:0">Recordatorios de mantenimiento</h2>
-      <p class="muted">Programa pendientes por fecha y hora. Los avisos funcionan mientras Chiaplast está abierta; el navegador puede limitar las notificaciones en segundo plano.</p>
-      <div class="f"><label for="reminderText">Pendiente</label><input id="reminderText" maxlength="140" placeholder="Ej. Revisar resistencia de la BSL-3"></div>
-      <div class="two">
-        <div class="f"><label for="reminderDate">Fecha</label><input id="reminderDate" type="date"></div>
-        <div class="f"><label for="reminderTime">Hora</label><input id="reminderTime" type="time"></div>
-      </div>
-      <button class="btn btn-p" style="width:100%;margin-bottom:10px" onclick="addReminder()">Guardar recordatorio</button>
-      <button class="btn btn-s" style="width:100%;margin-bottom:12px" onclick="enableReminderNotifications()">Permitir notificaciones mientras esté abierta</button>
-      <div id="reminderList"></div>
-      <p class="muted" style="font-size:12px;margin-bottom:0">Importante: un HTML aislado no garantiza una alarma a la hora exacta si la app está cerrada o el teléfono bloqueado.</p>
+      <p class="muted">Los reportes, tareas y recordatorios se guardan localmente en este dispositivo; no se conectan a servicios externos.</p>
     </div>
     <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
   </div>
@@ -685,16 +742,45 @@ function show(id){
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
   $('demoBanner').hidden=!isDemo();
   $('demoSw').setAttribute('aria-checked',isDemo());
-  if(id==='menu') renderRecent();
+  if(id==='menu'){renderRecent();renderHomeFollowup()}
   if(id==='dailyBatch') renderDailyBatch();
   if(id==='kanban') renderKanban();
   if(id==='notes') renderNotes();
-  if(id==='tools'){renderReminders();syncNativeReminders();const d=new Date();$('reminderDate').min=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());if(!$('reminderDate').value)$('reminderDate').value=$('reminderDate').min;if(!$('reminderTime').value)$('reminderTime').value=pad(d.getHours())+':'+pad(d.getMinutes());}
+  if(id==='reminders'){
+    const when=reminderDefault();$('reminderDate').min=when.date;
+    if(!$('reminderDate').value)$('reminderDate').value=when.date;
+    if(!$('reminderTime').value)$('reminderTime').value=when.time;
+    $('browserNotificationBtn').hidden=!!(window.ChiaplastNative);
+    $('reminderModeHint').textContent=window.ChiaplastNative?'Las alarmas se programan en Android. Vincula cada aviso con un área o máquina.':'Los avisos del navegador dependen de que Chiaplast permanezca abierta; en la APK se programan en Android.';
+    renderReminders();syncNativeReminders();
+  }
+  if(id==='tools') $('demoSw').setAttribute('aria-checked',isDemo());
 }
 function go(id){history.pushState({s:id},'');show(id)}
-function openReminders(){go('tools');const card=$('remindersCard');if(card)card.scrollIntoView({block:'start',behavior:'smooth'})}
+function openReminders(){go('reminders')}
 function openNotes(area,machine){$('noteArea').value=area||'General';$('noteMachine').value=machine||'';go('notes')}
 function openNoteForCurrentContext(){openNotes(Runtime.area||'General',Runtime.machine||'')}
+function openKanbanForCurrentContext(){
+  const machine=Runtime.machine||Runtime.area||'';
+  $('kanbanArea').value=[Runtime.area,machine&&machine!==Runtime.area?machine:''].filter(Boolean).join(' · ');
+  $('kanbanTitle').value='Seguimiento · '+machine;
+  $('kanbanDetails').value=$('obs').value.trim();
+  go('kanban');$('kanbanTitle').focus();
+}
+function reminderDefault(){const d=new Date(Date.now()+60*60*1000),p=n=>String(n).padStart(2,'0');return{date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes())}}
+function openReminderForCurrentContext(){
+  const when=reminderDefault(),machine=[Runtime.area,Runtime.machine&&Runtime.machine!==Runtime.area?Runtime.machine:''].filter(Boolean).join(' · ');
+  go('reminders');$('reminderId').value='';$('reminderTaskId').value='';$('reminderText').value='Seguimiento · '+(Runtime.machine||Runtime.area||'mantenimiento');
+  $('reminderMachine').value=machine;$('reminderDate').value=when.date;$('reminderTime').value=when.time;$('reminderText').focus();
+}
+function openReminderForKanbanTask(id){
+  const task=loadKanban().find(t=>t.id===id);if(!task)return;
+  const when=reminderDefault(),existing=loadReminders().find(r=>r.taskId===id||r.id===task.reminderId),future=existing&&Date.parse(existing.due)>Date.now();
+  const dueDate=task.due&&task.due>=when.date?task.due:when.date;
+  go('reminders');$('reminderId').value=existing?existing.id:'';$('reminderTaskId').value=task.id;
+  $('reminderText').value=existing?existing.text:task.title;$('reminderMachine').value=existing&&existing.machine||task.area||'';
+  $('reminderDate').value=future?existing.date:dueDate;$('reminderTime').value=future?existing.time:(dueDate===when.date?when.time:'08:00');$('reminderText').focus();
+}
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
   if(!isDemo()&&!isIn()){root('login');return}
@@ -1183,13 +1269,31 @@ function addKanbanTask(){
   const tasks=loadKanban();tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),title,area:$('kanbanArea').value.trim(),due:$('kanbanDue').value,details:$('kanbanDetails').value.trim(),status:'todo',created:Date.now()});
   saveKanban(tasks);$('kanbanTitle').value='';$('kanbanArea').value='';$('kanbanDue').value='';$('kanbanDetails').value='';renderKanban();toast('Tarea agregada al tablero.');
 }
-function moveKanbanTask(id,status){const tasks=loadKanban(),t=tasks.find(x=>x.id===id);if(!t)return;t.status=status;saveKanban(tasks);renderKanban()}
-function deleteKanbanTask(id){saveKanban(loadKanban().filter(t=>t.id!==id));renderKanban();toast('Tarea eliminada.')}
+function moveKanbanTask(id,status){
+  const tasks=loadKanban(),task=tasks.find(x=>x.id===id);if(!task)return;
+  task.status=status;saveKanban(tasks);
+  const reminders=loadReminders(),linked=reminders.find(r=>r.taskId===id||r.id===task.reminderId);
+  if(linked){
+    linked.status=status==='done'?'done':'pending';
+    saveReminders(reminders);
+    if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function'&&linked.status==='done')window.ChiaplastNative.cancelReminder(linked.id);
+    else if(linked.status!=='done'&&Date.parse(linked.due)>Date.now())scheduleNativeReminder(linked);
+  }
+  renderKanban();renderReminders();renderHomeFollowup();
+}
+function deleteKanbanTask(id){
+  const tasks=loadKanban(),task=tasks.find(x=>x.id===id);saveKanban(tasks.filter(t=>t.id!==id));
+  const reminders=loadReminders(),linked=reminders.find(r=>r.taskId===id||r.id===task?.reminderId);
+  if(linked){delete linked.taskId;saveReminders(reminders)}
+  renderKanban();renderReminders();renderHomeFollowup();toast('Tarea eliminada; sus avisos se conservaron.');
+}
 function renderKanban(){
   const tasks=loadKanban(),cols={todo:$('kanbanTodo'),doing:$('kanbanDoing'),done:$('kanbanDone')};if(!cols.todo)return;
-  Object.keys(cols).forEach(k=>{const subset=tasks.filter(t=>(t.status||'todo')===k);cols[k].innerHTML=subset.length?subset.map(t=>'<div class="kanban-item"><b>'+esc(t.title)+'</b>'+(t.area?'<small>'+esc(t.area)+'</small>':'')+(t.due?'<small>Fecha: '+esc(fmtD(t.due))+'</small>':'')+(t.details?'<small>'+esc(t.details)+'</small>':'')+'<div class="kanban-actions">'+(k!=='todo'?'<button onclick="moveKanbanTask(\''+esc(t.id)+'\',\'todo\')">← Por hacer</button>':'')+(k!=='doing'?'<button onclick="moveKanbanTask(\''+esc(t.id)+'\',\'doing\')">En proceso</button>':'')+(k!=='done'?'<button onclick="moveKanbanTask(\''+esc(t.id)+'\',\'done\')">Terminado</button>':'')+'<button onclick="deleteKanbanTask(\''+esc(t.id)+'\')">Eliminar</button></div></div>').join(''):'<div class="empty" style="font-size:11px;padding:8px 2px">Sin tareas</div>'});
+  Object.keys(cols).forEach(k=>{
+    const subset=tasks.filter(t=>(t.status||'todo')===k);
+    cols[k].innerHTML=subset.length?subset.map(t=>'<div class="kanban-item"><b>'+esc(t.title)+'</b>'+(t.area?'<small>'+esc(t.area)+'</small>':'')+(t.due?'<small>Fecha límite: '+esc(fmtD(t.due))+'</small>':'')+(t.details?'<small>'+esc(t.details)+'</small>':'')+'<div class="kanban-actions">'+(k!=='todo'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;todo&quot;)">← Por hacer</button>':'')+(k!=='doing'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;doing&quot;)">En proceso</button>':'')+(k!=='done'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;done&quot;)">Terminado</button><button type="button" onclick="openReminderForKanbanTask(&quot;'+esc(t.id)+'&quot;)">Programar aviso</button>':'')+'<button type="button" onclick="openNotes(&quot;Kanban&quot;,&quot;'+esc(t.area||'')+'&quot;)">Nota técnica</button><button type="button" onclick="deleteKanbanTask(&quot;'+esc(t.id)+'&quot;)">Eliminar</button></div></div>').join(''):'<div class="empty" style="font-size:12px;padding:10px 4px">Sin tareas</div>';
+  });
 }
-
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
 const NOTES_DB=()=> 'chiaplast-notes-v1'+(isDemo()?'-demo':''),NOTES_STORE='notes';
 let notePhotosDraft=[];
@@ -1303,41 +1407,77 @@ function saveReminders(items){store.set(reminderKey(),JSON.stringify(items))}
 function renderReminders(){
   const list=$('reminderList');if(!list)return;
   const items=loadReminders().sort((a,b)=>(a.due||'').localeCompare(b.due||''));
-  if(!items.length){list.innerHTML='<div class="empty">No hay recordatorios guardados.</div>';return}
-  list.innerHTML=items.map(r=>'<div class="rec"><div><b>'+esc(r.text)+'</b><span>'+esc(r.date)+' · '+esc(r.time)+(r.notified?' · Aviso mostrado':'')+'</span></div><button class="link" onclick="deleteReminder(&quot;'+esc(r.id)+'&quot;)">Eliminar</button></div>').join('');
+  if(!items.length){list.innerHTML='<div class="empty">No hay avisos. Puedes crearlos desde aquí, desde una tarea o al terminar un reporte.</div>';return}
+  const now=Date.now();
+  list.innerHTML=items.map(item=>{
+    const done=item.status==='done',due=Date.parse(item.due),state=done?'Completado':item.notified?'Aviso emitido':Number.isFinite(due)&&due<now?'Vencido · pendiente':'Programado';
+    const when=Number.isFinite(due)?new Date(due).toLocaleString():(item.date+' · '+item.time);
+    return '<article class="reminder-item'+(done?' is-done':'')+'"><div><b>'+esc(item.text)+'</b></div><span class="chip">'+esc(state)+'</span><div class="reminder-meta">'+esc(when)+(item.machine?' · '+esc(item.machine):'')+(item.taskId?' · Vinculado al tablero':'')+'</div><div class="reminder-actions"><button class="btn btn-s" type="button" onclick="editReminder(&quot;'+esc(item.id)+'&quot;)">Editar</button><button class="btn btn-s" type="button" onclick="toggleReminderStatus(&quot;'+esc(item.id)+'&quot;)">'+(done?'Reabrir':'Completar')+'</button><button class="btn btn-s" type="button" onclick="deleteReminder(&quot;'+esc(item.id)+'&quot;)">Eliminar</button></div></article>';
+  }).join('');
+}
+function scheduleNativeReminder(item){
+  if(!window.ChiaplastNative||typeof window.ChiaplastNative.scheduleReminder!=='function')return null;
+  return window.ChiaplastNative.scheduleReminder(JSON.stringify({id:item.id,title:item.text,machine:item.machine||'',when:item.date+'T'+item.time+':00',status:item.status||'pending'}));
 }
 function syncNativeReminders(){
   if(!window.ChiaplastNative||typeof window.ChiaplastNative.scheduleReminder!=='function')return;
-  loadReminders().forEach(r=>{
-    if(!r.notified&&r.date&&r.time){
-      const result=window.ChiaplastNative.scheduleReminder(JSON.stringify({id:r.id,title:r.text,machine:'',when:r.date+'T'+r.time+':00',status:'pending'}));
+  loadReminders().forEach(item=>{
+    const due=Date.parse(item.due);
+    if(item.status!=='done'&&!item.notified&&item.date&&item.time&&Number.isFinite(due)&&due>Date.now()){
+      const result=scheduleNativeReminder(item);
       if(result==='permission_required')toast('Autoriza las alarmas exactas en Ajustes para recibir avisos puntuales.');
     }
   });
 }
 window.syncNativeReminders=syncNativeReminders;
 window.openReminderFromNotification=function(id){
-  root('tools');const card=$('remindersCard');if(card)card.scrollIntoView({block:'start',behavior:'smooth'});
-  const item=loadReminders().find(r=>r.id===id);if(item)toast('Recordatorio: '+item.text);
+  const items=loadReminders(),item=items.find(r=>r.id===id);
+  if(item){item.notified=true;saveReminders(items)}
+  root('reminders');renderReminders();
+  if(item)toast('Aviso de mantenimiento · '+item.text);
 };
-function addReminder(){
+function addReminder(event){
+  if(event&&event.preventDefault)event.preventDefault();
   const text=$('reminderText').value.trim(),date=$('reminderDate').value,time=$('reminderTime').value;
-  if(!text||!date||!time){toast('Completa el pendiente, la fecha y la hora.');return}
+  if(!text||!date||!time){toast('Completa la tarea, la fecha y la hora.');return}
   const due=new Date(date+'T'+time+':00');
   if(Number.isNaN(due.getTime())){toast('La fecha u hora no es válida.');return}
-  if(due.getTime()<Date.now()-60000){toast('Elige una fecha y hora futuras.');return}
-  const item={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),text,date,time,due:due.toISOString(),notified:false};
-  const items=loadReminders();items.push(item);saveReminders(items);
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.scheduleReminder==='function'){
-    const result=window.ChiaplastNative.scheduleReminder(JSON.stringify({id:item.id,title:item.text,machine:'',when:date+'T'+time+':00',status:'pending'}));
-    if(result==='permission_required')toast('Recordatorio guardado. Autoriza las alarmas exactas para activar el aviso a la hora indicada.');
-  }
-  $('reminderText').value='';renderReminders();toast('Recordatorio guardado en este dispositivo.');
+  if(due.getTime()<=Date.now()){toast('Elige una fecha y hora futuras.');return}
+  const taskId=$('reminderTaskId').value.trim(),requestedId=$('reminderId').value;
+  const items=loadReminders(),previous=items.find(r=>r.id===requestedId||(taskId&&r.taskId===taskId));
+  const id=previous?previous.id:Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const item={id,text,date,time,due:due.toISOString(),machine:$('reminderMachine').value.trim(),taskId:taskId||(previous&&previous.taskId)||'',status:'pending',notified:false,updatedAt:Date.now(),createdAt:previous&&previous.createdAt||Date.now()};
+  const index=items.findIndex(r=>r.id===id);if(index>=0)items[index]=item;else items.push(item);
+  saveReminders(items);
+  if(item.taskId){const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId);if(task){task.reminderId=id;if(!task.due)task.due=date;saveKanban(tasks)}}
+  let message='Recordatorio guardado en este dispositivo. En navegador, el aviso requiere mantener Chiaplast abierta.';
+  if(window.ChiaplastNative){const result=scheduleNativeReminder(item);if(result==='permission_required')message='Guardado. Autoriza las alarmas exactas en Ajustes para recibir el aviso puntual.';else if(result==='error')message='Guardado localmente; Android no pudo programar la notificación.';else message='Recordatorio guardado y programado en Android.'}
+  $('reminderId').value='';$('reminderTaskId').value='';$('reminderText').value='';$('reminderMachine').value='';
+  renderReminders();renderKanban();renderHomeFollowup();toast(message);
+}
+function editReminder(id){
+  const item=loadReminders().find(r=>r.id===id);if(!item)return;
+  const fallback=reminderDefault(),future=Date.parse(item.due)>Date.now();
+  $('reminderId').value=item.id;$('reminderTaskId').value=item.taskId||'';$('reminderText').value=item.text;
+  $('reminderMachine').value=item.machine||'';$('reminderDate').value=future?item.date:fallback.date;$('reminderTime').value=future?item.time:fallback.time;
+  $('remindersCard').scrollIntoView({block:'start',behavior:'smooth'});$('reminderText').focus();
+}
+function toggleReminderStatus(id){
+  const items=loadReminders(),item=items.find(r=>r.id===id);if(!item)return;
+  item.status=item.status==='done'?'pending':'done';item.updatedAt=Date.now();
+  if(item.status==='pending')item.notified=false;
+  saveReminders(items);
+  const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId||t.reminderId===id);
+  if(task){task.status=item.status==='done'?'done':'todo';saveKanban(tasks)}
+  if(item.status==='done'&&window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
+  else if(item.status!=='done'&&Date.parse(item.due)>Date.now())scheduleNativeReminder(item);
+  renderReminders();renderKanban();renderHomeFollowup();
 }
 function deleteReminder(id){
-  saveReminders(loadReminders().filter(r=>r.id!==id));
+  const items=loadReminders(),item=items.find(r=>r.id===id);saveReminders(items.filter(r=>r.id!==id));
+  if(item&&item.taskId){const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId);if(task)delete task.reminderId;saveKanban(tasks)}
   if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
-  renderReminders();toast('Recordatorio eliminado.');
+  renderReminders();renderKanban();renderHomeFollowup();toast('Recordatorio eliminado.');
 }
 async function enableReminderNotifications(){
   if(!('Notification' in window)){toast('Este entorno no permite notificaciones del navegador. Los avisos aparecerán dentro de Chiaplast mientras esté abierta.');return}
@@ -1345,16 +1485,16 @@ async function enableReminderNotifications(){
   catch(e){toast('No fue posible solicitar permiso de notificaciones en este entorno.')}
 }
 function checkReminders(){
-  if(document.hidden)return;
+  if(document.hidden||window.ChiaplastNative)return;
   const now=Date.now(),items=loadReminders();let changed=false;
-  items.forEach(r=>{
-    const due=Date.parse(r.due);
-    if(!r.notified&&Number.isFinite(due)&&due<=now){
-      r.notified=true;changed=true;const msg='Mantenimiento pendiente: '+r.text;
-      if('Notification' in window&&Notification.permission==='granted'){try{new Notification('Chiaplast · Recordatorio',{body:msg,tag:'chiaplast-'+r.id})}catch(e){toast(msg)}}else toast(msg);
+  items.forEach(item=>{
+    const due=Date.parse(item.due);
+    if(item.status!=='done'&&!item.notified&&Number.isFinite(due)&&due<=now){
+      item.notified=true;changed=true;const msg='Mantenimiento pendiente: '+item.text;
+      if('Notification' in window&&Notification.permission==='granted'){try{new Notification('Chiaplast · Recordatorio',{body:msg,tag:'chiaplast-'+item.id})}catch(e){toast(msg)}}else toast(msg);
     }
   });
-  if(changed){saveReminders(items);renderReminders()}
+  if(changed){saveReminders(items);renderReminders();renderHomeFollowup()}
 }
 setInterval(checkReminders,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkReminders()});
@@ -1362,12 +1502,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkRemin
 /* Recientes */
 function addRecent(r){const key=stateKey('mtto_hist');let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
 function getRecent(){try{return JSON.parse(store.get(stateKey('mtto_hist'),'[]'))}catch(e){return[]}}
+function renderHomeFollowup(){
+  const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount');
+  if(reminderBox){const count=loadReminders().filter(r=>r.status!=='done').length;reminderBox.textContent=count?count+' aviso'+(count===1?' pendiente':'s pendientes'):'Sin avisos pendientes'}
+  if(taskBox){const count=loadKanban().filter(t=>(t.status||'todo')!=='done').length;taskBox.textContent=count?count+' tarea'+(count===1?' abierta':'s abiertas'):'Sin tareas abiertas'}
+}
 function renderRecent(){
   const l=getRecent();
   $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':r.demo?'Demo':'Preventivo')+'</span></div>').join('')
-    :'<div class="empty">Aún no hay reportes. Toca un área para empezar.</div>';
+    :'<div class="empty">Tus reportes recientes aparecerán aquí.</div>';
 }
-
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();
 setMode('real');
