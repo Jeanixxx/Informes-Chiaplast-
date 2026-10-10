@@ -211,6 +211,26 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 @media(max-width:420px){.body{padding:14px 12px 20px}.bar{padding-left:12px;padding-right:12px}.dock{padding-left:12px;padding-right:12px}.card{padding:14px}.two{gap:8px}.area{padding:13px;min-height:92px}.export-choice{gap:6px}.export-choice label{font-size:12px;padding:7px 4px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.area,.btn{transition:none}}
 
+
+.menu-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 0 18px}
+.menu-tool{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;min-height:106px;padding:13px 11px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-weight:750}
+.menu-tool .mi{font-size:23px;line-height:1}.menu-tool small{font-size:11px;line-height:1.35;color:var(--muted);font-weight:500}
+.kanban-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}
+.kanban-column{min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px}
+.kanban-column h3{font-size:12px;line-height:1.3;margin:2px 0 9px}
+.kanban-item{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px;margin-bottom:8px;overflow-wrap:anywhere}
+.kanban-item b{font-size:13px;display:block}.kanban-item small{display:block;color:var(--muted);font-size:11px;margin:4px 0 8px}
+.kanban-actions{display:flex;gap:4px;flex-wrap:wrap}.kanban-actions button{font-size:11px;font-weight:700;padding:6px 7px;border-radius:7px;background:var(--chip)}
+.note-card{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:13px;margin:10px 0}
+.note-card h3{margin:0 0 5px;font-size:16px}.note-meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.note-photos{display:flex;gap:7px;overflow-x:auto;margin:9px 0}.note-photos img{width:94px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line);flex:none}
+.note-warning{border:1px solid #d99c00;background:rgba(242,183,5,.13);padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.45}
+.note-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.note-actions button{flex:1;min-width:90px}
+.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.photo-preview figure{position:relative;margin:0}
+.photo-preview img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.photo-preview button{position:absolute;right:3px;top:3px;background:#172b3a;color:white;border-radius:50%;width:25px;height:25px}
+@media(max-width:420px){.menu-tools{gap:6px}.menu-tool{padding:11px 8px;min-height:105px}.kanban-columns{gap:5px}.kanban-column{padding:5px}.kanban-column h3{font-size:11px}.kanban-item{padding:6px}.kanban-actions button{padding:5px 4px}}
+@media(min-width:700px){.kanban-columns{gap:14px}.kanban-column{padding:12px}.kanban-item{padding:12px}}
 </style>
 </head>
 <body>
@@ -247,6 +267,11 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
   <div class="body">
     <div id="demoBanner" class="demo" hidden><i></i>Modo demo: los datos de prueba se mantienen separados</div>
     <p class="empty" style="margin:4px 0 14px">Primero selecciona el tipo de trabajo. Después elige el área y la máquina que vas a revisar.</p>
+    <div class="menu-tools" aria-label="Herramientas de trabajo">
+      <button class="menu-tool" onclick="openReminders()"><span class="mi">🔔</span><span>Recordatorios</span><small>Pendientes por fecha y hora</small></button>
+      <button class="menu-tool" onclick="go('kanban')"><span class="mi">▥</span><span>Tablero Kanban</span><small>Organizar tareas de mantenimiento</small></button>
+      <button class="menu-tool" onclick="openNotes()"><span class="mi">📝</span><span>Notas técnicas</span><small>Fotos, evidencias y PDF</small></button>
+    </div>
     <button class="area wide" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
       <b style="font-size:20px">Chequeo diario</b><span>Registrar mediciones diarias de las máquinas y reunir varios reportes en un Excel.</span>
     </button>
@@ -381,6 +406,7 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
     </div>
 
     <div id="ext" hidden></div>
+    <button class="btn btn-s" style="width:100%;margin:0 0 12px;flex:none" onclick="openNoteForCurrentContext()">＋ Nota con fotos de este apartado</button>
     <div class="card">
       <!-- ZONA RESERVADA: aquí irán los campos reales de cada área (E1, E2, CAM, DIM, BSL).
            Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
