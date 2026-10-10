@@ -1252,9 +1252,10 @@ async function renderNotes(){
 }
 async function deleteNote(id){if(!confirm('¿Eliminar esta nota y sus fotografías? Esta acción no se puede deshacer.'))return;try{await notesDelete(id);await renderNotes();toast('Nota eliminada.')}catch(e){toast('No se pudo eliminar la nota.')}}
 async async function printNote(id){
+  const w=window.open('','_blank');
+  if(!w){toast('El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.');return}
   try{
-    const n=(await notesAll()).find(x=>x.id===id);if(!n){toast('La nota ya no está disponible.');return}
-    const w=window.open('','_blank');if(!w){toast('El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.');return}
+    const n=(await notesAll()).find(x=>x.id===id);if(!n){w.close();toast('La nota ya no está disponible.');return}
     const imgs=(n.photos||[]).map((p,i)=>'<figure><img src="'+p+'" alt="Evidencia '+(i+1)+'"><figcaption>Fotografía '+(i+1)+'</figcaption></figure>').join('');
     w.document.open();w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(n.title)+'</title><style>body{font:14px Arial,sans-serif;color:#182631;margin:28px}h1{font-size:22px}h2{font-size:15px;margin-top:22px}.meta{color:#566674;font-size:12px;border-bottom:2px solid #e0e6eb;padding-bottom:12px}p{white-space:pre-wrap;line-height:1.5}figure{margin:12px 0;page-break-inside:avoid}img{max-width:100%;max-height:520px;object-fit:contain}figcaption{font-size:11px;color:#566674}@media print{body{margin:12mm}button{display:none}}</style></head><body><h1>CHIAPLAST · Nota técnica</h1><h2>'+esc(n.title)+'</h2><div class="meta">Apartado: '+esc(n.area)+' · Máquina: '+esc(n.machine||'No especificada')+'<br>Fecha: '+esc(new Date(n.created).toLocaleString())+'<br>Conservación en la app hasta: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+'</div><p>'+esc(n.text||'Sin observaciones adicionales.')+'</p><h2>Evidencias fotográficas</h2>'+imgs+'<p class="meta">Documento generado desde Chiaplast. Guarda este PDF fuera de la aplicación para conservarlo después del plazo de 30 días.</p><script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>');
     w.document.close();
