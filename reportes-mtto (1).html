@@ -1166,6 +1166,99 @@ function mqRows(){
   return r;
 }
 
+
+/* ===== Tablero Kanban local ===== */
+const kanbanKey=()=>stateKey('mtto_kanban');
+function loadKanban(){try{const a=JSON.parse(store.get(kanbanKey(),'[]'));return Array.isArray(a)?a:[]}catch(e){return[]}}
+function saveKanban(a){store.set(kanbanKey(),JSON.stringify(a))}
+function addKanbanTask(){
+  const title=$('kanbanTitle').value.trim();if(!title){toast('Escribe el nombre de la tarea.');$('kanbanTitle').focus();return}
+  const tasks=loadKanban();tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),title,area:$('kanbanArea').value.trim(),due:$('kanbanDue').value,details:$('kanbanDetails').value.trim(),status:'todo',created:Date.now()});
+  saveKanban(tasks);$('kanbanTitle').value='';$('kanbanArea').value='';$('kanbanDue').value='';$('kanbanDetails').value='';renderKanban();toast('Tarea agregada al tablero.');
+}
+function moveKanbanTask(id,status){const tasks=loadKanban(),t=tasks.find(x=>x.id===id);if(!t)return;t.status=status;saveKanban(tasks);renderKanban()}
+function deleteKanbanTask(id){saveKanban(loadKanban().filter(t=>t.id!==id));renderKanban();toast('Tarea eliminada.')}
+function renderKanban(){
+  const tasks=loadKanban(),cols={todo:$('kanbanTodo'),doing:$('kanbanDoing'),done:$('kanbanDone')};if(!cols.todo)return;
+  Object.keys(cols).forEach(k=>{const subset=tasks.filter(t=>(t.status||'todo')===k);cols[k].innerHTML=subset.length?subset.map(t=>'<div class="kanban-item"><b>'+esc(t.title)+'</b>'+(t.area?'<small>'+esc(t.area)+'</small>':'')+(t.due?'<small>Fecha: '+esc(fmtD(t.due))+'</small>':'')+(t.details?'<small>'+esc(t.details)+'</small>':'')+'<div class="kanban-actions">'+(k!=='todo'?'<button onclick="moveKanbanTask(\''+esc(t.id)+'\',\'todo\')">← Por hacer</button>':'')+(k!=='doing'?'<button onclick="moveKanbanTask(\''+esc(t.id)+'\',\'doing\')">En proceso</button>':'')+(k!=='done'?'<button onclick="moveKanbanTask(\''+esc(t.id)+'\',\'done\')">Terminado</button>':'')+'<button onclick="deleteKanbanTask(\''+esc(t.id)+'\')">Eliminar</button></div></div>').join(''):'<div class="empty" style="font-size:11px;padding:8px 2px">Sin tareas</div>'});
+}
+
+/* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
+const NOTES_DB='chiaplast-notes-v1',NOTES_STORE='notes';
+let notePhotosDraft=[];
+function openNotesDB(){
+  return new Promise((resolve,reject)=>{
+    if(!('indexedDB' in window)){reject(new Error('Este dispositivo no permite el almacenamiento local de notas.'));return}
+    const req=indexedDB.open(NOTES_DB,1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(NOTES_STORE))db.createObjectStore(NOTES_STORE,{keyPath:'id'})};
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacenamiento local.'));
+  });
+}
+async function notesAll(){
+  const db=await openNotesDB();
+  return new Promise((resolve,reject)=>{const tx=db.transaction(NOTES_STORE,'readonly'),req=tx.objectStore(NOTES_STORE).getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close()});
+}
+async function notesPut(note){
+  const db=await openNotesDB();
+  return new Promise((resolve,reject)=>{const tx=db.transaction(NOTES_STORE,'readwrite');tx.objectStore(NOTES_STORE).put(note);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error||new Error('No se pudo guardar la nota.'))};tx.onabort=()=>{db.close();reject(tx.error||new Error('Se canceló el guardado.'))}});
+}
+async function notesDelete(id){
+  const db=await openNotesDB();
+  return new Promise((resolve,reject)=>{const tx=db.transaction(NOTES_STORE,'readwrite');tx.objectStore(NOTES_STORE).delete(id);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error)}});
+}
+async function purgeExpiredNotes(){
+  const all=await notesAll(),now=Date.now(),expired=all.filter(n=>!Number.isFinite(n.created)||now-n.created>=30*24*60*60*1000);
+  for(const n of expired)await notesDelete(n.id);
+  return expired.length;
+}
+function resizeNoteImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();reader.onerror=()=>reject(new Error('No se pudo leer una fotografía.'));
+    reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error('El archivo no es una imagen válida.'));img.onload=()=>{
+      const scale=Math.min(1,1280/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+      const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL('image/jpeg',0.68));
+    };img.src=reader.result};reader.readAsDataURL(file);
+  });
+}
+async function previewNotePhotos(input){
+  const files=Array.from(input.files||[]).slice(0,5);
+  if((input.files||[]).length>5)toast('Se admiten hasta 5 fotografías por nota.');
+  notePhotosDraft=[];$('notePhotoPreview').innerHTML='<span class="muted">Preparando fotografías…</span>';
+  try{for(const file of files){if(file.type.startsWith('image/'))notePhotosDraft.push(await resizeNoteImage(file))}renderPhotoPreview();if(notePhotosDraft.length)toast(notePhotosDraft.length+' fotografía(s) preparadas.')}
+  catch(e){notePhotosDraft=[];$('notePhotoPreview').innerHTML='';toast(e.message||'No se pudieron preparar las fotos.')}
+}
+function renderPhotoPreview(){$('notePhotoPreview').innerHTML=notePhotosDraft.map((src,i)=>'<figure><img src="'+src+'" alt="Vista previa '+(i+1)+'"><button type="button" aria-label="Quitar fotografía" onclick="removeDraftPhoto('+i+')">×</button></figure>').join('')}
+function removeDraftPhoto(index){notePhotosDraft.splice(index,1);renderPhotoPreview();const input=$('notePhotos');if(input)input.value=''}
+async function saveNote(){
+  const title=$('noteTitle').value.trim(),text=$('noteText').value.trim();
+  if(!title&&!text){toast('Escribe un título o una nota antes de guardar.');return}
+  const now=Date.now(),note={id:now.toString(36)+Math.random().toString(36).slice(2,7),title:title||'Nota sin título',text,area:$('noteArea').value||'General',machine:$('noteMachine').value.trim(),created:now,expires:now+30*24*60*60*1000,photos:notePhotosDraft.slice()};
+  try{
+    await purgeExpiredNotes();await notesPut(note);
+    $('noteTitle').value='';$('noteText').value='';$('noteMachine').value='';$('notePhotos').value='';notePhotosDraft=[];renderPhotoPreview();await renderNotes();
+    alert('Nota guardada en este dispositivo.\n\nLas notas y fotografías se conservarán durante 30 días desde hoy y después se eliminarán automáticamente mientras Chiaplast vuelva a abrirse. Genera y guarda el PDF fuera de Chiaplast si necesitas conservar una copia.');
+    toast('Nota guardada durante 30 días.');
+  }catch(e){toast((e&&e.message)||'No se pudo guardar. Comprueba el espacio disponible del dispositivo.')}
+}
+async function renderNotes(){
+  const list=$('notesList');if(!list)return;
+  try{
+    await purgeExpiredNotes();const all=(await notesAll()).sort((a,b)=>b.created-a.created);
+    if(!all.length){list.innerHTML='<div class="empty">No hay notas guardadas. Las nuevas notas permanecerán aquí durante 30 días.</div>';return}
+    list.innerHTML=all.map(n=>'<article class="note-card"><h3>'+esc(n.title)+'</h3><div class="note-meta">'+esc(n.area)+(n.machine?' · '+esc(n.machine):'')+' · '+esc(new Date(n.created).toLocaleString())+'</div>'+(n.text?'<p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(n.text)+'</p>':'')+'<div class="note-photos">'+(n.photos||[]).map((p,i)=>'<img src="'+p+'" alt="Evidencia '+(i+1)+'">').join('')+'</div><div class="note-meta">Caduca: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+' · '+((n.photos||[]).length)+' foto(s)</div><div class="note-actions"><button class="btn btn-p" onclick="printNote(\''+esc(n.id)+'\')">Generar PDF</button><button class="btn btn-s" onclick="deleteNote(\''+esc(n.id)+'\')">Eliminar</button></div></article>').join('');
+  }catch(e){list.innerHTML='<div class="empty">No se pudo acceder al almacenamiento local de notas. Comprueba que el navegador permita almacenamiento para esta aplicación.</div>'}
+}
+async function deleteNote(id){if(!confirm('¿Eliminar esta nota y sus fotografías? Esta acción no se puede deshacer.'))return;try{await notesDelete(id);await renderNotes();toast('Nota eliminada.')}catch(e){toast('No se pudo eliminar la nota.')}}
+async function printNote(id){
+  try{
+    const n=(await notesAll()).find(x=>x.id===id);if(!n){toast('La nota ya no está disponible.');return}
+    const w=window.open('','_blank');if(!w){toast('El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.');return}
+    const imgs=(n.photos||[]).map((p,i)=>'<figure><img src="'+p+'" alt="Evidencia '+(i+1)+'"><figcaption>Fotografía '+(i+1)+'</figcaption></figure>').join('');
+    w.document.open();w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(n.title)+'</title><style>body{font:14px Arial,sans-serif;color:#182631;margin:28px}h1{font-size:22px}h2{font-size:15px;margin-top:22px}.meta{color:#566674;font-size:12px;border-bottom:2px solid #e0e6eb;padding-bottom:12px}p{white-space:pre-wrap;line-height:1.5}figure{margin:12px 0;page-break-inside:avoid}img{max-width:100%;max-height:520px;object-fit:contain}figcaption{font-size:11px;color:#566674}@media print{body{margin:12mm}button{display:none}}</style></head><body><h1>CHIAPLAST · Nota técnica</h1><h2>'+esc(n.title)+'</h2><div class="meta">Apartado: '+esc(n.area)+' · Máquina: '+esc(n.machine||'No especificada')+'<br>Fecha: '+esc(new Date(n.created).toLocaleString())+'<br>Conservación en la app hasta: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+'</div><p>'+esc(n.text||'Sin observaciones adicionales.')+'</p><h2>Evidencias fotográficas</h2>'+imgs+'<p class="meta">Documento generado desde Chiaplast. Guarda este PDF fuera de la aplicación para conservarlo después del plazo de 30 días.</p><script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>');
+    w.document.close();
+  }catch(e){toast('No se pudo preparar el PDF de esta nota.')}
+}
+
 /* ===== Recordatorios locales: comprobados solo mientras el HTML está activo ===== */
 const reminderKey=()=>stateKey('mtto_reminders');
 function loadReminders(){try{const v=JSON.parse(store.get(reminderKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
