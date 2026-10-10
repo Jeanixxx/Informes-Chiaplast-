@@ -472,6 +472,42 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
   <button class="btn btn-p" style="flex:none;width:100%" onclick="finish()">Nuevo reporte</button>
 </section>
 
+<!-- Tablero Kanban -->
+<section id="kanban" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban<small>Organiza el trabajo de mantenimiento</small></h1></header>
+  <div class="body">
+    <div class="card"><h2 style="margin-top:0">Nueva tarea</h2>
+      <div class="f"><label for="kanbanTitle">Tarea</label><input id="kanbanTitle" maxlength="140" placeholder="Ej. Cambiar chumacera de BM-2"></div>
+      <div class="two"><div class="f"><label for="kanbanArea">Área / máquina</label><input id="kanbanArea" maxlength="80" placeholder="DIM · BM-2"></div><div class="f"><label for="kanbanDue">Fecha límite</label><input id="kanbanDue" type="date"></div></div>
+      <div class="f"><label for="kanbanDetails">Detalle (opcional)</label><textarea id="kanbanDetails" rows="2" maxlength="500" placeholder="Materiales, causa, responsable…"></textarea></div>
+      <button class="btn btn-p" style="width:100%;flex:none" onclick="addKanbanTask()">Agregar al tablero</button>
+    </div>
+    <div class="kanban-columns">
+      <div class="kanban-column"><h3>Por hacer</h3><div id="kanbanTodo"></div></div>
+      <div class="kanban-column"><h3>En proceso</h3><div id="kanbanDoing"></div></div>
+      <div class="kanban-column"><h3>Terminado</h3><div id="kanbanDone"></div></div>
+    </div>
+    <p class="muted" style="font-size:12px">Las tareas se guardan en este dispositivo y se mantienen separadas del modo demo.</p>
+  </div>
+</section>
+
+<!-- Notas técnicas -->
+<section id="notes" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Notas técnicas<small>Registro de hallazgos y evidencias</small></h1></header>
+  <div class="body">
+    <div class="note-warning" style="margin-bottom:12px"><b>Conservación temporal:</b> las notas y fotografías se guardan en este dispositivo durante un máximo de 30 días desde su creación. Después se eliminan automáticamente al abrir esta sección. Genera el PDF y guárdalo fuera de Chiaplast si necesitas conservarlo.</div>
+    <div class="card"><h2 style="margin-top:0">Nueva nota</h2>
+      <div class="f"><label for="noteTitle">Título</label><input id="noteTitle" maxlength="120" placeholder="Ej. Fuga de aceite en reductor"></div>
+      <div class="two"><div class="f"><label for="noteArea">Apartado</label><select id="noteArea"><option value="General">General</option><option value="Extrusión 1">Extrusión 1</option><option value="Extrusión 2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="Chequeo diario">Chequeo diario</option><option value="Recordatorios">Recordatorios</option><option value="Kanban">Kanban</option><option value="Otro">Otro</option></select></div><div class="f"><label for="noteMachine">Máquina / referencia</label><input id="noteMachine" maxlength="80" placeholder="Ej. BM-3"></div></div>
+      <div class="f"><label for="noteText">Nota / observaciones</label><textarea id="noteText" rows="4" maxlength="3000" placeholder="Describe el hallazgo, trabajo realizado o pendiente…"></textarea></div>
+      <div class="f"><label for="notePhotos">Fotografías (máximo 5 por nota)</label><input id="notePhotos" type="file" accept="image/*" capture="environment" multiple onchange="previewNotePhotos(this)"><small class="muted">En un teléfono puedes abrir la cámara o elegir imágenes existentes. Las fotos se reducen para ahorrar espacio.</small></div>
+      <div id="notePhotoPreview" class="photo-preview"></div>
+      <button class="btn btn-p" style="width:100%;flex:none" onclick="saveNote()">Guardar nota y evidencias</button>
+    </div>
+    <div class="h2" style="margin-top:18px">Notas guardadas</div><div id="notesList"></div>
+  </div>
+</section>
+
 <!-- Herramientas -->
 <section id="tools" class="screen">
   <header class="bar">
@@ -649,9 +685,14 @@ function show(id){
   $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu') renderRecent();
   if(id==='dailyBatch') renderDailyBatch();
+  if(id==='kanban') renderKanban();
+  if(id==='notes') renderNotes();
   if(id==='tools'){renderReminders();const d=new Date();$('reminderDate').min=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());if(!$('reminderDate').value)$('reminderDate').value=$('reminderDate').min;if(!$('reminderTime').value)$('reminderTime').value=pad(d.getHours())+':'+pad(d.getMinutes());}
 }
 function go(id){history.pushState({s:id},'');show(id)}
+function openReminders(){go('tools');const card=$('remindersCard');if(card)card.scrollIntoView({block:'start',behavior:'smooth'})}
+function openNotes(area,machine){if(area)$('noteArea').value=area;if(machine)$('noteMachine').value=machine;go('notes')}
+function openNoteForCurrentContext(){openNotes(Runtime.area||'General',Runtime.machine||'')}
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
   if(!isDemo()&&!isIn()){root('login');return}
