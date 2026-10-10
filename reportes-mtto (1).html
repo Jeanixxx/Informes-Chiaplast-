@@ -501,7 +501,7 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
       <div class="f"><label for="noteTitle">Título</label><input id="noteTitle" maxlength="120" placeholder="Ej. Fuga de aceite en reductor"></div>
       <div class="two"><div class="f"><label for="noteArea">Apartado</label><select id="noteArea"><option value="General">General</option><option value="Extrusión 1">Extrusión 1</option><option value="Extrusión 2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="Chequeo diario">Chequeo diario</option><option value="Recordatorios">Recordatorios</option><option value="Kanban">Kanban</option><option value="Otro">Otro</option></select></div><div class="f"><label for="noteMachine">Máquina / referencia</label><input id="noteMachine" maxlength="80" placeholder="Ej. BM-3"></div></div>
       <div class="f"><label for="noteText">Nota / observaciones</label><textarea id="noteText" rows="4" maxlength="3000" placeholder="Describe el hallazgo, trabajo realizado o pendiente…"></textarea></div>
-      <div class="f"><label for="notePhotos">Fotografías (máximo 5 por nota)</label><input id="notePhotos" type="file" accept="image/*" capture="environment" multiple onchange="previewNotePhotos(this)"><small class="muted">En un teléfono puedes abrir la cámara o elegir imágenes existentes. Las fotos se reducen para ahorrar espacio.</small></div>
+      <div class="f"><label>Fotografías (máximo 5 por nota)</label><div class="two"><button class="btn btn-s" type="button" onclick="captureNotePhoto()">Tomar fotografía</button><button class="btn btn-s" type="button" onclick="pickNotePhoto()">Adjuntar imagen</button></div><input id="notePhotos" style="display:none" type="file" accept="image/*" capture="environment" multiple onchange="previewNotePhotos(this)"><small class="muted">En la APK se usa la cámara o el selector de Android. Las evidencias quedan en este dispositivo.</small></div>
       <div id="notePhotoPreview" class="photo-preview"></div>
       <button class="btn btn-p" style="width:100%;flex:none" onclick="saveNote()">Guardar nota y evidencias</button>
     </div>
@@ -689,7 +689,7 @@ function show(id){
   if(id==='dailyBatch') renderDailyBatch();
   if(id==='kanban') renderKanban();
   if(id==='notes') renderNotes();
-  if(id==='tools'){renderReminders();const d=new Date();$('reminderDate').min=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());if(!$('reminderDate').value)$('reminderDate').value=$('reminderDate').min;if(!$('reminderTime').value)$('reminderTime').value=pad(d.getHours())+':'+pad(d.getMinutes());}
+  if(id==='tools'){renderReminders();syncNativeReminders();const d=new Date();$('reminderDate').min=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());if(!$('reminderDate').value)$('reminderDate').value=$('reminderDate').min;if(!$('reminderTime').value)$('reminderTime').value=pad(d.getHours())+':'+pad(d.getMinutes());}
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function openReminders(){go('tools');const card=$('remindersCard');if(card)card.scrollIntoView({block:'start',behavior:'smooth'})}
@@ -849,6 +849,11 @@ function blobBase64(blob){
 }
 async function exportReport(blob,name,mime){
   mime=mime||XLSX_MIME;
+  if(!isDemo()&&window.ChiaplastNative&&typeof window.ChiaplastNative.shareReport==='function'){
+    const result=window.ChiaplastNative.shareReport(name,mime,await blobBase64(blob));
+    if(result!=='ok')throw new Error('Android no pudo preparar el reporte para compartir.');
+    return 'android-share';
+  }
   const plugins=window.Capacitor&&window.Capacitor.Plugins;
   const fs=plugins&&plugins.Filesystem,share=plugins&&plugins.Share;
   if(fs&&typeof fs.writeFile==='function'&&typeof fs.getUri==='function'&&share&&typeof share.share==='function'){
@@ -1210,9 +1215,30 @@ async function notesDelete(id){
 }
 async function purgeExpiredNotes(){
   const all=await notesAll(),now=Date.now(),expired=all.filter(n=>!Number.isFinite(n.created)||now-n.created>=30*24*60*60*1000);
-  for(const n of expired)await notesDelete(n.id);
+  for(const n of expired){deleteNoteEvidence(n);await notesDelete(n.id)}
   return expired.length;
 }
+function deleteNoteEvidence(note){
+  try{if(window.ChiaplastNative&&typeof window.ChiaplastNative.deleteEvidence==='function')(note.photos||[]).forEach(src=>{if(typeof src==='string'&&src.includes('/evidence/'))window.ChiaplastNative.deleteEvidence(src)})}catch(e){}
+}
+function captureNotePhoto(){
+  if(notePhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías por nota.');return}
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('note');return}
+  $('notePhotos').click();
+}
+function pickNotePhoto(){
+  if(notePhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías por nota.');return}
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('note');return}
+  $('notePhotos').removeAttribute('capture');$('notePhotos').click();
+}
+window.onEvidenceCaptured=function(raw){
+  try{
+    const data=typeof raw==='string'?JSON.parse(raw):raw;
+    if(!data||!data.uri)return;
+    if(notePhotosDraft.length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías por nota.');return}
+    notePhotosDraft.push(data.uri);renderPhotoPreview();toast('Evidencia agregada.');
+  }catch(e){toast('No se pudo agregar la fotografía.')}
+};
 function resizeNoteImage(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();reader.onerror=()=>reject(new Error('No se pudo leer una fotografía.'));
@@ -1250,15 +1276,23 @@ async function renderNotes(){
     list.innerHTML=all.map(n=>'<article class="note-card"><h3>'+esc(n.title)+'</h3><div class="note-meta">'+esc(n.area)+(n.machine?' · '+esc(n.machine):'')+' · '+esc(new Date(n.created).toLocaleString())+'</div>'+(n.text?'<p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(n.text)+'</p>':'')+'<div class="note-photos">'+(n.photos||[]).map((p,i)=>'<img src="'+p+'" alt="Evidencia '+(i+1)+'">').join('')+'</div><div class="note-meta">Caduca: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+' · '+((n.photos||[]).length)+' foto(s)</div><div class="note-actions"><button class="btn btn-p" onclick="printNote(\''+esc(n.id)+'\')">Generar PDF</button><button class="btn btn-s" onclick="deleteNote(\''+esc(n.id)+'\')">Eliminar</button></div></article>').join('');
   }catch(e){list.innerHTML='<div class="empty">No se pudo acceder al almacenamiento local de notas. Comprueba que el navegador permita almacenamiento para esta aplicación.</div>'}
 }
-async function deleteNote(id){if(!confirm('¿Eliminar esta nota y sus fotografías? Esta acción no se puede deshacer.'))return;try{await notesDelete(id);await renderNotes();toast('Nota eliminada.')}catch(e){toast('No se pudo eliminar la nota.')}}
-async async function printNote(id){
-  const w=window.open('','_blank');
-  if(!w){toast('El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.');return}
+async function deleteNote(id){if(!confirm('¿Eliminar esta nota y sus fotografías? Esta acción no se puede deshacer.'))return;try{const note=(await notesAll()).find(n=>n.id===id);if(note)deleteNoteEvidence(note);await notesDelete(id);await renderNotes();toast('Nota eliminada.')}catch(e){toast('No se pudo eliminar la nota.')}}
+function buildNotePrintHtml(n){
+  const imgs=(n.photos||[]).map((p,i)=>'<figure><img src="'+p+'" alt="Evidencia '+(i+1)+'"><figcaption>Fotografía '+(i+1)+'</figcaption></figure>').join('');
+  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(n.title)+'</title><style>body{font:14px Arial,sans-serif;color:#182631;margin:28px}h1{font-size:22px}h2{font-size:15px;margin-top:22px}.meta{color:#566674;font-size:12px;border-bottom:2px solid #e0e6eb;padding-bottom:12px}p{white-space:pre-wrap;line-height:1.5}figure{margin:12px 0;page-break-inside:avoid}img{max-width:100%;max-height:520px;object-fit:contain}figcaption{font-size:11px;color:#566674}@media print{body{margin:12mm}button{display:none}}</style></head><body><h1>CHIAPLAST · Nota técnica</h1><h2>'+esc(n.title)+'</h2><div class="meta">Apartado: '+esc(n.area)+' · Máquina: '+esc(n.machine||'No especificada')+'<br>Fecha: '+esc(new Date(n.created).toLocaleString())+'<br>Conservación en la app hasta: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+'</div><p>'+esc(n.text||'Sin observaciones adicionales.')+'</p><h2>Evidencias fotográficas</h2>'+imgs+'<p class="meta">Documento generado desde Chiaplast. Guarda este PDF fuera de la aplicación para conservarlo después del plazo de 30 días.</p></body></html>';
+}
+async function printNote(id){
   try{
-    const n=(await notesAll()).find(x=>x.id===id);if(!n){w.close();toast('La nota ya no está disponible.');return}
-    const imgs=(n.photos||[]).map((p,i)=>'<figure><img src="'+p+'" alt="Evidencia '+(i+1)+'"><figcaption>Fotografía '+(i+1)+'</figcaption></figure>').join('');
-    w.document.open();w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(n.title)+'</title><style>body{font:14px Arial,sans-serif;color:#182631;margin:28px}h1{font-size:22px}h2{font-size:15px;margin-top:22px}.meta{color:#566674;font-size:12px;border-bottom:2px solid #e0e6eb;padding-bottom:12px}p{white-space:pre-wrap;line-height:1.5}figure{margin:12px 0;page-break-inside:avoid}img{max-width:100%;max-height:520px;object-fit:contain}figcaption{font-size:11px;color:#566674}@media print{body{margin:12mm}button{display:none}}</style></head><body><h1>CHIAPLAST · Nota técnica</h1><h2>'+esc(n.title)+'</h2><div class="meta">Apartado: '+esc(n.area)+' · Máquina: '+esc(n.machine||'No especificada')+'<br>Fecha: '+esc(new Date(n.created).toLocaleString())+'<br>Conservación en la app hasta: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+'</div><p>'+esc(n.text||'Sin observaciones adicionales.')+'</p><h2>Evidencias fotográficas</h2>'+imgs+'<p class="meta">Documento generado desde Chiaplast. Guarda este PDF fuera de la aplicación para conservarlo después del plazo de 30 días.</p><script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>');
-    w.document.close();
+    const n=(await notesAll()).find(x=>x.id===id);if(!n){toast('La nota ya no está disponible.');return}
+    const doc=buildNotePrintHtml(n);
+    if(window.ChiaplastNative&&typeof window.ChiaplastNative.printHtmlReport==='function'){
+      const result=window.ChiaplastNative.printHtmlReport(doc,n.title||'Nota Chiaplast');
+      if(result!=='ok')toast('No se pudo abrir la impresión del PDF.');
+      return;
+    }
+    const w=window.open('','_blank');
+    if(!w){toast('El navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.');return}
+    w.document.open();w.document.write(doc+'<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\\/script>');w.document.close();
   }catch(e){toast('No se pudo preparar el PDF de esta nota.')}
 }
 
@@ -1272,16 +1306,39 @@ function renderReminders(){
   if(!items.length){list.innerHTML='<div class="empty">No hay recordatorios guardados.</div>';return}
   list.innerHTML=items.map(r=>'<div class="rec"><div><b>'+esc(r.text)+'</b><span>'+esc(r.date)+' · '+esc(r.time)+(r.notified?' · Aviso mostrado':'')+'</span></div><button class="link" onclick="deleteReminder(&quot;'+esc(r.id)+'&quot;)">Eliminar</button></div>').join('');
 }
+function syncNativeReminders(){
+  if(!window.ChiaplastNative||typeof window.ChiaplastNative.scheduleReminder!=='function')return;
+  loadReminders().forEach(r=>{
+    if(!r.notified&&r.date&&r.time){
+      const result=window.ChiaplastNative.scheduleReminder(JSON.stringify({id:r.id,title:r.text,machine:'',when:r.date+'T'+r.time+':00',status:'pending'}));
+      if(result==='permission_required')toast('Autoriza las alarmas exactas en Ajustes para recibir avisos puntuales.');
+    }
+  });
+}
+window.syncNativeReminders=syncNativeReminders;
+window.openReminderFromNotification=function(id){
+  root('tools');const card=$('remindersCard');if(card)card.scrollIntoView({block:'start',behavior:'smooth'});
+  const item=loadReminders().find(r=>r.id===id);if(item)toast('Recordatorio: '+item.text);
+};
 function addReminder(){
   const text=$('reminderText').value.trim(),date=$('reminderDate').value,time=$('reminderTime').value;
   if(!text||!date||!time){toast('Completa el pendiente, la fecha y la hora.');return}
   const due=new Date(date+'T'+time+':00');
   if(Number.isNaN(due.getTime())){toast('La fecha u hora no es válida.');return}
   if(due.getTime()<Date.now()-60000){toast('Elige una fecha y hora futuras.');return}
-  const items=loadReminders();items.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),text,date,time,due:due.toISOString(),notified:false});
-  saveReminders(items);$('reminderText').value='';renderReminders();toast('Recordatorio guardado en este dispositivo.');
+  const item={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),text,date,time,due:due.toISOString(),notified:false};
+  const items=loadReminders();items.push(item);saveReminders(items);
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.scheduleReminder==='function'){
+    const result=window.ChiaplastNative.scheduleReminder(JSON.stringify({id:item.id,title:item.text,machine:'',when:date+'T'+time+':00',status:'pending'}));
+    if(result==='permission_required')toast('Recordatorio guardado. Autoriza las alarmas exactas para activar el aviso a la hora indicada.');
+  }
+  $('reminderText').value='';renderReminders();toast('Recordatorio guardado en este dispositivo.');
 }
-function deleteReminder(id){saveReminders(loadReminders().filter(r=>r.id!==id));renderReminders();toast('Recordatorio eliminado.')}
+function deleteReminder(id){
+  saveReminders(loadReminders().filter(r=>r.id!==id));
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
+  renderReminders();toast('Recordatorio eliminado.');
+}
 async function enableReminderNotifications(){
   if(!('Notification' in window)){toast('Este entorno no permite notificaciones del navegador. Los avisos aparecerán dentro de Chiaplast mientras esté abierta.');return}
   try{const permission=await Notification.requestPermission();toast(permission==='granted'?'Notificaciones permitidas mientras el entorno las admita.':'No se concedió permiso. Los avisos aparecerán dentro de Chiaplast mientras esté abierta.')}
