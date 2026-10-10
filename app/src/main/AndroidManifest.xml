@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <application android:allowBackup="false" android:label="Chiaplast Mantenimiento" android:supportsRtl="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="false">
+    <application android:allowBackup="false" android:label="Chiaplast Mantenimiento" android:supportsRtl="true" android:theme="@style/Theme.AppCompat.Light.NoActionBar" android:usesCleartextTraffic="false">
         <activity android:name=".MainActivity" android:launchMode="singleTop" android:configChanges="keyboard|keyboardHidden|orientation|screenSize" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
