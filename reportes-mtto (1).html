@@ -235,7 +235,6 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 /* Capa de coherencia visual y uso en planta */
 body{background:var(--bg);color:var(--ink)}
 .bar{background:linear-gradient(135deg,var(--steel) 0%,var(--steel-2) 100%);box-shadow:inset 0 -1px 0 rgba(255,255,255,.07)}
-.menu-intro{margin:4px 0 16px;max-width:760px}
 .workflow-primary{min-height:112px;border-radius:12px;box-shadow:0 4px 14px rgba(17,27,38,.07);justify-content:center;gap:8px}
 .workflow-primary b{font-size:18px;letter-spacing:-.2px}
 .workflow-primary span{max-width:760px;font-size:14px;line-height:1.45;color:var(--muted)}
@@ -288,7 +287,7 @@ body{background:var(--bg);color:var(--ink)}
   <div class="top">
     <div class="mark" style="font-size:30px">CHIAPLAST</div><i class="rule"></i>
     <h1>Departamento de Mantenimiento</h1>
-    <p>Más de 20 años de trabajo en planta. Registra aquí tus reportes.</p>
+    <p>Reportes de mantenimiento de planta.</p>
   </div>
   <div class="stripe"></div>
   <div class="sheet">
@@ -301,12 +300,11 @@ body{background:var(--bg);color:var(--ink)}
 <!-- Menú -->
 <section id="menu" class="screen">
   <header class="bar">
-    <h1>Centro de mantenimiento<small>Reportes y seguimiento de planta</small></h1>
+    <h1>Centro de mantenimiento</h1>
     <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
   </header>
   <div class="body">
     <div id="demoBanner" class="demo" hidden><i></i>Modo demo: los datos de prueba se mantienen separados</div>
-    <p class="empty menu-intro">Registra inspecciones, documenta hallazgos y da seguimiento a cada máquina.</p>
     <div class="h2">Reportes operativos</div>
     <button class="area wide workflow-primary" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
       <b>Chequeo diario</b><span>Captura temperatura y amperaje; reúne varios equipos en un solo reporte.</span>
@@ -320,7 +318,7 @@ body{background:var(--bg);color:var(--ink)}
       <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite">Pendientes y trabajos en curso</small></button>
       <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span><small>Hallazgos, fotos y PDF</small></button>
     </div>
-    <div class="h2">Últimos reportes</div>
+    <div class="h2">Recientes</div>
     <div id="recent"></div>
   </div>
 </section>
@@ -435,7 +433,7 @@ body{background:var(--bg);color:var(--ink)}
 <section id="form" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <h1 id="fTitle">Área<small>Paso 1 de 2</small></h1>
+    <h1 id="fTitle">Área</h1>
   </header>
   <div class="steps"><div class="on"></div><div></div></div>
   <div class="body">
@@ -486,26 +484,26 @@ body{background:var(--bg);color:var(--ink)}
 <section id="confirm" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <h1>Revisar<small>Paso 2 de 2</small></h1>
+    <h1>Revisar</h1>
   </header>
   <div class="steps"><div class="on"></div><div class="on"></div></div>
   <div class="body">
     <div class="card"><div id="sum"></div>
-      <div class="fname"><span style="color:var(--muted)">Nombre base del reporte</span><br><b id="fn"></b></div>
+      <div class="fname"><span style="color:var(--muted)">Archivo</span><br><b id="fn"></b></div>
       <div class="f" style="margin-top:16px;margin-bottom:0">
-        <span class="lbl">¿En qué formato deseas guardarlo?</span>
+        <span class="lbl">Formato</span>
         <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
           <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
           <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
           <label><input type="radio" name="exportChoice" value="both"> Ambos</label>
         </div>
-        <p class="export-note">PDF genera un documento listo para imprimir o compartir. Excel conserva los datos en celdas para analizarlos.</p>
+        <p class="export-note">PDF para imprimir o compartir; Excel para analizar los datos.</p>
       </div>
     </div>
   </div>
   <div class="dock">
     <button class="btn btn-s" onclick="history.back()">Editar</button>
-    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar archivo</button>
+    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar reporte</button>
   </div>
 </section>
 
@@ -874,7 +872,7 @@ function pick(name,code){
 function startCheck(kind){
   Runtime.checkType=kind;
   const dailyMeasurements=isDaily()&&isExt();
-  $('fTitle').innerHTML=esc(Runtime.area)+(Runtime.batchMode?' · '+esc(Runtime.machine):'')+(isDaily()?' · Diario':'')+'<small>Paso 1 de 2</small>';
+  $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
   $('ext').innerHTML=dailyMeasurements?buildDaily():isExt()?buildExt():buildMq();
   $('ext').hidden=false;$('maintenanceFields').hidden=dailyMeasurements;
@@ -1039,7 +1037,7 @@ async function send(){
     addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
-  finally{b.disabled=false;b.textContent='Generar archivo'}
+  finally{b.disabled=false;b.textContent='Generar reporte'}
 }
 function finish(){
   $('obs').value='';extLoad({});['gType','gStatus'].forEach(g=>{const x=$(g);x.dataset.v='';x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'))});
