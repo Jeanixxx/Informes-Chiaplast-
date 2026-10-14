@@ -80,8 +80,6 @@ button{border:0;background:none;cursor:pointer;touch-action:manipulation}
 .sheet .link{display:block;margin:12px auto 0}
 .sheet small{display:block;color:var(--err);min-height:18px;margin-top:8px;font-size:13px;line-height:1.4;text-align:center}
 /* Menú */
-.demo{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff7d5,#fce7a3);color:#4a3a00;border:1px solid rgba(201,140,0,.2);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:600;margin-bottom:14px;box-shadow:0 8px 20px rgba(242,183,5,.12)}
-.demo i{width:10px;height:10px;border-radius:50%;background:#d49a00;flex:0 0 auto;box-shadow:0 0 0 4px rgba(212,154,0,.12)}
 .h2{font-size:13px;font-weight:700;color:var(--muted);margin:20px 4px 10px;letter-spacing:.08em;text-transform:uppercase}
 .areas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .area{background:linear-gradient(180deg,#ffffff,#f4f7f9);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:var(--r);min-height:92px;padding:14px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow);transition:transform .12s ease,box-shadow .2s ease}
@@ -201,7 +199,6 @@ input:focus,textarea:focus,.zr input:focus{border-color:#b68c00;box-shadow:0 0 0
 .seg{gap:7px}.seg button{border-radius:9px;min-height:46px;font-size:13px}.seg button[aria-pressed=true]{background:var(--steel);border-color:var(--accent)}
 .steps div{height:4px}.dock{background:var(--surface);box-shadow:0 -3px 12px rgba(23,43,58,.035);gap:10px}
 .export-choice label{border-radius:9px;background:var(--bg);font-size:13px}
-.demo{background:#fff7d8;color:#463600;border:1px solid #ead18a;box-shadow:none;border-radius:9px}
 .toast{border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .login .sheet{background:var(--surface);color:var(--ink)}.login .sheet .link{color:var(--muted)}
 .login .stripe{height:6px;animation:none;background:var(--accent)}
@@ -270,6 +267,7 @@ body{background:var(--bg);color:var(--ink)}
   .kanban-column{scroll-snap-align:start}
 }
 @media(max-width:380px){.menu-tool{grid-template-columns:30px minmax(0,1fr);padding:9px}.menu-tool .mi{width:28px;height:28px;font-size:11px}.reminder-item{padding:11px}}
+.helpm{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99;padding:24px}.helpm[hidden]{display:none}.helpbox{background:var(--surface);color:var(--ink);border-radius:14px;padding:20px;max-width:380px;width:100%;display:flex;flex-direction:column;gap:14px}.helpbox p{margin:0;line-height:1.5}
 </style>
 </head>
 <body>
@@ -292,7 +290,6 @@ body{background:var(--bg);color:var(--ink)}
   <div class="stripe"></div>
   <div class="sheet">
     <button class="btn btn-p" id="loginBtn" onclick="signIn()">Continuar</button>
-    <button class="link" onclick="signInDemo()">Entrar en modo demo</button>
     <small id="loginErr" role="alert"></small>
   </div>
 </section>
@@ -304,19 +301,18 @@ body{background:var(--bg);color:var(--ink)}
     <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
   </header>
   <div class="body">
-    <div id="demoBanner" class="demo" hidden><i></i>Modo demo: los datos de prueba se mantienen separados</div>
     <div class="h2">Reportes operativos</div>
     <button class="area wide workflow-primary" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
-      <b>Chequeo diario</b><span>Captura temperatura y amperaje; reúne varios equipos en un solo reporte.</span>
+      <b>Chequeo diario</b>
     </button>
     <button class="area wide workflow-primary" style="width:100%;margin-bottom:18px;border-left-color:var(--accent)" onclick="startWorkflow('preventive')">
-      <b>Mantenimiento preventivo</b><span>Selecciona área y máquina para completar la inspección.</span>
+      <b>Mantenimiento preventivo</b>
     </button>
     <div class="h2">Seguimiento del trabajo</div>
     <div class="menu-tools" aria-label="Seguimiento de mantenimiento">
-      <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span><small id="menuReminderCount" aria-live="polite">Avisos por máquina y fecha</small></button>
-      <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite">Pendientes y trabajos en curso</small></button>
-      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span><small>Hallazgos, fotos y PDF</small></button>
+      <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span><small id="menuReminderCount" aria-live="polite"></small></button>
+      <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite"></small></button>
+      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span></button>
     </div>
     <div class="h2">Recientes</div>
     <div id="recent"></div>
@@ -331,10 +327,10 @@ body{background:var(--bg);color:var(--ink)}
   </header>
   <div class="body">
     <button class="area" style="width:100%;margin-bottom:12px" onclick="startCheck('daily')">
-      <b style="font-size:20px">Chequeo diario</b><span>Temperatura y amperaje de zonas y motor principal.</span>
+      <b style="font-size:20px">Chequeo diario</b>
     </button>
     <button class="area" style="width:100%" onclick="startCheck('preventive')">
-      <b style="font-size:20px">Mantenimiento preventivo</b><span>Abrir el formulario de mantenimiento existente.</span>
+      <b style="font-size:20px">Mantenimiento preventivo</b>
     </button>
   </div>
 </section>
@@ -343,10 +339,9 @@ body{background:var(--bg);color:var(--ink)}
 <section id="preventiveArea" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="root('menu')" aria-label="Atrás">‹</button>
-    <h1>Mantenimiento preventivo<small>1. Elige el área</small></h1>
+    <h1>Mantenimiento preventivo</h1>
   </header>
   <div class="body">
-    <p class="empty">Selecciona el área para ver únicamente las máquinas registradas en ella.</p>
     <div class="areas">
       <button class="area" onclick="choosePreventiveArea('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="choosePreventiveArea('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
@@ -363,7 +358,6 @@ body{background:var(--bg);color:var(--ink)}
     <h1>Elegir máquina<small id="preventiveMachineSubtitle"></small></h1>
   </header>
   <div class="body">
-    <p class="empty">Selecciona la máquina que recibirá el mantenimiento preventivo.</p>
     <div id="preventiveMachineChoices" class="areas"></div>
   </div>
 </section>
@@ -372,10 +366,9 @@ body{background:var(--bg);color:var(--ink)}
 <section id="dailyArea" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="leaveDailyBatch()" aria-label="Atrás">‹</button>
-    <h1>Reportes diarios<small>1. Elige el área</small></h1>
+    <h1>Reportes diarios</h1>
   </header>
   <div class="body">
-    <p class="muted">Selecciona el área donde se encuentra la máquina que vas a revisar.</p>
     <div class="areas">
       <button class="area" onclick="chooseDailyArea('Extrusión 1','E1AREA')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="chooseDailyArea('Extrusión 2','E2AREA')"><b>E2</b><span>Extrusión 2</span></button>
@@ -394,7 +387,7 @@ body{background:var(--bg);color:var(--ink)}
   <div class="body">
     <div id="dailyMachineChoices" class="areas"></div>
     <div class="card" style="margin-top:14px">
-      <div class="f"><label for="customMachine">¿No aparece en la lista? Escribe el nombre de la máquina</label>
+      <div class="f"><label for="customMachine">Otra máquina</label>
         <input id="customMachine" placeholder="Nombre de la máquina" autocomplete="off">
       </div>
       <button class="btn btn-s" style="width:100%" onclick="chooseCustomDailyMachine()">Usar este nombre</button>
@@ -405,13 +398,12 @@ body{background:var(--bg);color:var(--ink)}
 <section id="dailyBatch" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="leaveDailyBatch()" aria-label="Salir">‹</button>
-    <h1>Informes recopilados<small id="dailyBatchCount">0 informes guardados temporalmente</small></h1>
+    <h1>Informes recopilados<small id="dailyBatchCount"></small></h1>
   </header>
   <div class="body">
     <div class="card">
-      <p>Los informes se mantienen en este dispositivo mientras continúa la captura. Puedes agregar otras máquinas o quitar un informe antes de generar el Excel.</p>
       <div id="dailyBatchList"></div>
-      <div id="dailyBatchEmpty" class="empty">Aún no has agregado informes.</div>
+      <div id="dailyBatchEmpty" class="empty">Sin máquinas agregadas.</div>
       <div class="f" style="margin-top:18px;margin-bottom:0">
         <span class="lbl">Formato de salida</span>
         <div class="export-choice" role="radiogroup" aria-label="Formato de los reportes diarios">
@@ -419,13 +411,12 @@ body{background:var(--bg);color:var(--ink)}
           <label><input type="radio" name="batchExportChoice" value="excel" checked> Excel</label>
           <label><input type="radio" name="batchExportChoice" value="both"> Ambos</label>
         </div>
-        <p class="export-note">Se exportarán juntos únicamente los informes recopilados en este lote.</p>
       </div>
     </div>
   </div>
   <div class="dock" style="gap:8px">
-    <button class="btn btn-s" onclick="go('dailyArea')">Agregar informe</button>
-    <button class="btn btn-p" id="finishBatchBtn" onclick="finishDailyBatch()">Finalizar y guardar reportes</button>
+    <button class="btn btn-s" onclick="go('dailyArea')">Otra máquina</button>
+    <button class="btn btn-p" id="finishBatchBtn" onclick="finishDailyBatch()">Terminar y guardar</button>
   </div>
 </section>
 
@@ -442,7 +433,7 @@ body{background:var(--bg);color:var(--ink)}
         <div class="f"><label for="d">Fecha</label><input type="date" id="d" onchange="this.classList.remove('bad');saveDraft()"></div>
         <div class="f"><label for="t">Hora</label><input type="time" id="t" onchange="this.classList.remove('bad');saveDraft()"></div>
       </div>
-      <button class="link" onclick="setNow();saveDraft()">Usar fecha y hora actuales</button>
+      <button class="link" onclick="setNow();saveDraft()">Ahora</button>
     </div>
 
     <div id="ext" hidden></div>
@@ -497,7 +488,6 @@ body{background:var(--bg);color:var(--ink)}
           <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
           <label><input type="radio" name="exportChoice" value="both"> Ambos</label>
         </div>
-        <p class="export-note">PDF para imprimir o compartir; Excel para analizar los datos.</p>
       </div>
     </div>
   </div>
@@ -513,6 +503,7 @@ body{background:var(--bg);color:var(--ink)}
   <h2 id="rTitle">Listo</h2>
   <p id="rMsg"></p>
   <div class="card"><span style="color:var(--muted);font-size:13px">Archivo</span><div id="rFile" style="font-weight:700;word-break:break-all;margin-top:4px"></div></div>
+  <div id="shareBtns"></div>
   <button class="btn btn-p" style="flex:none;width:100%" onclick="finish()">Nuevo reporte</button>
 </section>
 
@@ -520,10 +511,9 @@ body{background:var(--bg);color:var(--ink)}
 <section id="reminders" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
-    <h1>Recordatorios<small>Seguimiento por máquina y fecha</small></h1>
+    <h1>Recordatorios</h1>
   </header>
   <div class="body">
-    <p id="reminderModeHint" class="empty">Los avisos se guardan en este dispositivo.</p>
     <form class="card" id="remindersCard" onsubmit="addReminder(event)">
       <input id="reminderId" type="hidden">
       <input id="reminderTaskId" type="hidden">
@@ -543,7 +533,7 @@ body{background:var(--bg);color:var(--ink)}
 </section>
 
 <section id="kanban" class="screen">
-  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban<small>Organiza el trabajo de mantenimiento</small></h1></header>
+  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban</h1></header>
   <div class="body">
     <div class="card"><h2 style="margin-top:0">Nueva tarea</h2>
       <div class="f"><label for="kanbanTitle">Tarea</label><input id="kanbanTitle" maxlength="140" placeholder="Ej. Cambiar chumacera de BM-2"></div>
@@ -557,15 +547,13 @@ body{background:var(--bg);color:var(--ink)}
       <div class="kanban-column"><h3>En proceso</h3><div id="kanbanDoing"></div></div>
       <div class="kanban-column"><h3>Terminado</h3><div id="kanbanDone"></div></div>
     </div>
-    <p class="muted" style="font-size:12px">Las tareas se guardan en este dispositivo y se mantienen separadas del modo demo.</p>
   </div>
 </section>
 
 <!-- Notas técnicas -->
 <section id="notes" class="screen">
-  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Notas técnicas<small>Registro de hallazgos y evidencias</small></h1></header>
+  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Notas técnicas</h1></header>
   <div class="body">
-    <div class="note-warning" style="margin-bottom:12px"><b>Conservación temporal:</b> las notas y fotografías se guardan en este dispositivo durante un máximo de 30 días desde su creación. Después se eliminan automáticamente al abrir esta sección. Genera el PDF y guárdalo fuera de Chiaplast si necesitas conservarlo.</div>
     <div class="card"><h2 style="margin-top:0">Nueva nota</h2>
       <div class="f"><label for="noteTitle">Título</label><input id="noteTitle" maxlength="120" placeholder="Ej. Fuga de aceite en reductor"></div>
       <div class="two"><div class="f"><label for="noteArea">Apartado</label><select id="noteArea"><option value="General">General</option><option value="Extrusión 1">Extrusión 1</option><option value="Extrusión 2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="Chequeo diario">Chequeo diario</option><option value="Recordatorios">Recordatorios</option><option value="Kanban">Kanban</option><option value="Otro">Otro</option></select></div><div class="f"><label for="noteMachine">Máquina / referencia</label><input id="noteMachine" maxlength="80" placeholder="Ej. BM-3"></div></div>
@@ -582,29 +570,28 @@ body{background:var(--bg);color:var(--ink)}
 <section id="tools" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
-    <h1>Configuración<small>Preferencias de uso local</small></h1>
+    <h1>Configuración</h1>
   </header>
   <div class="body">
     <div class="card">
-      <div class="tool" style="margin-bottom:14px">
-        <div><b>Modo demo</b><span>Prueba la generación sin mezclar los datos reales.</span></div>
-        <button class="sw" id="demoSw" role="switch" aria-checked="false" aria-label="Modo demo" onclick="toggleDemo()"></button>
-      </div>
-      <p class="muted">Los reportes, tareas y recordatorios se guardan localmente en este dispositivo; no se conectan a servicios externos.</p>
     </div>
     <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
   </div>
 </section>
 
+<div id="helpModal" class="helpm" hidden onclick="this.hidden=true"><div class="helpbox"><p id="helpText"></p><button class="btn btn-p">Entendido</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
+const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado."};
+function showHelp(){const a=document.querySelector('.screen.active');$('helpText').textContent=HELP[a&&a.id]||HELP.menu;$('helpModal').hidden=false}
+document.querySelectorAll('.screen:not(.splash):not(.login) .bar').forEach(b=>{const h=document.createElement('button');h.className='iconbtn';h.style.cssText='width:38px;height:38px;font-size:17px;margin-left:auto';h.textContent='?';h.setAttribute('aria-label','Ayuda');h.onclick=showHelp;b.appendChild(h)});
 const AppState={session:false,user:'',settings:{},history:[]};
-const Runtime={mode:'real',area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false};
+const Runtime={area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false};
 const DailyBatch={active:false,area:'',code:'',machine:'',reports:[],editIndex:-1};
-const dailyBatchKey=()=>stateKey('mtto_daily_batch');
+const dailyBatchKey=()=>'mtto_daily_batch';
 function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveDailyBatch(){store.set(dailyBatchKey(),JSON.stringify(DailyBatch.reports))}
 /* Catálogo único de máquinas: lo comparten chequeo diario y mantenimiento preventivo. */
@@ -623,7 +610,7 @@ function choosePreventiveArea(area,code){
   Runtime.area=area;Runtime.code=code;Runtime.machine='';
   const data=MACHINE_DB[code];if(!data){toast('No se encontró el área en el catálogo.');return}
   $('preventiveMachineSubtitle').textContent=area+' · '+data.machines.length+' máquinas';
-  $('preventiveMachineChoices').innerHTML=data.machines.map(name=>'<button class="area" onclick="choosePreventiveMachine(&quot;'+esc(name)+'&quot;,&quot;'+esc(code)+'&quot;)"><b>'+esc(name)+'</b><span>Iniciar mantenimiento preventivo</span></button>').join('');
+  $('preventiveMachineChoices').innerHTML=data.machines.map(name=>'<button class="area" onclick="choosePreventiveMachine(&quot;'+esc(name)+'&quot;,&quot;'+esc(code)+'&quot;)"><b>'+esc(name)+'</b></button>').join('');
   go('preventiveMachine');
 }
 function choosePreventiveMachine(machine,code){
@@ -637,10 +624,10 @@ function beginDailyBatch(){
 function chooseDailyArea(area,code){
   const dbCode=code==='E1AREA'?'E1':code==='E2AREA'?'E2':code;
   DailyBatch.area=area;DailyBatch.code=code;
-  const data=MACHINE_DB[dbCode];const list=(data?data.machines:[]).map(name=>({name,code:dbCode}));
+  const data=MACHINE_DB[dbCode];const list=(data?data.machines:[]).map(name=>({name,code:dbCode})),done=new Set(DailyBatch.reports.map(r=>r.machine));
   $('dailyMachineSubtitle').textContent=area+' · '+list.length+' máquinas';
   $('customMachine').value='';
-  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+'</b><span>Capturar chequeo diario</span></button>').join('');
+  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+(done.has(m.name)?' ✓':'')+'</b></button>').join('');
   go('dailyMachine');
 }
 function chooseCustomDailyMachine(){
@@ -695,22 +682,27 @@ function batchExcelRows(){
   return rows;
 }
 async function finishDailyBatch(skipConfirm=false){
-  if(!DailyBatch.reports.length){toast('Agrega al menos un informe antes de finalizar.');return}
-  if(!skipConfirm&&!confirm('¿Deseas generar los archivos con los '+DailyBatch.reports.length+' informes recopilados?'))return;
-  const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando reportes…';
+  if(!DailyBatch.reports.length){toast('Agrega al menos una máquina.');return}
+  const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando…';
   try{
     const baseName='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','');
     const results=await generateExports(batchExcelRows(),baseName,selectedExport('batchExportChoice'));
-    $('rFile').textContent=results.map(r=>r.name).join(' · ');
-    $('rTitle').textContent=isDemo()?'Reportes diarios de prueba generados':'Reportes diarios generados';
-    const shared=results.some(r=>r.mode==='android-share');
-    $('rMsg').textContent='El lote contiene '+DailyBatch.reports.length+' informes. '+(isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.');
-    addRecent({n:results.map(r=>r.name).join(', '),a:'Reportes diarios ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily',demo:isDemo()});
+    showDone(results,'Reporte diario generado');
+    addRecent({n:results.map(r=>r.name).join(', '),a:'Diario ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily'});
     DailyBatch.reports=[];DailyBatch.active=false;saveDailyBatch();store.del(dailyBatchKey());Runtime.batchMode=false;
     history.replaceState({s:'done'},'');show('done');
-  }catch(e){toast(e.message||'No se pudieron generar los reportes.')}
-  finally{b.disabled=false;b.textContent='Finalizar y guardar reportes';renderDailyBatch()}
+  }catch(e){toast(e.message||'No se pudo generar el reporte.')}
+  finally{b.disabled=false;b.textContent='Terminar y guardar';renderDailyBatch()}
 }
+const LastExports=[];
+function showDone(results,title){
+  $('rFile').textContent=results.map(r=>r.name).join(' · ');
+  $('rTitle').textContent=title;
+  const saved=results.some(r=>r.mode==='android-saved');
+  $('rMsg').textContent=saved?'Guardado en Descargas/Chiaplast':'Descargado en el dispositivo';
+  $('shareBtns').innerHTML=LastExports.map((f,k)=>'<button class="btn btn-s" style="flex:none;width:100%;margin-bottom:8px" onclick="shareLast('+k+')">Compartir '+esc(f.name.split('.').pop().toUpperCase())+'</button>').join('');
+}
+function shareLast(k){const f=LastExports[k];if(f&&window.ChiaplastNative)window.ChiaplastNative.shareReport(f.name,f.mime,f.b64)}
 let storageWarningShown=false;
 const store={
   get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
@@ -726,10 +718,7 @@ const store={
   },
   del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
-function isDemo(){return Runtime.mode==='demo'}
-function stateKey(base){return isDemo()?base+'_demo':base}
 function currentUser(){return AppState.user||store.get('mtto_user','')}
-function setMode(mode){Runtime.mode=mode;$('demoBanner').hidden=!isDemo();$('demoSw').setAttribute('aria-checked',isDemo())}
 function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
 AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
 
@@ -738,8 +727,6 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  $('demoBanner').hidden=!isDemo();
-  $('demoSw').setAttribute('aria-checked',isDemo());
   if(id==='menu'){renderRecent();renderHomeFollowup()}
   if(id==='dailyBatch') renderDailyBatch();
   if(id==='kanban') renderKanban();
@@ -749,10 +736,8 @@ function show(id){
     if(!$('reminderDate').value)$('reminderDate').value=when.date;
     if(!$('reminderTime').value)$('reminderTime').value=when.time;
     $('browserNotificationBtn').hidden=!!(window.ChiaplastNative);
-    $('reminderModeHint').textContent=window.ChiaplastNative?'Las alarmas se programan en Android. Vincula cada aviso con un área o máquina.':'Los avisos del navegador dependen de que Chiaplast permanezca abierta; en la APK se programan en Android.';
     renderReminders();syncNativeReminders();
   }
-  if(id==='tools') $('demoSw').setAttribute('aria-checked',isDemo());
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function openReminders(){go('reminders')}
@@ -781,7 +766,7 @@ function openReminderForKanbanTask(id){
 }
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
-  if(!isDemo()&&!isIn()){root('login');return}
+  if(!isIn()){root('login');return}
   const s=e.state&&e.state.s;
   if(!s||s==='splash'||s==='login'){ if(isIn()) show('menu'); return; }
   if(s==='done'){ show('menu'); return; }
@@ -844,7 +829,6 @@ function buildXlsx(rows){
 async function signIn(){
   const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Abriendo…';$('loginErr').textContent='';
   try{
-    setMode('real');
     AppState.session=true;AppState.user='Usuario local';
     store.set('mtto_user',AppState.user);store.set('mtto_session','true');
     Runtime.area='';Runtime.code='';Runtime.rows=[];
@@ -852,13 +836,11 @@ async function signIn(){
   }catch(e){$('loginErr').textContent=e.message||'No se pudo abrir la app.'}
   finally{b.disabled=false;b.textContent='Continuar'}
 }
-function signInDemo(){setMode('demo');Runtime.area='';Runtime.code='';Runtime.rows=[];root('menu')}
 function logout(){
-  AppState.session=false;AppState.user='';setMode('real');store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
+  AppState.session=false;AppState.user='';store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
   try{const p=GA();p&&p.signOut()}catch(e){}
   history.replaceState({s:'login'},'');show('login');
 }
-function toggleDemo(){setMode(isDemo()?'real':'demo');Runtime.rows=[];store.del('mtto_draft_demo');store.del('mtto_draft_daily_demo');toast(isDemo()?'Modo demo activado: los datos quedan aislados':'Modo real activado: se restauró el entorno de trabajo real')}
 
 /* Flujo */
 function pick(name,code){
@@ -885,7 +867,7 @@ function startCheck(kind){
   go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
-const draftStorageKey=()=>stateKey((isDaily()?'mtto_draft_daily':'mtto_draft')+((Runtime.code==='DIM'&&/^(BM|BD)-/i.test(Runtime.machine))?'_'+Runtime.machine.replace(/[^a-z0-9_-]/gi,'_'):''));
+const draftStorageKey=()=>((isDaily()?'mtto_draft_daily':'mtto_draft')+((Runtime.code==='DIM'&&/^(BM|BD)-/i.test(Runtime.machine))?'_'+Runtime.machine.replace(/[^a-z0-9_-]/gi,'_'):''));
 function choose(g,btn){
   const box=$(g);
   box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
@@ -916,7 +898,7 @@ function review(){
     const report={area:Runtime.area,code:Runtime.code,machine:Runtime.machine,date:fmtD(d),time:t,rows:Runtime.rows.slice(1),draft:{d,t,type,st,obs:$('obs').value,fields:extState()},dailyMeasurements};
     if(DailyBatch.editIndex>=0)DailyBatch.reports[DailyBatch.editIndex]=report;else DailyBatch.reports.push(report);
     DailyBatch.editIndex=-1;saveDailyBatch();renderDailyBatch();$('obs').value='';extLoad({});
-    go('dailyBatch');toast('Informe agregado al lote.');return;
+    go('dailyBatch');toast('Máquina agregada.');return;
   }
   $('sum').innerHTML=rows.map(r=>r[2]?'<div class="h2" style="margin:16px 0 2px">'+esc(r[0])+'</div>':'<div class="row"><span>'+esc(r[0])+'</span><b'+(/^(NO|Falla)$/.test(r[1])?' style="color:var(--err)"':'')+'>'+esc(r[1])+'</b></div>').join('');
   $('fn').textContent=fileName();
@@ -933,10 +915,11 @@ function blobBase64(blob){
 }
 async function exportReport(blob,name,mime){
   mime=mime||XLSX_MIME;
-  if(!isDemo()&&window.ChiaplastNative&&typeof window.ChiaplastNative.shareReport==='function'){
-    const result=window.ChiaplastNative.shareReport(name,mime,await blobBase64(blob));
-    if(result!=='ok')throw new Error('Android no pudo preparar el reporte para compartir.');
-    return 'android-share';
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.saveReport==='function'){
+    const b64=await blobBase64(blob);
+    if(window.ChiaplastNative.saveReport(name,mime,b64)!=='ok')throw new Error('No se pudo guardar el reporte en el dispositivo.');
+    LastExports.push({name,mime,b64});
+    return 'android-saved';
   }
   const plugins=window.Capacitor&&window.Capacitor.Plugins;
   const fs=plugins&&plugins.Filesystem,share=plugins&&plugins.Share;
@@ -949,7 +932,7 @@ async function exportReport(blob,name,mime){
     await share.share({title:name,text:'Reporte de mantenimiento Chiaplast listo para guardar o compartir.',url:file.uri,dialogTitle:'Guardar o compartir reporte'});
     return 'android-share';
   }
-  if(!isDemo()&&typeof File==='function'&&navigator.share&&navigator.canShare){
+  if(typeof File==='function'&&navigator.share&&navigator.canShare){
     const report=new File([blob],name,{type:mime});
     if(navigator.canShare({files:[report]})){
       try{
@@ -1012,6 +995,7 @@ function selectedExport(name){
   return input?input.value:'excel';
 }
 async function generateExports(rows,baseName,choice){
+  LastExports.length=0;
   const formats=choice==='both'?['excel','pdf']:[choice],results=[];
   for(const format of formats){
     const isPdf=format==='pdf',name=baseName+(isPdf?'.pdf':'.xlsx');
@@ -1024,17 +1008,13 @@ async function generateExports(rows,baseName,choice){
 async function send(){
   const b=$('sendBtn');b.disabled=true;const baseName=fileName();
   try{
-    if(isDemo()){b.innerHTML='<span class="spin"></span>Simulando…';await new Promise(r=>setTimeout(r,500));}
     b.innerHTML='<span class="spin"></span>Generando…';
     const exportRows=Runtime.rows[0]&&Runtime.rows[0][0]==='Campo'
       ?[['REPORTE DE MANTENIMIENTO CHIAPLAST',''],['Área',Runtime.area],['Máquina',Runtime.machine||Runtime.area],['Tipo de reporte',isDaily()?'Chequeo diario':'Mantenimiento preventivo'],['Fecha',fmtD($('d').value)],['Hora',$('t').value],['',''],['Campo / componente','Resultado / valor'],...Runtime.rows.slice(1)]
       :Runtime.rows;
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'));
-    $('rFile').textContent=results.map(r=>r.name).join(' · ');
-    $('rTitle').textContent=isDemo()?'Reporte de prueba generado':'Reporte generado';
-    const shared=results.some(r=>r.mode==='android-share');
-    $('rMsg').textContent=isDemo()?'Se generaron los formatos elegidos en modo de prueba.':shared?'Los archivos están listos para guardarse o compartirse desde Android.':'Los archivos se generaron para descargarse en este dispositivo.';
-    addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,demo:isDemo()});
+    showDone(results,'Reporte generado');
+    addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar reporte'}
@@ -1259,7 +1239,7 @@ function mqRows(){
 
 
 /* ===== Tablero Kanban local ===== */
-const kanbanKey=()=>stateKey('mtto_kanban');
+const kanbanKey=()=>'mtto_kanban';
 function loadKanban(){try{const a=JSON.parse(store.get(kanbanKey(),'[]'));return Array.isArray(a)?a:[]}catch(e){return[]}}
 function saveKanban(a){store.set(kanbanKey(),JSON.stringify(a))}
 function addKanbanTask(){
@@ -1293,7 +1273,7 @@ function renderKanban(){
   });
 }
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
-const NOTES_DB=()=> 'chiaplast-notes-v1'+(isDemo()?'-demo':''),NOTES_STORE='notes';
+const NOTES_DB=()=> 'chiaplast-notes-v1',NOTES_STORE='notes';
 let notePhotosDraft=[];
 function openNotesDB(){
   return new Promise((resolve,reject)=>{
@@ -1374,9 +1354,9 @@ async function renderNotes(){
   const list=$('notesList');if(!list)return;
   try{
     await purgeExpiredNotes();const all=(await notesAll()).sort((a,b)=>b.created-a.created);
-    if(!all.length){list.innerHTML='<div class="empty">No hay notas guardadas. Las nuevas notas permanecerán aquí durante 30 días.</div>';return}
+    if(!all.length){list.innerHTML='<div class="empty">Sin notas.</div>';return}
     list.innerHTML=all.map(n=>'<article class="note-card"><h3>'+esc(n.title)+'</h3><div class="note-meta">'+esc(n.area)+(n.machine?' · '+esc(n.machine):'')+' · '+esc(new Date(n.created).toLocaleString())+'</div>'+(n.text?'<p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(n.text)+'</p>':'')+'<div class="note-photos">'+(n.photos||[]).map((p,i)=>'<img src="'+p+'" alt="Evidencia '+(i+1)+'">').join('')+'</div><div class="note-meta">Caduca: '+esc(new Date(n.expires||n.created+30*24*60*60*1000).toLocaleDateString())+' · '+((n.photos||[]).length)+' foto(s)</div><div class="note-actions"><button class="btn btn-p" onclick="printNote(\''+esc(n.id)+'\')">Generar PDF</button><button class="btn btn-s" onclick="deleteNote(\''+esc(n.id)+'\')">Eliminar</button></div></article>').join('');
-  }catch(e){list.innerHTML='<div class="empty">No se pudo acceder al almacenamiento local de notas. Comprueba que el navegador permita almacenamiento para esta aplicación.</div>'}
+  }catch(e){list.innerHTML='<div class="empty">No se pudo leer el almacenamiento.</div>'}
 }
 async function deleteNote(id){if(!confirm('¿Eliminar esta nota y sus fotografías? Esta acción no se puede deshacer.'))return;try{const note=(await notesAll()).find(n=>n.id===id);if(note)deleteNoteEvidence(note);await notesDelete(id);await renderNotes();toast('Nota eliminada.')}catch(e){toast('No se pudo eliminar la nota.')}}
 function buildNotePrintHtml(n){
@@ -1399,13 +1379,13 @@ async function printNote(id){
 }
 
 /* ===== Recordatorios locales: comprobados solo mientras el HTML está activo ===== */
-const reminderKey=()=>stateKey('mtto_reminders');
+const reminderKey=()=>'mtto_reminders';
 function loadReminders(){try{const v=JSON.parse(store.get(reminderKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveReminders(items){store.set(reminderKey(),JSON.stringify(items))}
 function renderReminders(){
   const list=$('reminderList');if(!list)return;
   const items=loadReminders().sort((a,b)=>(a.due||'').localeCompare(b.due||''));
-  if(!items.length){list.innerHTML='<div class="empty">No hay avisos. Puedes crearlos desde aquí, desde una tarea o al terminar un reporte.</div>';return}
+  if(!items.length){list.innerHTML='<div class="empty">Sin avisos.</div>';return}
   const now=Date.now();
   list.innerHTML=items.map(item=>{
     const done=item.status==='done',due=Date.parse(item.due),state=done?'Completado':item.notified?'Aviso emitido':Number.isFinite(due)&&due<now?'Vencido · pendiente':'Programado';
@@ -1498,8 +1478,8 @@ setInterval(checkReminders,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkReminders()});
 
 /* Recientes */
-function addRecent(r){const key=stateKey('mtto_hist');let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
-function getRecent(){try{return JSON.parse(store.get(stateKey('mtto_hist'),'[]'))}catch(e){return[]}}
+function addRecent(r){const key='mtto_hist';let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
+function getRecent(){try{return JSON.parse(store.get('mtto_hist','[]'))}catch(e){return[]}}
 function renderHomeFollowup(){
   const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount');
   if(reminderBox){const count=loadReminders().filter(r=>r.status!=='done').length;reminderBox.textContent=count?count+' aviso'+(count===1?' pendiente':'s pendientes'):'Sin avisos pendientes'}
@@ -1507,12 +1487,11 @@ function renderHomeFollowup(){
 }
 function renderRecent(){
   const l=getRecent();
-  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':r.demo?'Demo':'Preventivo')+'</span></div>').join('')
-    :'<div class="empty">Tus reportes recientes aparecerán aquí.</div>';
+  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></div>').join('')
+    :'<div class="empty">Sin reportes recientes.</div>';
 }
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();
-setMode('real');
 setTimeout(()=>{
   syncAppState();
   root(AppState.session?'menu':'login');
