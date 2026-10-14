@@ -16,6 +16,17 @@ Proyecto Android Studio con Kotlin + WebView, sin Capacitor. La interfaz se toma
 ## Compilación automática
 La acción de GitHub `Build Android APK` compila la aplicación y publica el APK de depuración como artefacto descargable en cada push/PR. El artefacto no es una versión firmada para distribución pública.
 
+Para generar también un APK de release instalable como actualización, crea un keystore propio y permanente (por ejemplo, con `keytool -genkeypair -v -keystore chiaplast-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias chiaplast`) y guarda una copia segura fuera del repositorio. Configura estos GitHub Actions Secrets en el repositorio:
+
+- `ANDROID_KEYSTORE_BASE64`: contenido del keystore codificado en Base64.
+- `ANDROID_KEYSTORE_PASSWORD`: contraseña del keystore.
+- `ANDROID_KEY_ALIAS`: alias de la clave (por ejemplo, `chiaplast`).
+- `ANDROID_KEY_PASSWORD`: contraseña de la clave.
+
+No subas el keystore ni sus contraseñas al repositorio ni los compartas por chat. Al estar configurados los cuatro secretos, la acción publica `chiaplast-android-release-apk`; los APK de release de ejecuciones sucesivas usan la misma firma y aumentan su `versionCode` automáticamente. Si se pierden el keystore o sus contraseñas, Android no permitirá actualizar esa instalación con una firma nueva.
+
+El APK `debug` y el APK `release` tienen firmas diferentes. Para pasar de uno al otro hay que desinstalar el anterior, lo que borra los datos locales de la aplicación. Para conservar los datos entre instalaciones, usa siempre el APK `release` firmado con el mismo keystore.
+
 ## Capacidades
 - Formularios, borradores, recordatorios y Kanban locales en WebView.
 - Alarmas exactas con `AlarmManager`, reprogramación tras reinicio y notificaciones locales.
