@@ -1,7 +1,10 @@
 package mx.chiaplast.mantenimiento
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Context
+import android.os.Environment
+import android.provider.MediaStore
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -142,6 +145,21 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface fun cancelReminder(id: String): String {
             ReminderScheduler.cancel(context, id)
             return "ok"
+        }
+
+        @JavascriptInterface fun saveReport(fileName: String, mime: String, base64: String): String {
+            return try {
+                val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_").take(120).ifBlank { "reporte.xlsx" }
+                val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, safeName)
+                    put(MediaStore.Downloads.MIME_TYPE, mime.ifBlank { "application/octet-stream" })
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Chiaplast")
+                }
+                val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return "error"
+                contentResolver.openOutputStream(uri)?.use { it.write(bytes) } ?: return "error"
+                "ok"
+            } catch (_: Exception) { "error" }
         }
 
         @JavascriptInterface fun shareReport(fileName: String, mime: String, base64: String): String {
