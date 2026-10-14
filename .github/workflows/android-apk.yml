@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, feat/android-apk-native]
+    branches: [main, feat/android-apk-native, simplificar-interfaz]
   pull_request:
     branches: [main]
   workflow_dispatch:

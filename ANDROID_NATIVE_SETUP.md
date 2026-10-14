@@ -28,7 +28,7 @@ No subas el keystore ni sus contraseñas al repositorio ni los compartas por cha
 El APK `debug` y el APK `release` tienen firmas diferentes. Para pasar de uno al otro hay que desinstalar el anterior, lo que borra los datos locales de la aplicación. Para conservar los datos entre instalaciones, usa siempre el APK `release` firmado con el mismo keystore.
 
 ## Capacidades
-- Formularios, borradores, recordatorios y Kanban locales en WebView.
+- Formularios, borradores, recordatorios, Kanban y calendario local de mantenimiento preventivo en WebView. El calendario permite programar una máquina para un día o un periodo de siete días, abrir la orden y marcarla como hecha o aún no hecha.
 - Alarmas exactas con `AlarmManager`, reprogramación tras reinicio y notificaciones locales.
 - Cámara y selección de imágenes con almacenamiento privado local.
 - Impresión de notas con fotografías mediante el diálogo nativo de Android (incluye Guardar como PDF).

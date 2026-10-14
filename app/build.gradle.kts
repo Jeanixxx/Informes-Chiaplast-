@@ -25,7 +25,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = ciVersionCode
-        versionName = "1.0.1"
+        versionName = "1.0.2"
     }
     signingConfigs {
         if (hasCompleteReleaseSigningValues) {
