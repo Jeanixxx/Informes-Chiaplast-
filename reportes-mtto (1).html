@@ -485,6 +485,7 @@ body{background:var(--bg);color:var(--ink)}
     </div>
     <div class="card" id="sigCard" hidden>
       <div class="f" style="margin-bottom:0"><span class="lbl">Firma<em>*</em></span>
+        <input id="sigName" maxlength="60" placeholder="Nombre de quien firma" autocomplete="name" oninput="this.classList.remove('bad');Sig.name=this.value.trim();store.set('mtto_sig_name',this.value.trim())" style="width:100%;margin-bottom:10px">
         <canvas id="sigPad" width="600" height="200" aria-label="Espacio para firmar"></canvas>
         <button class="link" type="button" onclick="sigClear()">Borrar firma</button>
       </div>
@@ -727,16 +728,6 @@ function leaveDailyBatch(){
   }
   go('menu');
 }
-function batchExcelRows(){
-  const rows=[['REPORTES DE CHEQUEO DIARIO CHIAPLAST',''],['Fecha de generación',new Date().toLocaleString('es-MX')],['Total de informes',String(DailyBatch.reports.length)],['','']];
-  DailyBatch.reports.forEach((report,i)=>{
-    rows.push(['INFORME '+(i+1)+' | '+report.area+' | '+report.machine,'']);
-    rows.push(['Campo / componente','Resultado / valor']);
-    report.rows.forEach(r=>rows.push([r[0],r[1]||'—']));
-    rows.push(['','']);
-  });
-  return rows;
-}
 async function finishDailyBatch(skipConfirm=false){
   if(!DailyBatch.reports.length){toast('Agrega al menos una máquina.');return}
   const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando…';
@@ -865,31 +856,6 @@ function zip(files){
   z.setUint32(0,0x06054b50,true);z.setUint16(8,files.length,true);z.setUint16(10,files.length,true);z.setUint32(12,size,true);z.setUint32(16,off,true);
   return new Blob([...parts,...cd,z],{type:XLSX_MIME});
 }
-function buildXlsx(rows){
-  const x=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const cell=(v,col,row,style)=>'<c r="'+col+row+'" s="'+style+'" t="inlineStr"><is><t xml:space="preserve">'+x(v==null?'':v)+'</t></is></c>';
-  const sd=rows.map((r,i)=>{
-    const n=i+1,first=String(r[0]||''),second=String(r[1]||'');
-    let style=0;
-    if(i===0)style=1;
-    else if(!first&&!second)style=0;
-    else if(/^INFORME\s|^ZONA\s|^PRUEBA OPERATIVA$|^TEMPERATURA Y CONSUMO$|^MEDICIONES DIARIAS$/.test(first.toUpperCase())&&second==='')style=3;
-    else if(first==='Campo / componente'||first==='Campo')style=2;
-    else if(second==='')style=4;
-    return '<row r="'+n+'" customHeight="'+(i===0?'1':'0')+'"'+(i===0?' ht="30"':'')+'>'+cell(r[0]||'', 'A',n,style)+cell(r[1]||'', 'B',n,style===1?1:style===2?2:style===3?3:style===4?4:0)+'</row>';
-  }).join('');
-  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',R='http://schemas.openxmlformats.org/officeDocument/2006/relationships',M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',P='http://schemas.openxmlformats.org/package/2006/relationships';
-  const styles=H+'<styleSheet xmlns="'+M+'"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="16"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF16232E"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2B705"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF2"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9E0E5"/></left><right style="thin"><color rgb="FFD9E0E5"/></right><top style="thin"><color rgb="FFD9E0E5"/></top><bottom style="thin"><color rgb="FFD9E0E5"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFill="1" applyFont="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="1" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="4" borderId="1" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
-  return zip([
-    ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
-    ['_rels/.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
-    ['xl/workbook.xml',H+'<workbook xmlns="'+M+'" xmlns:r="'+R+'"><sheets><sheet name="Reporte" sheetId="1" r:id="rId1"/></sheets></workbook>'],
-    ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+R+'/styles" Target="styles.xml"/></Relationships>'],
-    ['xl/styles.xml',styles],
-    ['xl/worksheets/sheet1.xml',H+'<worksheet xmlns="'+M+'"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="38" customWidth="1"/><col min="2" max="2" width="62" customWidth="1"/></cols><sheetData>'+sd+'</sheetData><autoFilter ref="A1:B'+rows.length+'"/></worksheet>']
-  ]);
-}
-
 /* Sesión */
 async function signIn(){
   const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Abriendo…';$('loginErr').textContent='';
@@ -917,7 +883,7 @@ function pick(name,code){
   startCheck('preventive');
 }
 /* Firma: solo preventivos; se anexa únicamente a los PDF */
-const Sig={hex:'',w:0,h:0,drawing:false};
+const Sig={hex:'',w:0,h:0,drawing:false,name:''};
 function sigClear(){
   const c=$('sigPad'),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
   Sig.hex='';c.classList.remove('bad');
@@ -940,7 +906,7 @@ function sigCapture(){
 })();
 function startCheck(kind){
   Runtime.checkType=kind;
-  $('sigCard').hidden=kind==='daily';sigClear();
+  $('sigCard').hidden=kind==='daily';sigClear();$('sigName').value=store.get('mtto_sig_name','');Sig.name=$('sigName').value.trim();
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
@@ -975,7 +941,10 @@ function review(){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||!Number.isFinite(Number(x))){i.classList.add('bad');bad=bad||i}});
     if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
-  if(!isDaily()&&!Sig.hex){$('sigPad').classList.add('bad');bad=bad||$('sigPad')}
+  if(!isDaily()){
+    if(!Sig.name){$('sigName').classList.add('bad');bad=bad||$('sigName')}
+    if(!Sig.hex){$('sigPad').classList.add('bad');bad=bad||$('sigPad')}
+  }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
   const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
@@ -1041,52 +1010,200 @@ async function exportReport(blob,name,mime){
   return 'download';
 }
 
+/* ===== Documentos formales: estructura común para Excel y PDF =====
+   Cada fila: [texto, valor, tipo]  tipo 1=sección, 2=dato general, 3=título, 4=encabezado de tabla */
+const META_LABELS=['Área','Máquina','Fecha','Hora','Tipo','Estado','Tipo de chequeo'];
+function statusKind(v){
+  const t=String(v==null?'':v).trim().toUpperCase();
+  if(/^(OK|SÍ|SI|ENTREGADO|ENGRASADA)$/.test(t))return 'ok';
+  if(/^(NO|FALLA)$/.test(t))return 'bad';
+  if(/^(PENDIENTE|EN PROCESO|EN PARO)$/.test(t))return 'warn';
+  if(t==='N/A')return 'na';
+  return '';
+}
+function splitReportRows(rows){
+  const meta=[],body=[];let lead=true;
+  rows.forEach(r=>{
+    if(r[0]==='Reportó')return;
+    if(lead&&!r[2]&&META_LABELS.includes(r[0]))meta.push([r[0],r[1],2]);
+    else{lead=false;body.push(r)}
+  });
+  return{meta,body};
+}
+function singleReportDoc(rows,extraMeta){
+  const sp=splitReportRows(rows);
+  const title=isDaily()?'REPORTE DE CHEQUEO DIARIO':'REPORTE DE MANTENIMIENTO PREVENTIVO';
+  return[[title,'',3],...sp.meta,...(extraMeta||[]).map(m=>[m[0],m[1],2]),['Campo / componente','Resultado / valor',4],...sp.body.map(r=>[r[0],r[1]||'—',r[2]])];
+}
+function batchExcelRows(){
+  const rows=[['REPORTE DE CHEQUEO DIARIO','',3],['Fecha de generación',new Date().toLocaleString('es-MX'),2],['Total de informes',String(DailyBatch.reports.length),2]];
+  DailyBatch.reports.forEach((report,i)=>{
+    const sp=splitReportRows(report.rows);
+    rows.push(['INFORME '+(i+1)+' · '+report.machine,'',1],...sp.meta,['Campo / componente','Resultado / valor',4],...sp.body.map(r=>[r[0],r[1]||'—',r[2]]));
+  });
+  return rows;
+}
+
+/* ===== Excel con formato ===== */
+function buildXlsx(rows){
+  const x=v=>String(v==null?'':v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const out=[],merges=[];let r=0;
+  const c=(col,txt,s)=>'<c r="'+col+r+'" s="'+s+'" t="inlineStr"><is><t xml:space="preserve">'+x(txt)+'</t></is></c>';
+  const add=(a,b,sa,sb,ht,merge)=>{r++;out.push('<row r="'+r+'"'+(ht?' ht="'+ht+'" customHeight="1"':'')+'>'+c('A',a,sa)+c('B',b,sb)+'</row>');if(merge)merges.push('A'+r+':B'+r)};
+  const VS={ok:9,bad:10,warn:11,na:12};
+  rows.forEach(row=>{
+    const a=row[0],b=row[1],t=row[2];
+    if(t===3){add(a,'',1,1,34,true);add('Chiaplast · Departamento de Mantenimiento','',2,2,20,true);add('','',13,13,5,true);add('','',0,0,8,true)}
+    else if(t===1)add(a,'',3,3,22,true);
+    else if(t===2)add(a,b,5,6);
+    else if(t===4)add(a,b,4,4,20);
+    else add(a,b,7,VS[statusKind(b)]||8);
+  });
+  add('','',0,0,10,true);
+  add('Documento generado por la aplicación de Mantenimiento Chiaplast · '+new Date().toLocaleString('es-MX'),'',14,14,18,true);
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',R='http://schemas.openxmlformats.org/officeDocument/2006/relationships',M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',P='http://schemas.openxmlformats.org/package/2006/relationships';
+  const bd='<border><left style="thin"><color rgb="FFD0D9E0"/></left><right style="thin"><color rgb="FFD0D9E0"/></right><top style="thin"><color rgb="FFD0D9E0"/></top><bottom style="thin"><color rgb="FFD0D9E0"/></bottom><diagonal/></border>';
+  const f=(b,sz,col,it)=>'<font>'+(b?'<b/>':'')+(it?'<i/>':'')+'<sz val="'+sz+'"/><color rgb="'+col+'"/><name val="Calibri"/><family val="2"/></font>';
+  const fill=col=>'<fill><patternFill patternType="solid"><fgColor rgb="'+col+'"/><bgColor indexed="64"/></patternFill></fill>';
+  const xf=(font,fl,b,al)=>'<xf numFmtId="0" fontId="'+font+'" fillId="'+fl+'" borderId="'+b+'" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment '+al+'/></xf>';
+  const L='horizontal="left" vertical="center" wrapText="1" indent="1"',T='horizontal="left" vertical="top" wrapText="1" indent="1"';
+  const styles=H+'<styleSheet xmlns="'+M+'"><fonts count="9">'
+    +f(0,11,'FF172B3A')+f(1,11,'FF172B3A')+f(1,11,'FFFFFFFF')+f(1,18,'FFFFFFFF')+f(1,11,'FF13804A')+f(1,11,'FFB3261E')+f(1,11,'FFA66A00')+f(0,11,'FF7A8791')+f(0,9,'FF7A8791',1)
+    +'</fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'+fill('FF172B3A')+fill('FFEAF0F4')+fill('FFEFB900')+'</fills>'
+    +'<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+bd+'</borders>'
+    +'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="15">'
+    +xf(0,0,0,L)+xf(3,2,0,L)+xf(2,2,0,L)+xf(2,2,1,L)+xf(1,3,1,L)+xf(1,3,1,L)+xf(0,0,1,L)+xf(0,0,1,T)+xf(0,0,1,T)
+    +xf(4,0,1,T)+xf(5,0,1,T)+xf(6,0,1,T)+xf(7,0,1,T)+xf(0,4,0,L)+xf(8,0,0,L)
+    +'</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  const sheet=H+'<worksheet xmlns="'+M+'"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView showGridLines="0" workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="18"/>'
+    +'<cols><col min="1" max="1" width="54" customWidth="1"/><col min="2" max="2" width="40" customWidth="1"/></cols><sheetData>'+out.join('')+'</sheetData>'
+    +'<mergeCells count="'+merges.length+'">'+merges.map(m=>'<mergeCell ref="'+m+'"/>').join('')+'</mergeCells>'
+    +'<printOptions horizontalCentered="1"/><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.7" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'
+    +'<headerFooter><oddFooter>&amp;LChiaplast · Mantenimiento&amp;RPágina &amp;P de &amp;N</oddFooter></headerFooter></worksheet>';
+  return zip([
+    ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+    ['_rels/.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml',H+'<workbook xmlns="'+M+'" xmlns:r="'+R+'"><sheets><sheet name="Reporte" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="'+P+'"><Relationship Id="rId1" Type="'+R+'/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+R+'/styles" Target="styles.xml"/></Relationships>'],
+    ['xl/styles.xml',styles],
+    ['xl/worksheets/sheet1.xml',sheet]
+  ]);
+}
+
+/* ===== PDF formal (A4, Helvetica, tablas con color y paginación) ===== */
 const PDF_MIME='application/pdf';
-function pdfSafe(value){
-  return String(value==null?'':value).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^\x20-\x7E]/g,' ').replace(/\s+/g,' ').trim()
-    .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+const HW_R=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const HW_B=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+function pdfEnc(v){
+  const map={8212:151,8211:150,8230:133,8226:149,8220:147,8221:148,8216:145,8217:146,8364:128};
+  let o='';
+  for(const ch of String(v==null?'':v)){
+    let c=ch.codePointAt(0);const m=map[c];
+    if(m!==undefined)c=m;else if(c>255||c<32||(c>=127&&c<160))c=c<32?32:63;
+    if(c===40||c===41||c===92)o+='\\'+String.fromCharCode(c);
+    else if(c>=32&&c<127)o+=String.fromCharCode(c);
+    else o+='\\'+c.toString(8).padStart(3,'0');
+  }
+  return o;
+}
+function pdfWidth(s,size,bold){
+  const t=bold?HW_B:HW_R;let w=0;
+  for(const ch of String(s).normalize('NFD').replace(/[̀-ͯ]/g,'')){const k=ch.charCodeAt(0);w+=(k>=32&&k<127?t[k-32]:556)}
+  return w*size/1000;
+}
+function pdfWrap(s,max,size,bold){
+  const lines=[];let cur='';
+  String(s==null?'':s).split(/\s+/).filter(Boolean).forEach(word=>{
+    while(pdfWidth(word,size,bold)>max){let i=word.length;while(i>1&&pdfWidth(word.slice(0,i),size,bold)>max)i--;if(cur){lines.push(cur);cur=''}lines.push(word.slice(0,i));word=word.slice(i)}
+    const test=cur?cur+' '+word:word;
+    if(pdfWidth(test,size,bold)<=max)cur=test;else{lines.push(cur);cur=word}
+  });
+  if(cur||!lines.length)lines.push(cur);
+  return lines;
 }
 function buildPdf(rows,sig){
-  const lines=[];
-  rows.forEach(row=>{
-    const a=String(row&&row[0]||'').trim(),b=String(row&&row[1]||'').trim();
-    const text=(a?(b?a+' — '+b:a):b)||' ';
-    const clean=pdfSafe(text),width=94;
-    for(let i=0;i<clean.length;i+=width)lines.push(clean.slice(i,i+width));
-  });
-  const pages=[];
-  for(let i=0;i<lines.length;i+=52)pages.push(lines.slice(i,i+52));
-  if(!pages.length)pages.push(['Reporte de mantenimiento Chiaplast']);
-  if(sig){
-    const used=pages[pages.length-1].length;
-    if(794-(used*14+60+80)<40)pages.push([]);
-  }
-  const objects=[];
-  objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
-  objects[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
-  const pageRefs=[];
-  pages.forEach((page,index)=>{
-    const pageId=4+index*2,contentId=pageId+1;
-    pageRefs.push(pageId+' 0 R');
-    let stream='BT\n/F1 10 Tf\n48 794 Td\n';
-    page.forEach((line,j)=>{if(j)stream+='0 -14 Td\n';stream+='('+line+') Tj\n';});
-    stream+='ET';
-    const withSig=sig&&index===pages.length-1,imgId=4+pages.length*2;
-    if(withSig){
-      const y=794-page.length*14-60-80;
-      stream+='\nBT\n/F1 10 Tf\n48 '+(y+88)+' Td\n(Firma:) Tj\nET\nq\n180 0 0 60 48 '+(y+20)+' cm\n/Sig Do\nQ\n0.5 w\n48 '+(y+16)+' m 260 '+(y+16)+' l S';
+  const W=595,H=842,M=40,CW=W-2*M,BOT=H-56,generated=new Date().toLocaleString('es-MX');
+  const STEEL='0.09 0.17 0.23',ACC='0.94 0.73 0',LINE='0.82 0.86 0.89',LIGHT='0.92 0.94 0.96';
+  const COL={ok:'0.07 0.50 0.29',bad:'0.70 0.15 0.12',warn:'0.65 0.42 0',na:'0.48 0.53 0.57','':'0.09 0.17 0.23'};
+  const trow=rows.find(r=>r[2]===3);const docTitle=trow?trow[0]:'REPORTE DE MANTENIMIENTO';
+  const pages=[];let ops,y,sigPage=-1;
+  const R=(x,yt,w,h,fill,stroke)=>{ops.push((fill?fill+' rg ':'')+(stroke?stroke+' RG 0.5 w ':'')+x.toFixed(2)+' '+(H-yt-h).toFixed(2)+' '+w.toFixed(2)+' '+h.toFixed(2)+' re '+(fill&&stroke?'B':fill?'f':'S'))};
+  const T=(x,yt,s,size,bold,col,right)=>{const px=right?x-pdfWidth(s,size,bold):x;ops.push('BT /'+(bold?'F2':'F1')+' '+size+' Tf '+col+' rg '+px.toFixed(2)+' '+(H-yt).toFixed(2)+' Td ('+pdfEnc(s)+') Tj ET')};
+  const newPage=()=>{
+    ops=[];pages.push(ops);const first=pages.length===1;
+    if(first){
+      R(0,0,W,76,STEEL);R(0,76,W,4,ACC);
+      T(M,38,'CHIAPLAST',22,true,'1 1 1');T(M,56,'Departamento de Mantenimiento',9.5,false,'0.80 0.85 0.89');
+      T(W-M,36,docTitle,11,true,'1 1 1',true);
+      y=100;
+    }else{
+      R(0,0,W,30,STEEL);R(0,30,W,3,ACC);
+      T(M,20,'CHIAPLAST',11,true,'1 1 1');T(W-M,20,docTitle,8.5,true,'0.80 0.85 0.89',true);
+      y=50;
     }
-    objects[pageId]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >>'+(withSig?' /XObject << /Sig '+imgId+' 0 R >>':'')+' >> /Contents '+contentId+' 0 R >>';
-    objects[contentId]='<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream';
+  };
+  const ensure=h=>{if(y+h>BOT)newPage()};
+  const row=(a,b,lw,opt)=>{
+    opt=opt||{};const size=9.5,lh=12,pad=6,kind=statusKind(b);
+    const la=pdfWrap(a,lw-2*pad,size,!!opt.labelBold),lb=pdfWrap(b,CW-lw-2*pad,size,!!kind||!!opt.valBold);
+    const n=Math.max(la.length,lb.length),h=n*lh+pad+2;
+    ensure(h);
+    R(M,y,lw,h,opt.labelFill||(opt.zebra?'0.975 0.98 0.985':'1 1 1'),LINE);
+    R(M+lw,y,CW-lw,h,opt.valFill||(opt.zebra?'0.975 0.98 0.985':'1 1 1'),LINE);
+    la.forEach((s,i)=>T(M+pad,y+pad+8+i*lh,s,size,!!opt.labelBold,COL['']));
+    lb.forEach((s,i)=>T(M+lw+pad,y+pad+8+i*lh,s,size,!!kind||!!opt.valBold,COL[kind]));
+    y+=h;
+  };
+  newPage();
+  let zebra=0,prevMeta=false;
+  rows.forEach(r=>{
+    const a=r[0],b=r[1]==null?'':r[1],t=r[2];
+    if(t===3)return;
+    if(t===1){ensure(20+34);y+=prevMeta?0:8;R(M,y,CW,20,STEEL);T(M+8,y+14,a,10,true,'1 1 1');y+=20;zebra=0;prevMeta=false;return}
+    if(t===2){row(a,b,150,{labelBold:true,labelFill:LIGHT});prevMeta=true;return}
+    if(t===4){if(prevMeta)y+=10;ensure(18+30);R(M,y,CW,18,LIGHT,LINE);T(M+6,y+12.5,a,9,true,COL['']);T(M+300+6,y+12.5,b,9,true,COL['']);y+=18;zebra=0;prevMeta=false;return}
+    row(a,b,300,{zebra:zebra++%2});prevMeta=false;
   });
-  objects[2]='<< /Type /Pages /Kids ['+pageRefs.join(' ')+'] /Count '+pages.length+' >>';
-  if(sig){const data=sig.hex+'>';objects[4+pages.length*2]='<< /Type /XObject /Subtype /Image /Width '+sig.w+' /Height '+sig.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+data.length+' >>\nstream\n'+data+'\nendstream';}
-  let pdf='%PDF-1.4\n%CHIA\n';const offsets=[0];
-  for(let i=1;i<objects.length;i++){offsets[i]=pdf.length;pdf+=i+' 0 obj\n'+objects[i]+'\nendobj\n';}
-  const xref=pdf.length;pdf+='xref\n0 '+objects.length+'\n0000000000 65535 f \n';
-  for(let i=1;i<objects.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
-  pdf+='trailer\n<< /Size '+objects.length+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  if(sig){
+    ensure(150);y+=20;
+    R(M,y,CW,20,STEEL);T(M+8,y+14,'Firma de conformidad',10,true,'1 1 1');y+=20;
+    R(M,y,CW,112,'1 1 1',LINE);
+    sigPage=pages.length-1;
+    ops.push('q 190 0 0 63.33 '+(M+20)+' '+(H-y-15-63.33).toFixed(2)+' cm /Sig Do Q');
+    ops.push(COL['']+' RG 0.8 w '+(M+14)+' '+(H-y-84).toFixed(2)+' m '+(M+226)+' '+(H-y-84).toFixed(2)+' l S');
+    const nm=pdfWrap(sig.name||'',206,10.5,true)[0]||'';
+    T(M+14+(212-pdfWidth(nm,10.5,true))/2,y+97,nm,10.5,true,COL['']);
+    T(M+14+(212-pdfWidth('Nombre y firma del responsable',8,false))/2,y+108,'Nombre y firma del responsable',8,false,COL.na);
+    const fr=rows.find(q=>q[0]==='Fecha');
+    T(M+300,y+30,'Fecha del reporte',8.5,false,COL.na);T(M+300,y+46,fr?fr[1]:generated.split(',')[0],11,true,COL['']);
+    T(M+300,y+76,'Generado',8.5,false,COL.na);T(M+300,y+92,generated,9.5,false,COL['']);
+    y+=112;
+  }
+  const total=pages.length;
+  pages.forEach((p,i)=>{
+    ops=p;
+    ops.push(LINE+' RG 0.6 w '+M+' '+(H-H+34)+' m '+(W-M)+' '+(H-H+34)+' l S');
+    T(M,H-20,'Chiaplast · Mantenimiento · Documento generado el '+generated,8,false,COL.na);
+    T(W-M,H-20,'Página '+(i+1)+' de '+total,8,true,COL.na,true);
+  });
+  const objs=[];const add=s=>{objs.push(s);return objs.length};
+  add('<< /Type /Catalog /Pages 2 0 R >>');add('PAGES');
+  add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  const info=add('<< /Title ('+pdfEnc(docTitle+' - Chiaplast')+') /Author (Chiaplast Mantenimiento) /Creator (Aplicacion de Mantenimiento Chiaplast) >>');
+  const sigId=sig?5+pages.length*2+1:0,refs=[];
+  pages.forEach((p,i)=>{
+    const pid=objs.length+1,cid=pid+1;refs.push(pid+' 0 R');
+    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(i===sigPage?' /XObject << /Sig '+sigId+' 0 R >>':'')+' >> /Contents '+cid+' 0 R >>');
+    const stream=p.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
+  });
+  objs[1]='<< /Type /Pages /Kids ['+refs.join(' ')+'] /Count '+pages.length+' >>';
+  if(sig){const d=sig.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+sig.w+' /Height '+sig.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
+  let pdf='%PDF-1.4\n%CHIA\n';const off=[];
+  objs.forEach((o,i)=>{off.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n'});
+  const xr=pdf.length;pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  off.forEach(o=>{pdf+=String(o).padStart(10,'0')+' 00000 n \n'});
+  pdf+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R /Info '+info+' 0 R >>\nstartxref\n'+xr+'\n%%EOF';
   return new Blob([pdf],{type:PDF_MIME});
 }
 function selectedExport(name){
@@ -1108,10 +1225,8 @@ async function send(){
   const b=$('sendBtn');b.disabled=true;const baseName=fileName();
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
-    const exportRows=Runtime.rows[0]&&Runtime.rows[0][0]==='Campo'
-      ?[['REPORTE DE MANTENIMIENTO CHIAPLAST',''],['Área',Runtime.area],['Máquina',Runtime.machine||Runtime.area],['Tipo de reporte',isDaily()?'Chequeo diario':'Mantenimiento preventivo'],['Fecha',fmtD($('d').value)],['Hora',$('t').value],['',''],['Campo / componente','Resultado / valor'],...Runtime.rows.slice(1)]
-      :Runtime.rows;
-    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()||!Sig.hex?null:Sig);
+    const exportRows=singleReportDoc(Runtime.rows.slice(1),isDaily()?[]:[['Responsable',Sig.name]]);
+    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()||!Sig.hex?null:{hex:Sig.hex,w:Sig.w,h:Sig.h,name:Sig.name});
     showDone(results,'Reporte generado');
     addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
