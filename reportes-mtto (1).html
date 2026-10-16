@@ -330,7 +330,8 @@ body{background:var(--bg);color:var(--ink)}
       <button class="menu-tool" onclick="openPreventiveCalendar()"><span class="mi" aria-hidden="true">03</span><span>Calendario preventivo</span><small id="menuCalendarCount" aria-live="polite"></small></button>
       <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">04</span><span>Notas técnicas</span></button>
     </div>
-    <div class="h2">Recientes</div>
+    <div class="h2">Historial de reportes</div>
+    <div class="f"><label for="historySearch">Buscar por folio, máquina, área o fecha</label><input id="historySearch" type="search" placeholder="Ej. MTTO-2026-00001, DIM, BM-1" oninput="filterReportHistory()" style="width:100%;min-height:48px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--bg)"></div>
     <div id="recent"></div>
   </div>
 </section>
@@ -799,6 +800,12 @@ function openPreventiveCalendar(){
 }
 function openNotes(area,machine){$('noteArea').value=area||'General';$('noteMachine').value=machine||'';go('notes')}
 function openNoteForCurrentContext(){openNotes(Runtime.area||'General',Runtime.machine||'')}
+function offerFailureFollowup(){
+  const failed=(Runtime.rows||[]).some(r=>String(r[1]||'').trim().toUpperCase()==='FALLA'||String(r[1]||'').trim().toUpperCase()==='NO');
+  if(!failed)return;
+  if(!window.confirm('Se detectó un punto marcado como FALLA/NO. ¿Deseas crear una tarea de seguimiento en Kanban?'))return;
+  openKanbanForCurrentContext();
+}
 function openKanbanForCurrentContext(){
   const machine=Runtime.machine||Runtime.area||'';
   $('kanbanArea').value=[Runtime.area,machine&&machine!==Runtime.area?machine:''].filter(Boolean).join(' · ');
@@ -962,7 +969,8 @@ function review(){
   $('fn').textContent=fileName();
   go('confirm');
 }
-const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','');
+let currentReportFolio='';
+const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'_'+(currentReportFolio||'MTTO');
 function blobBase64(blob){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -1030,10 +1038,19 @@ function splitReportRows(rows){
   });
   return{meta,body};
 }
+function currentFolio(){
+  const key='mtto_folio_counter_v1';let n=Number(store.get(key,'0'));if(!Number.isSafeInteger(n)||n<0)n=0;
+  const date=new Date(),year=date.getFullYear();
+  const yearKey='mtto_folio_year_v1',oldYear=Number(store.get(yearKey,'0'));
+  if(oldYear!==year){n=0;store.set(yearKey,String(year))}
+  n++;store.set(key,String(n));
+  return 'MTTO-'+year+'-'+String(n).padStart(5,'0');
+}
 function singleReportDoc(rows,extraMeta){
   const sp=splitReportRows(rows);
   const title=isDaily()?'REPORTE DE CHEQUEO DIARIO':'REPORTE DE MANTENIMIENTO PREVENTIVO';
-  return[[title,'',3],...sp.meta,...(extraMeta||[]).map(m=>[m[0],m[1],2]),['Campo / componente','Resultado / valor',4],...sp.body.map(r=>[r[0],r[1]||'—',r[2]])];
+  const folio=currentReportFolio||currentFolio();
+  return[[title,'',3],['Folio',folio,2],...sp.meta,...(extraMeta||[]).map(m=>[m[0],m[1],2]),['Campo / componente','Resultado / valor',4],...sp.body.map(r=>[r[0],r[1]||'—',r[2]])];
 }
 function batchExcelRows(){
   const rows=[['REPORTE DE CHEQUEO DIARIO','',3],['Fecha de generación',new Date().toLocaleString('es-MX'),2],['Total de informes',String(DailyBatch.reports.length),2]];
@@ -1222,13 +1239,13 @@ async function generateExports(rows,baseName,choice,sig){
   return results;
 }
 async function send(){
-  const b=$('sendBtn');b.disabled=true;const baseName=fileName();
+  const b=$('sendBtn');b.disabled=true;offerFailureFollowup();currentReportFolio=currentFolio();const baseName=fileName();
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
     const exportRows=singleReportDoc(Runtime.rows.slice(1),isDaily()?[]:[['Responsable',Sig.name]]);
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()||!Sig.hex?null:{hex:Sig.hex,w:Sig.w,h:Sig.h,name:Sig.name});
     showDone(results,'Reporte generado');
-    addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType});
+    addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar reporte'}
@@ -1762,8 +1779,10 @@ setInterval(checkReminders,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkReminders()});
 
 /* Recientes */
-function addRecent(r){const key='mtto_hist';let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
-function getRecent(){try{return JSON.parse(store.get('mtto_hist','[]'))}catch(e){return[]}}
+function addRecent(r){const key='mtto_hist';let l=getRecent();if(!r.id)r.id=r.folio||('MTTO-'+Date.now());l.unshift(r);store.set(key,JSON.stringify(l.slice(0,500)));AppState.history=l.slice(0,500)}
+function getRecent(){try{const v=JSON.parse(store.get('mtto_hist','[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
+function filterReportHistory(){renderRecent()}
+function openHistoryReport(id){const r=getRecent().find(x=>x.id===id||x.folio===id);if(!r)return;const rows=Array.isArray(r.rows)?r.rows:[];const preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\\n');if(window.confirm((r.folio||'Reporte')+'\\n\\n'+(r.a||'')+' · '+(r.w||'')+'\\n\\n'+preview.slice(0,1800)+'\\n\\n¿Deseas compartir los datos de este reporte?')){try{if(navigator.share)navigator.share({title:r.folio||'Reporte Chiaplast',text:preview});else if(navigator.clipboard)navigator.clipboard.writeText(preview).then(()=>toast('Datos del reporte copiados.'));else toast('No se pudo compartir desde este navegador.')}catch(e){toast('No se pudo compartir el reporte.')}}}
 function renderHomeFollowup(){
   const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount'),calendarBox=$('menuCalendarCount');
   if(reminderBox){const count=loadReminders().filter(r=>r.status!=='done').length;reminderBox.textContent=count?count+' aviso'+(count===1?' pendiente':'s pendientes'):'Sin avisos pendientes'}
@@ -1771,9 +1790,9 @@ function renderHomeFollowup(){
   if(calendarBox){const count=loadPreventiveCalendar().filter(order=>order.status!=='done').length;calendarBox.textContent=count?count+' '+(count===1?'orden pendiente':'órdenes pendientes'):'Sin órdenes pendientes'}
 }
 function renderRecent(){
-  const l=getRecent();
-  $('recent').innerHTML=l.length?l.map(r=>'<div class="rec"><div><b>'+esc(r.a)+'</b><span>'+esc(r.w)+'</span></div><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></div>').join('')
-    :'<div class="empty">Sin reportes recientes.</div>';
+  const q=(($('historySearch')&&$('historySearch').value)||'').trim().toLowerCase();
+  const l=getRecent().filter(r=>!q||[r.folio,r.id,r.a,r.m,r.w,r.n,r.k].join(' ').toLowerCase().includes(q));
+  $('recent').innerHTML=l.length?l.map(r=>'<button type="button" class="rec" style="width:100%;text-align:left" onclick="openHistoryReport(\\''+esc(r.id||r.folio||'')+'\\')"><span><b>'+esc(r.folio||r.id||'Reporte anterior')+' · '+esc(r.a||'')+'</b><span>'+esc(r.m||'')+' · '+esc(r.w||'')+' · '+esc(r.n||'')+'</span></span><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></button>').join(''):'<div class="empty">No hay reportes que coincidan con la búsqueda.</div>';
 }
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();
