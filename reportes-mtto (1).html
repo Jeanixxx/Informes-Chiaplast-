@@ -251,6 +251,19 @@ body{background:var(--bg);color:var(--ink)}
 .reminder-meta{grid-column:1/-1;color:var(--muted);font-size:12px;line-height:1.45}
 .reminder-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
 .reminder-actions .btn{min-height:42px;padding:0 12px;font-size:13px;box-shadow:none}
+.calendar-item{padding:14px;margin:0 0 9px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:11px;background:var(--surface)}
+.calendar-item.is-done{border-left-color:var(--ok)}
+.calendar-item.is-overdue{border-left-color:var(--err)}
+.calendar-item b{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.calendar-meta{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0 10px}
+.calendar-status{font-weight:800}
+.calendar-status.is-done{color:var(--ok)}
+.calendar-status.is-pending{color:var(--err)}
+.calendar-detail{line-height:1.55}
+.calendar-detail h2{font-size:18px;margin:0 0 8px}
+.calendar-detail p{margin:8px 0}
+.calendar-detail .calendar-status{display:inline-block;padding:5px 9px;border-radius:999px;background:var(--chip)}
+.calendar-detail .btn{width:100%;margin-top:10px}
 .kanban-columns{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .kanban-column{padding:12px;border-radius:12px}
 .kanban-column h3{font-size:13px;letter-spacing:.03em}
@@ -314,7 +327,8 @@ body{background:var(--bg);color:var(--ink)}
     <div class="menu-tools" aria-label="Seguimiento de mantenimiento">
       <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span><small id="menuReminderCount" aria-live="polite"></small></button>
       <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite"></small></button>
-      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">03</span><span>Notas técnicas</span></button>
+      <button class="menu-tool" onclick="openPreventiveCalendar()"><span class="mi" aria-hidden="true">03</span><span>Calendario preventivo</span><small id="menuCalendarCount" aria-live="polite"></small></button>
+      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">04</span><span>Notas técnicas</span></button>
     </div>
     <div class="h2">Recientes</div>
     <div id="recent"></div>
@@ -540,6 +554,40 @@ body{background:var(--bg);color:var(--ink)}
   </div>
 </section>
 
+<section id="preventiveCalendar" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <h1>Calendario preventivo<small>Programa y consulta órdenes por máquina</small></h1>
+  </header>
+  <div class="body">
+    <form class="card" id="preventiveCalendarForm" onsubmit="addPreventiveOrder(event)">
+      <h2 style="margin:0 0 16px">Nueva orden preventiva</h2>
+      <div class="f"><label for="calendarTitle">Trabajo pendiente</label><input id="calendarTitle" maxlength="140" required placeholder="Ej. Lubricar chumaceras"></div>
+      <div class="two">
+        <div class="f"><label for="calendarArea">Área</label><select id="calendarArea" required onchange="updateCalendarMachines()"><option value="">Selecciona un área</option></select></div>
+        <div class="f"><label for="calendarMachine">Máquina</label><select id="calendarMachine" required disabled><option value="">Primero selecciona un área</option></select></div>
+      </div>
+      <div class="f"><label for="calendarPeriod">Periodo</label><select id="calendarPeriod" onchange="updateCalendarPeriodHint()"><option value="day">Día específico</option><option value="week">Periodo de una semana (7 días)</option></select></div>
+      <div class="f"><label for="calendarStartDate">Fecha</label><input id="calendarStartDate" type="date" required onchange="updateCalendarPeriodHint()"><small id="calendarPeriodHint" class="muted"></small></div>
+      <div class="f"><label for="calendarDetails">Detalle de la orden (opcional)</label><textarea id="calendarDetails" rows="2" maxlength="500" placeholder="Materiales, responsable u observaciones"></textarea></div>
+      <button class="btn btn-p" type="submit" style="width:100%">Agregar al calendario</button>
+    </form>
+    <div class="h2">Órdenes programadas</div>
+    <div id="preventiveCalendarList" aria-live="polite"></div>
+    <p class="muted" style="font-size:12px">Las órdenes se guardan en este dispositivo y se separan del modo demo.</p>
+  </div>
+</section>
+
+<section id="preventiveOrder" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('preventiveCalendar')" aria-label="Volver al calendario">‹</button>
+    <h1>Orden preventiva<small id="preventiveOrderSubtitle"></small></h1>
+  </header>
+  <div class="body">
+    <div id="preventiveOrderDetail" class="card calendar-detail"></div>
+  </div>
+</section>
+
 <section id="kanban" class="screen">
   <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban</h1></header>
   <div class="body">
@@ -736,6 +784,8 @@ function show(id){
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
   if(id==='menu'){renderRecent();renderHomeFollowup()}
+  if(id==='preventiveCalendar')renderPreventiveCalendar();
+  if(id==='preventiveOrder')renderPreventiveOrder();
   if(id==='dailyBatch') renderDailyBatch();
   if(id==='kanban') renderKanban();
   if(id==='notes') renderNotes();
@@ -749,6 +799,13 @@ function show(id){
 }
 function go(id){history.pushState({s:id},'');show(id)}
 function openReminders(){go('reminders')}
+function openPreventiveCalendar(){
+  if(!$('calendarStartDate').value)$('calendarStartDate').value=calendarToday();
+  if(!$('calendarArea').options.length||$('calendarArea').options.length===1){
+    $('calendarArea').innerHTML='<option value="">Selecciona un área</option>'+Object.keys(MACHINE_DB).map(code=>'<option value="'+code+'">'+esc(MACHINE_DB[code].area)+'</option>').join('');
+  }
+  updateCalendarPeriodHint();go('preventiveCalendar');
+}
 function openNotes(area,machine){$('noteArea').value=area||'General';$('noteMachine').value=machine||'';go('notes')}
 function openNoteForCurrentContext(){openNotes(Runtime.area||'General',Runtime.machine||'')}
 function openKanbanForCurrentContext(){
@@ -1321,6 +1378,69 @@ function renderKanban(){
     cols[k].innerHTML=subset.length?subset.map(t=>'<div class="kanban-item"><b>'+esc(t.title)+'</b>'+(t.area?'<small>'+esc(t.area)+'</small>':'')+(t.due?'<small>Fecha límite: '+esc(fmtD(t.due))+'</small>':'')+(t.details?'<small>'+esc(t.details)+'</small>':'')+'<div class="kanban-actions">'+(k!=='todo'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;todo&quot;)">← Por hacer</button>':'')+(k!=='doing'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;doing&quot;)">En proceso</button>':'')+(k!=='done'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;done&quot;)">Terminado</button><button type="button" onclick="openReminderForKanbanTask(&quot;'+esc(t.id)+'&quot;)">Programar aviso</button>':'')+'<button type="button" onclick="openNotes(&quot;Kanban&quot;,&quot;'+esc(t.area||'')+'&quot;)">Nota técnica</button><button type="button" onclick="deleteKanbanTask(&quot;'+esc(t.id)+'&quot;)">Eliminar</button></div></div>').join(''):'<div class="empty" style="font-size:12px;padding:10px 4px">Sin tareas</div>';
   });
 }
+/* ===== Calendario local de órdenes preventivas ===== */
+const preventiveCalendarKey=()=>stateKey('mtto_preventive_calendar');
+let currentPreventiveOrderId='';
+function loadPreventiveCalendar(){
+  try{const orders=JSON.parse(store.get(preventiveCalendarKey(),'[]'));return Array.isArray(orders)?orders:[]}
+  catch(e){return[]}
+}
+function savePreventiveCalendar(orders){return store.set(preventiveCalendarKey(),JSON.stringify(orders))}
+function calendarToday(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function addCalendarDays(value,count){
+  const parts=value.split('-').map(Number),d=new Date(parts[0],parts[1]-1,parts[2]);
+  d.setDate(d.getDate()+count);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function updateCalendarMachines(){
+  const code=$('calendarArea').value,data=MACHINE_DB[code],machineSelect=$('calendarMachine');
+  machineSelect.innerHTML=data?'<option value="">Selecciona una máquina</option>'+data.machines.map(machine=>'<option value="'+esc(machine)+'">'+esc(machine)+'</option>').join(''):'<option value="">Primero selecciona un área</option>';
+  machineSelect.disabled=!data;
+}
+function updateCalendarPeriodHint(){
+  const date=$('calendarStartDate').value,week=$('calendarPeriod').value==='week';
+  $('calendarPeriodHint').textContent=!date?'':week?'Periodo de 7 días: del '+fmtD(date)+' al '+fmtD(addCalendarDays(date,6))+'.':'Programado para el '+fmtD(date)+'.';
+}
+function addPreventiveOrder(event){
+  event.preventDefault();
+  const code=$('calendarArea').value,data=MACHINE_DB[code],machine=$('calendarMachine').value,title=$('calendarTitle').value.trim(),startDate=$('calendarStartDate').value;
+  if(!data||!data.machines.includes(machine)||!title||!startDate){toast('Completa el trabajo, el área, la máquina y la fecha.');return}
+  const week=$('calendarPeriod').value==='week';
+  const order={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),title,area:data.area,code,machine,details:$('calendarDetails').value.trim(),period:week?'week':'day',startDate,endDate:week?addCalendarDays(startDate,6):startDate,status:'pending',createdAt:Date.now(),completedAt:null};
+  const orders=loadPreventiveCalendar();orders.push(order);
+  if(!savePreventiveCalendar(orders)){toast('No se pudo guardar la orden en este dispositivo.');return}
+  $('calendarTitle').value='';$('calendarDetails').value='';
+  renderPreventiveCalendar();renderHomeFollowup();toast('Orden preventiva agregada al calendario.');
+}
+function renderPreventiveCalendar(){
+  const target=$('preventiveCalendarList');if(!target)return;
+  const orders=loadPreventiveCalendar().sort((a,b)=>String(a.startDate).localeCompare(String(b.startDate))||Number(b.createdAt||0)-Number(a.createdAt||0));
+  target.innerHTML=orders.length?orders.map(order=>{
+    const done=order.status==='done',overdue=!done&&order.endDate<calendarToday(),status=done?'Hecho':'Aún no hecho';
+    const dates=order.period==='week'?'Periodo: '+fmtD(order.startDate)+' – '+fmtD(order.endDate):'Fecha: '+fmtD(order.startDate);
+    return '<article class="calendar-item'+(done?' is-done':overdue?' is-overdue':'')+'"><b>'+esc(order.title)+'</b><div class="calendar-meta">'+esc(order.area)+' · '+esc(order.machine)+'<br>'+esc(dates)+'<br><span class="calendar-status '+(done?'is-done':'is-pending')+'">'+status+'</span></div><button type="button" class="btn btn-s" style="width:100%;min-height:42px" onclick="openPreventiveOrder(&quot;'+esc(order.id)+'&quot;)">Abrir orden</button></article>';
+  }).join(''):'<div class="empty">No hay órdenes programadas. Agrega una orden para verla en este calendario.</div>';
+}
+function openPreventiveOrder(id){
+  if(!loadPreventiveCalendar().some(order=>order.id===id)){toast('No se encontró la orden preventiva.');return}
+  currentPreventiveOrderId=id;go('preventiveOrder');
+}
+function renderPreventiveOrder(){
+  const target=$('preventiveOrderDetail');if(!target)return;
+  const order=loadPreventiveCalendar().find(item=>item.id===currentPreventiveOrderId);
+  if(!order){$('preventiveOrderSubtitle').textContent='Orden no disponible';target.innerHTML='<p class="empty">No se encontró esta orden en el dispositivo.</p>';return}
+  const done=order.status==='done',dates=order.period==='week'?'Del '+fmtD(order.startDate)+' al '+fmtD(order.endDate)+' (7 días)':fmtD(order.startDate);
+  $('preventiveOrderSubtitle').textContent=order.machine+' · '+(done?'Hecho':'Aún no hecho');
+  target.innerHTML='<h2>'+esc(order.title)+'</h2><p class="calendar-status '+(done?'is-done':'is-pending')+'">'+(done?'Hecho':'Aún no hecho')+'</p><p><b>Área:</b> '+esc(order.area)+'</p><p><b>Máquina:</b> '+esc(order.machine)+'</p><p><b>Programación:</b> '+esc(dates)+'</p>'+(order.details?'<p><b>Detalle:</b> '+esc(order.details)+'</p>':'')+(done&&order.completedAt?'<p><b>Marcado como hecho:</b> '+esc(new Date(order.completedAt).toLocaleString('es-MX'))+'</p>':'')+(done?'<button type="button" class="btn btn-s" onclick="setPreventiveOrderStatus(&quot;pending&quot;)">Marcar como aún no hecho</button>':'<button type="button" class="btn btn-p" onclick="setPreventiveOrderStatus(&quot;done&quot;)">Marcar como hecho</button>');
+}
+function setPreventiveOrderStatus(status){
+  if(status!=='done'&&status!=='pending')return;
+  const orders=loadPreventiveCalendar(),order=orders.find(item=>item.id===currentPreventiveOrderId);if(!order)return;
+  const previousStatus=order.status,previousCompletedAt=order.completedAt;
+  order.status=status;order.completedAt=status==='done'?Date.now():null;
+  if(!savePreventiveCalendar(orders)){order.status=previousStatus;order.completedAt=previousCompletedAt;toast('No se pudo actualizar el estado de la orden.');return}
+  renderPreventiveOrder();renderPreventiveCalendar();renderHomeFollowup();
+}
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
 const NOTES_DB=()=> 'chiaplast-notes-v1',NOTES_STORE='notes';
 let notePhotosDraft=[];
@@ -1530,9 +1650,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkRemin
 function addRecent(r){const key='mtto_hist';let l=getRecent();l.unshift(r);store.set(key,JSON.stringify(l.slice(0,5)));AppState.history=l.slice(0,5)}
 function getRecent(){try{return JSON.parse(store.get('mtto_hist','[]'))}catch(e){return[]}}
 function renderHomeFollowup(){
-  const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount');
+  const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount'),calendarBox=$('menuCalendarCount');
   if(reminderBox){const count=loadReminders().filter(r=>r.status!=='done').length;reminderBox.textContent=count?count+' aviso'+(count===1?' pendiente':'s pendientes'):'Sin avisos pendientes'}
   if(taskBox){const count=loadKanban().filter(t=>(t.status||'todo')!=='done').length;taskBox.textContent=count?count+' tarea'+(count===1?' abierta':'s abiertas'):'Sin tareas abiertas'}
+  if(calendarBox){const count=loadPreventiveCalendar().filter(order=>order.status!=='done').length;calendarBox.textContent=count?count+' '+(count===1?'orden pendiente':'órdenes pendientes'):'Sin órdenes pendientes'}
 }
 function renderRecent(){
   const l=getRecent();

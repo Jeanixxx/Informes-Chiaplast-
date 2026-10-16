@@ -5,6 +5,18 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val releaseStoreFile = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+val releaseStorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+val releaseSigningValues = listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+val hasReleaseSigningValues = releaseSigningValues.any { !it.isNullOrBlank() }
+val hasCompleteReleaseSigningValues = releaseSigningValues.all { !it.isNullOrBlank() }
+require(!hasReleaseSigningValues || hasCompleteReleaseSigningValues) {
+    "Release signing requires ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD."
+}
+val ciVersionCode = providers.environmentVariable("GITHUB_RUN_NUMBER").orNull?.toIntOrNull() ?: 1
+
 android {
     namespace = "mx.chiaplast.mantenimiento"
     compileSdk = 35
@@ -12,10 +24,27 @@ android {
         applicationId = "mx.chiaplast.mantenimiento"
         minSdk = 31
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.1"
+        versionCode = ciVersionCode
+        versionName = "1.0.2"
     }
-    buildTypes { release { isMinifyEnabled = false } }
+    signingConfigs {
+        if (hasCompleteReleaseSigningValues) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseStoreFile))
+                storePassword = requireNotNull(releaseStorePassword)
+                keyAlias = requireNotNull(releaseKeyAlias)
+                keyPassword = requireNotNull(releaseKeyPassword)
+            }
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            if (hasCompleteReleaseSigningValues) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -35,3 +64,10 @@ val copyMainWebApp by tasks.registering(Sync::class) {
 }
 android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/chiaplastAssets"))
 tasks.named("preBuild").configure { dependsOn(copyMainWebApp) }
+tasks.matching { it.name == "packageRelease" || it.name == "bundleRelease" }.configureEach {
+    doFirst {
+        check(hasCompleteReleaseSigningValues) {
+            "Release outputs must be signed. Configure ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD."
+        }
+    }
+}
