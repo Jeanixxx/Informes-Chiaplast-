@@ -161,13 +161,15 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .toast{position:absolute;left:16px;right:16px;bottom:calc(var(--sb) + 90px);background:var(--steel);color:#fff;padding:14px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:9;text-align:center}
 .toast.show{opacity:1;transform:none}
 
-/* Engrasado preventivo de 23 chumaceras para máquinas BM y BD */
+/* Uso de la grasera: 47 puntos para máquinas BM y BD */
 .grease-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:12px}
 .grease-point{min-height:44px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font-weight:800;font-size:14px;transition:background .15s,border-color .15s,color .15s}
 .grease-point[aria-pressed="true"]{background:#13804a;border-color:#0d6539;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .grease-point:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .grease-help{color:var(--muted);font-size:13px;line-height:1.45;margin:4px 0 0}
 @media(max-width:420px){.grease-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.grease-point{min-height:42px;font-size:13px}}
+#sigPad{display:block;width:100%;height:140px;border:1.5px solid var(--line);border-radius:12px;background:#fff;touch-action:none}
+#sigPad.bad{border-color:var(--err)}
 /* ===== Refinamiento visual industrial Chiaplast ===== */
 :root{color-scheme:light dark;--bg:#f1f4f6;--surface:#fff;--ink:#172b3a;--muted:#60717e;--line:#d8e0e6;--steel:#172b3a;--steel-2:#213b4c;--accent:#efb900;--accent-2:#e0a900;--accent-ink:#17212a;--chip:#eaf0f4;--r:12px;--shadow:0 8px 24px rgba(23,43,58,.07)}
 @media(prefers-color-scheme:dark){:root{--bg:#111a22;--surface:#192630;--ink:#eaf0f4;--muted:#a5b4bf;--line:#2b3b47;--steel:#101b24;--steel-2:#1a2b37;--chip:#24343f;--shadow:0 8px 24px rgba(0,0,0,.18)}}
@@ -466,6 +468,12 @@ body{background:var(--bg);color:var(--ink)}
       </div>
       <div class="f"><label for="obs">Observaciones</label>
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
+    </div>
+    <div class="card" id="sigCard" hidden>
+      <div class="f" style="margin-bottom:0"><span class="lbl">Firma<em>*</em></span>
+        <canvas id="sigPad" width="600" height="200" aria-label="Espacio para firmar"></canvas>
+        <button class="link" type="button" onclick="sigClear()">Borrar firma</button>
+      </div>
     </div>
   </div>
   <div class="dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
@@ -851,8 +859,31 @@ function pick(name,code){
   }
   startCheck('preventive');
 }
+/* Firma: solo preventivos; se anexa únicamente a los PDF */
+const Sig={hex:'',w:0,h:0,drawing:false};
+function sigClear(){
+  const c=$('sigPad'),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  Sig.hex='';c.classList.remove('bad');
+}
+function sigCapture(){
+  const c=$('sigPad'),W=300,H=100,t=document.createElement('canvas');t.width=W;t.height=H;
+  const g=t.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(c,0,0,W,H);
+  const d=g.getImageData(0,0,W,H).data;let hex='',ink=0;
+  for(let i=0;i<d.length;i+=4){const v=Math.round(d[i]*.3+d[i+1]*.59+d[i+2]*.11);if(v<200)ink++;hex+=(v<16?'0':'')+v.toString(16)}
+  Sig.hex=ink>40?hex:'';Sig.w=W;Sig.h=H;
+}
+(function(){
+  const c=$('sigPad'),x=c.getContext('2d');sigClear();
+  x.lineWidth=5;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';
+  const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+  c.addEventListener('pointerdown',e=>{Sig.drawing=true;c.setPointerCapture(e.pointerId);const[a,b]=pt(e);x.beginPath();x.moveTo(a,b);x.lineTo(a+.1,b+.1);x.stroke();c.classList.remove('bad')});
+  c.addEventListener('pointermove',e=>{if(!Sig.drawing)return;const[a,b]=pt(e);x.lineTo(a,b);x.stroke()});
+  const end=()=>{if(Sig.drawing){Sig.drawing=false;sigCapture()}};
+  c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
+})();
 function startCheck(kind){
   Runtime.checkType=kind;
+  $('sigCard').hidden=kind==='daily';sigClear();
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
@@ -887,6 +918,7 @@ function review(){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||!Number.isFinite(Number(x))){i.classList.add('bad');bad=bad||i}});
     if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
+  if(!isDaily()&&!Sig.hex){$('sigPad').classList.add('bad');bad=bad||$('sigPad')}
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
   const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
@@ -958,7 +990,7 @@ function pdfSafe(value){
     .replace(/[^\x20-\x7E]/g,' ').replace(/\s+/g,' ').trim()
     .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
 }
-function buildPdf(rows){
+function buildPdf(rows,sig){
   const lines=[];
   rows.forEach(row=>{
     const a=String(row&&row[0]||'').trim(),b=String(row&&row[1]||'').trim();
@@ -969,6 +1001,10 @@ function buildPdf(rows){
   const pages=[];
   for(let i=0;i<lines.length;i+=52)pages.push(lines.slice(i,i+52));
   if(!pages.length)pages.push(['Reporte de mantenimiento Chiaplast']);
+  if(sig){
+    const used=pages[pages.length-1].length;
+    if(794-(used*14+60+80)<40)pages.push([]);
+  }
   const objects=[];
   objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
   objects[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
@@ -979,10 +1015,16 @@ function buildPdf(rows){
     let stream='BT\n/F1 10 Tf\n48 794 Td\n';
     page.forEach((line,j)=>{if(j)stream+='0 -14 Td\n';stream+='('+line+') Tj\n';});
     stream+='ET';
-    objects[pageId]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>';
+    const withSig=sig&&index===pages.length-1,imgId=4+pages.length*2;
+    if(withSig){
+      const y=794-page.length*14-60-80;
+      stream+='\nBT\n/F1 10 Tf\n48 '+(y+88)+' Td\n(Firma:) Tj\nET\nq\n180 0 0 60 48 '+(y+20)+' cm\n/Sig Do\nQ\n0.5 w\n48 '+(y+16)+' m 260 '+(y+16)+' l S';
+    }
+    objects[pageId]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >>'+(withSig?' /XObject << /Sig '+imgId+' 0 R >>':'')+' >> /Contents '+contentId+' 0 R >>';
     objects[contentId]='<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream';
   });
   objects[2]='<< /Type /Pages /Kids ['+pageRefs.join(' ')+'] /Count '+pages.length+' >>';
+  if(sig){const data=sig.hex+'>';objects[4+pages.length*2]='<< /Type /XObject /Subtype /Image /Width '+sig.w+' /Height '+sig.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+data.length+' >>\nstream\n'+data+'\nendstream';}
   let pdf='%PDF-1.4\n%CHIA\n';const offsets=[0];
   for(let i=1;i<objects.length;i++){offsets[i]=pdf.length;pdf+=i+' 0 obj\n'+objects[i]+'\nendobj\n';}
   const xref=pdf.length;pdf+='xref\n0 '+objects.length+'\n0000000000 65535 f \n';
@@ -994,12 +1036,12 @@ function selectedExport(name){
   const input=document.querySelector('input[name="'+name+'"]:checked');
   return input?input.value:'excel';
 }
-async function generateExports(rows,baseName,choice){
+async function generateExports(rows,baseName,choice,sig){
   LastExports.length=0;
   const formats=choice==='both'?['excel','pdf']:[choice],results=[];
   for(const format of formats){
     const isPdf=format==='pdf',name=baseName+(isPdf?'.pdf':'.xlsx');
-    const blob=isPdf?buildPdf(rows):buildXlsx(rows);
+    const blob=isPdf?buildPdf(rows,sig):buildXlsx(rows);
     const mode=await exportReport(blob,name,isPdf?PDF_MIME:XLSX_MIME);
     results.push({name,format,mode});
   }
@@ -1012,7 +1054,7 @@ async function send(){
     const exportRows=Runtime.rows[0]&&Runtime.rows[0][0]==='Campo'
       ?[['REPORTE DE MANTENIMIENTO CHIAPLAST',''],['Área',Runtime.area],['Máquina',Runtime.machine||Runtime.area],['Tipo de reporte',isDaily()?'Chequeo diario':'Mantenimiento preventivo'],['Fecha',fmtD($('d').value)],['Hora',$('t').value],['',''],['Campo / componente','Resultado / valor'],...Runtime.rows.slice(1)]
       :Runtime.rows;
-    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'));
+    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()||!Sig.hex?null:Sig);
     showDone(results,'Reporte generado');
     addRecent({n:results.map(r=>r.name).join(', '),a:Runtime.area,w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
@@ -1020,6 +1062,7 @@ async function send(){
   finally{b.disabled=false;b.textContent='Generar reporte'}
 }
 function finish(){
+  sigClear();
   $('obs').value='';extLoad({});['gType','gStatus'].forEach(g=>{const x=$(g);x.dataset.v='';x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'))});
   Runtime.batchMode=false;Runtime.machine='';DailyBatch.active=false;
   history.replaceState({s:'menu'},'');show('menu');
@@ -1085,7 +1128,7 @@ function extLoad(o){
   document.querySelectorAll('#ext input').forEach(i=>{i.value=o[i.id]||'';i.classList.remove('bad')});
   document.querySelectorAll('#ext .seg').forEach(g=>{const v=o[g.id]||'';g.dataset.v=v;g.classList.remove('bad');g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
   document.querySelectorAll('#ext [data-grease]').forEach(b=>{const done=o['grease'+b.dataset.grease]===true||o['grease'+b.dataset.grease]==='true';b.setAttribute('aria-pressed',String(done))});
-  const points=document.querySelectorAll('#ext [data-grease]'),progress=$('greaseProgress');if(progress)progress.textContent=Array.from(points).filter(b=>b.getAttribute('aria-pressed')==='true').length+' de 23 chumaceras engrasadas';
+  greaseProgress();
 }
 function extRows(){
   const v=id=>$(id).value.trim().replace(',','.');
@@ -1169,9 +1212,9 @@ function buildMq(){
   if(Runtime.code==='DIM'){
     let k=0,h='';
     if(/^(BM|BD)-/i.test(Runtime.machine)){
-      h+='<div class="card"><h3>Engrasado de chumaceras</h3><p class="grease-help">Marca cada punto al terminar de engrasarlo. Verde = engrasado. El avance se guarda en el borrador de esta máquina.</p><div class="grease-grid" role="group" aria-label="23 puntos de engrase">';
-      for(let p=1;p<=23;p++)h+='<button type="button" class="grease-point" data-grease="'+p+'" aria-pressed="false" aria-label="Chumacera '+p+'" onclick="toggleGrease(this)">'+p+'</button>';
-      h+='</div><p class="grease-help" id="greaseProgress">0 de 23 chumaceras engrasadas</p></div>';
+      h+='<div class="card"><h3>Uso de la grasera</h3><button class="link" style="margin:0 0 8px" onclick="greaseAll()">Marcar todos</button><div class="grease-grid" role="group" aria-label="'+GREASE_N+' puntos de la grasera">';
+      for(let p=1;p<=GREASE_N;p++)h+='<button type="button" class="grease-point" data-grease="'+p+'" aria-pressed="false" aria-label="Punto '+p+'" onclick="toggleGrease(this)">'+p+'</button>';
+      h+='</div><p class="grease-help" id="greaseProgress">0 de '+GREASE_N+' puntos</p></div>';
     }
     h+='<button class="link" style="margin:0 0 12px" onclick="allOk(\'m\')">Marcar todo en OK</button>';
     DIM_CHECK.forEach((g,n)=>{
@@ -1197,12 +1240,18 @@ function buildMq(){
   });
   return h;
 }
+const GREASE_N=47;
+function greaseProgress(){
+  const progress=$('greaseProgress');
+  if(progress)progress.textContent=Array.from(document.querySelectorAll('#ext [data-grease]')).filter(b=>b.getAttribute('aria-pressed')==='true').length+' de '+GREASE_N+' puntos';
+}
 function toggleGrease(button){
-  const done=button.getAttribute('aria-pressed')!=='true';
-  button.setAttribute('aria-pressed',String(done));
-  const points=document.querySelectorAll('#ext [data-grease]'),progress=$('greaseProgress');
-  if(progress)progress.textContent=Array.from(points).filter(b=>b.getAttribute('aria-pressed')==='true').length+' de 23 chumaceras engrasadas';
-  saveDraft();buzz(8);
+  button.setAttribute('aria-pressed',String(button.getAttribute('aria-pressed')!=='true'));
+  greaseProgress();saveDraft();buzz(8);
+}
+function greaseAll(){
+  document.querySelectorAll('#ext [data-grease]').forEach(b=>b.setAttribute('aria-pressed','true'));
+  greaseProgress();saveDraft();buzz(8);
 }
 function mqRows(){
   if(Runtime.code==='CAM'){
@@ -1216,10 +1265,10 @@ function mqRows(){
   if(Runtime.code==='DIM'){
     const r=[];let k=0;
     if(/^(BM|BD)-/i.test(Runtime.machine)){
-      r.push(['ENGRASADO DE CHUMACERAS','',1]);
-      for(let p=1;p<=23;p++){
+      r.push(['USO DE LA GRASERA','',1]);
+      for(let p=1;p<=GREASE_N;p++){
         const button=document.querySelector('#ext [data-grease="'+p+'"]');
-        r.push(['Chumacera '+p,button&&button.getAttribute('aria-pressed')==='true'?'ENGRASADA':'PENDIENTE']);
+        r.push(['Punto '+p,button&&button.getAttribute('aria-pressed')==='true'?'SÍ':'PENDIENTE']);
       }
     }
     DIM_CHECK.forEach((g,n)=>{
