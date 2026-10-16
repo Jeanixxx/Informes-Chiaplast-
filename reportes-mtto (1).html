@@ -1792,7 +1792,11 @@ function renderHomeFollowup(){
 function renderRecent(){
   const q=(($('historySearch')&&$('historySearch').value)||'').trim().toLowerCase();
   const l=getRecent().filter(r=>!q||[r.folio,r.id,r.a,r.m,r.w,r.n,r.k].join(' ').toLowerCase().includes(q));
-  $('recent').innerHTML=l.length?l.map(r=>'<button type="button" class="rec" style="width:100%;text-align:left" onclick="openHistoryReport(\\''+esc(r.id||r.folio||'')+'\\')"><span><b>'+esc(r.folio||r.id||'Reporte anterior')+' · '+esc(r.a||'')+'</b><span>'+esc(r.m||'')+' · '+esc(r.w||'')+' · '+esc(r.n||'')+'</span></span><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></button>').join(''):'<div class="empty">No hay reportes que coincidan con la búsqueda.</div>';
+  $('recent').innerHTML=l.length?l.map(r=>{
+    const id=esc(r.id||r.folio||'');
+    return '<button type="button" class="rec" style="width:100%;text-align:left" data-report-id="'+id+'"><span><b>'+esc(r.folio||r.id||'Reporte anterior')+' · '+esc(r.a||'')+'</b><span>'+esc(r.m||'')+' · '+esc(r.w||'')+' · '+esc(r.n||'')+'</span></span><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></button>';
+  }).join(''):'<div class="empty">No hay reportes que coincidan con la búsqueda.</div>';
+  $('recent').querySelectorAll('[data-report-id]').forEach(btn=>btn.addEventListener('click',()=>openHistoryReport(btn.getAttribute('data-report-id'))));
 }
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();
