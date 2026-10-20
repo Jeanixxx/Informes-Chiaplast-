@@ -283,10 +283,111 @@ body{background:var(--bg);color:var(--ink)}
 }
 @media(max-width:380px){.menu-tool{grid-template-columns:30px minmax(0,1fr);padding:9px}.menu-tool .mi{width:28px;height:28px;font-size:11px}.reminder-item{padding:11px}}
 .helpm{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99;padding:24px}.helpm[hidden]{display:none}.helpbox{background:var(--surface);color:var(--ink);border-radius:14px;padding:20px;max-width:380px;width:100%;display:flex;flex-direction:column;gap:14px}.helpbox p{margin:0;line-height:1.5}
+/* Tablet control-room interface */
+.app-topbar,.app-sidebar{display:none}
+.app.has-chrome .app-topbar{position:absolute;z-index:12;inset:0 0 auto;height:54px;padding:0 16px;background:#172b3a;color:#fff;display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-align:left;padding:0}
+.brand-mark{width:28px;height:28px;display:grid;place-items:center;background:#f2b705;color:#172b3a;font-weight:900}
+.brand b,.brand small{display:block}.brand b{font-size:13px;letter-spacing:.04em}.brand small{font-size:8px;letter-spacing:.13em;color:#a9bac5}
+.plant-status,.topbar-clock,.topbar-user{font:700 9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
+.plant-status{padding:6px 8px;background:#0d1b25}.plant-status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#43d6a0;margin-right:5px}
+.topbar-spacer{flex:1}.topbar-clock{color:#d4dee5}.topbar-user{padding:8px 10px;background:#0d1b25;color:#fff;border-radius:4px}
+.app.has-chrome .app-sidebar{position:absolute;z-index:11;inset:54px auto 0 0;width:158px;padding:14px 8px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
+.app-sidebar button{display:flex;align-items:center;gap:9px;width:100%;min-height:37px;padding:8px 9px;text-align:left;color:var(--ink);font-size:11px;font-weight:700;border-radius:3px}
+.app-sidebar button span{width:16px;font-size:14px;text-align:center}
+.app-sidebar button:hover,.app-sidebar button.active{background:#172b3a;color:white}
+.app-sidebar .sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);border-radius:0}
+.app.has-chrome .screen{top:54px;left:158px;right:0;bottom:0}
+.app.has-chrome .screen>.body{width:100%;max-width:none;margin:0;padding:14px 16px 20px}
+.app.has-chrome .screen>.bar{min-height:48px;padding:8px 16px}
+.app.has-chrome .screen>.bar h1{font-size:17px}
+.app.has-chrome #menu>.bar{display:none}
+.app.has-chrome #menu>.body{background:#f0f4ff}
+.dashboard-heading,.section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dashboard-heading{margin:0 0 12px;padding:0 0 11px;border-bottom:1px solid #dce5f3}
+.eyebrow{font:9px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em;color:#687487}
+.dashboard-heading h2,.section-heading h2{font-size:15px;line-height:1.2;margin:3px 0 0;color:#152437}
+.dashboard-actions{display:flex;gap:7px}
+.dashboard-actions .btn{min-height:34px;padding:0 11px;font-size:10px;white-space:nowrap}
+.dashboard-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.metric{min-width:0;padding:10px;background:#fff;border:1px solid #dce5f3}
+.metric>span,.metric>small{display:block;color:#647084;font:8px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
+.metric>b{display:block;margin:5px 0 3px;color:#162438;font-size:24px;line-height:1}
+.metric>small{font-size:9px;letter-spacing:0}
+.dashboard-section,.dashboard-panel{min-width:0;background:#fff;border:1px solid #dce5f3;padding:10px;margin-bottom:12px}
+.section-heading{margin-bottom:8px}
+.section-heading h2{font-size:13px;margin:0}
+.section-heading>span{color:#647084;font:8px ui-monospace,SFMono-Regular,Consolas,monospace}
+.dashboard-areas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.dashboard-area{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;min-height:133px;padding:9px;text-align:left;background:#fff;border:1px solid #e0e6ef}
+.dashboard-area>b{display:flex;align-items:center;justify-content:space-between;gap:3px}
+.dashboard-area>b i{font-style:normal;font-size:11px}.dashboard-area>b em{font-style:normal;font-size:7px;color:#087b55;background:#d8fff0;padding:3px}
+.dashboard-area>strong{font-size:10px;line-height:1.25}
+.dashboard-area>small{font-size:8px;line-height:1.3;color:#718095}
+.dashboard-area>span{margin-top:auto;padding:7px 5px;background:#e8efff;text-align:center;font-size:9px;font-weight:700}
+.dashboard-lower{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;align-items:stretch}
+.dashboard-panel{margin:0}
+.quick-links{display:grid;gap:5px}
+.quick-link{display:flex;align-items:center;gap:9px;width:100%;padding:8px;text-align:left;background:#f2f5fc;color:var(--ink)}
+.quick-link>b{width:24px;height:24px;display:grid;place-items:center;background:#dce7ff;color:#172b3a}
+.quick-link span{flex:1;min-width:0}.quick-link strong,.quick-link small{display:block}.quick-link strong{font-size:10px}.quick-link small{font-size:8px;color:#687487;margin-top:2px}
+.quick-link>i{font-style:normal;font-size:12px}
+.text-action{font-size:9px;color:#34465c;text-decoration:underline}
+.history-search{margin:8px 0}.history-search label{display:block;font-size:9px;margin-bottom:4px;color:#687487}
+.history-search input{width:100%;min-height:34px;padding:7px 9px;font-size:10px}
+#recent .rec,#notesRecent .rec{margin-bottom:5px;padding:8px 9px;background:#f2f5fc;border:0;border-radius:2px}
+#recent .rec b,#notesRecent .rec b{font-size:9px}#recent .rec span,#notesRecent .rec span{font-size:8px}
+.workspace-tabs{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:12px;padding:6px;background:#e8efff}
+.workspace-tabs button{min-height:32px;padding:0 10px;background:transparent;color:var(--ink);font-size:10px;font-weight:700}
+.workspace-tabs button.selected{background:#172b3a;color:white}
+.workspace-count{margin-left:auto;color:#647084;font:9px ui-monospace,SFMono-Regular,Consolas,monospace}
+.notes-history{margin-top:20px;padding:14px;background:#fff;border:1px solid var(--line)}
+@media(min-width:1000px){
+  .app.has-chrome .screen>.body{padding:16px 20px 24px}
+  .dashboard-metrics{gap:10px}
+  .metric{padding:12px}
+  .dashboard-area{min-height:145px;padding:11px}
+  .dashboard-panel{padding:12px}
+}
+@media(max-width:900px){
+  .app.has-chrome .app-sidebar{width:142px}
+  .app.has-chrome .screen{left:142px}
+  .dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-areas{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .dashboard-area{min-height:120px;padding:7px}
+}
+@media(max-width:699px){
+  .app.has-chrome .app-topbar{height:48px;padding:0 10px}
+  .app.has-chrome .app-sidebar{display:none}
+  .app.has-chrome .screen{top:48px;left:0}
+  .dashboard-heading{align-items:flex-start;flex-direction:column}
+  .dashboard-actions{width:100%}.dashboard-actions .btn{flex:1;white-space:normal}
+  .dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-areas{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-lower{grid-template-columns:1fr}
+  .workspace-count{margin-left:0}
+  .plant-status{display:none}
+}
 </style>
 </head>
 <body>
 <div class="app">
+<header class="app-topbar" aria-label="Barra de estado Chiaplast">
+  <button class="brand" type="button" onclick="go('menu')" aria-label="Ir al centro de control">
+    <span class="brand-mark">C</span><span><b>CHIAPLAST</b><small>MANTENIMIENTO DE PLANTA</small></span>
+  </button>
+  <span class="plant-status"><i></i> DATOS LOCALES · SIN SINCRONIZACIÓN</span>
+  <div class="topbar-spacer"></div>
+  <span class="topbar-clock" id="dashboardClock"></span>
+  <button class="topbar-user" type="button" onclick="go('tools')">⚙ <span id="topbarUser">Técnico</span></button>
+</header>
+<nav class="app-sidebar" aria-label="Navegación principal">
+  <button type="button" data-nav="menu" onclick="go('menu')"><span>▦</span>Centro de Control</button>
+  <button type="button" onclick="startWorkflow('daily')"><span>☷</span>Chequeo e Inspección</button>
+  <button type="button" data-nav="kanban" onclick="go('kanban')"><span>▥</span>Planificación &amp; Kanban</button>
+  <button type="button" data-nav="notes" onclick="go('notes')"><span>▤</span>Bitácora &amp; Historial</button>
+  <button class="sidebar-bottom" type="button" onclick="go('tools')"><span>⚙</span>Ajustes / Configuración</button>
+</nav>
 
 <!-- Splash -->
 <section id="splash" class="screen splash active">
@@ -312,27 +413,49 @@ body{background:var(--bg);color:var(--ink)}
 <!-- Menú -->
 <section id="menu" class="screen">
   <header class="bar">
-    <h1>Centro de mantenimiento</h1>
+    <h1>Centro de Control de Planta<small>LÍNEA DE MANDO INDUSTRIAL · OPERACIÓN LOCAL</small></h1>
     <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
   </header>
   <div class="body">
-    <div class="h2">Reportes operativos</div>
-    <button class="area wide workflow-primary" style="width:100%;margin-bottom:12px;border-left-color:#13804a" onclick="startWorkflow('daily')">
-      <b>Chequeo diario</b>
-    </button>
-    <button class="area wide workflow-primary" style="width:100%;margin-bottom:18px;border-left-color:var(--accent)" onclick="startWorkflow('preventive')">
-      <b>Mantenimiento preventivo</b>
-    </button>
-    <div class="h2">Seguimiento del trabajo</div>
-    <div class="menu-tools" aria-label="Seguimiento de mantenimiento">
-      <button class="menu-tool" onclick="openReminders()"><span class="mi" aria-hidden="true">01</span><span>Recordatorios</span><small id="menuReminderCount" aria-live="polite"></small></button>
-      <button class="menu-tool" onclick="go('kanban')"><span class="mi" aria-hidden="true">02</span><span>Tablero de tareas</span><small id="menuTaskCount" aria-live="polite"></small></button>
-      <button class="menu-tool" onclick="openPreventiveCalendar()"><span class="mi" aria-hidden="true">03</span><span>Calendario preventivo</span><small id="menuCalendarCount" aria-live="polite"></small></button>
-      <button class="menu-tool" onclick="openNotes()"><span class="mi" aria-hidden="true">04</span><span>Notas técnicas</span></button>
+    <div class="dashboard-heading">
+      <div><span class="eyebrow">LÍNEA DE MANDO INDUSTRIAL · DATOS LOCALES</span><h2>Centro de Control de Planta</h2></div>
+      <div class="dashboard-actions">
+        <button class="btn btn-p" onclick="startWorkflow('daily')">☷ + Chequeo Diario Lote</button>
+        <button class="btn btn-s" onclick="openPreventiveCalendar()">◷ + Nuevo Preventivo</button>
+      </div>
     </div>
-    <div class="h2">Historial de reportes</div>
-    <div class="f"><label for="historySearch">Buscar por folio, máquina, área o fecha</label><input id="historySearch" type="search" placeholder="Ej. MTTO-2026-00001, DIM, BM-1" oninput="filterReportHistory()" style="width:100%;min-height:48px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--bg)"></div>
-    <div id="recent"></div>
+    <div class="dashboard-metrics" aria-label="Resumen operativo">
+      <article class="metric"><span>INSPECCIONES HOY</span><b id="metricInspections">0</b><small id="metricInspectionCaption">Reportes guardados hoy</small></article>
+      <article class="metric"><span>ÓRDENES PREVENTIVAS</span><b id="metricOrders">0</b><small id="metricOrderCaption">Pendientes</small></article>
+      <article class="metric"><span>TAREAS ACTIVAS</span><b id="metricTasks">0</b><small id="metricTaskCaption">Tareas abiertas</small></article>
+      <article class="metric"><span>ÁREAS OPERATIVAS</span><b>5</b><small>E1 · E2 · CAM · DIM · BSL</small></article>
+    </div>
+    <section class="dashboard-section">
+      <div class="section-heading"><h2>Matriz Operativa por Área</h2><span id="areaMatrixTotal">ÁREAS DE MANTENIMIENTO</span></div>
+      <div class="dashboard-areas">
+        <button class="dashboard-area" onclick="startDailyArea('Extrusión 1','E1AREA')"><b><i>E1</i><em>● Catálogo</em></b><strong>Extrusión 1</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
+        <button class="dashboard-area" onclick="startDailyArea('Extrusión 2','E2AREA')"><b><i>E2</i><em>● Catálogo</em></b><strong>Extrusión 2</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
+        <button class="dashboard-area" onclick="startDailyArea('CAM','CAM')"><b><i>CAM</i><em>● Catálogo</em></b><strong>Confección &amp; Sellado</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
+        <button class="dashboard-area" onclick="startDailyArea('DIM','DIM')"><b><i>DIM</i><em>● Catálogo</em></b><strong>Dimensionado</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
+        <button class="dashboard-area" onclick="startDailyArea('BSL','BSL')"><b><i>BSL</i><em>● Catálogo</em></b><strong>Bolsas Especiales</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
+      </div>
+    </section>
+    <div class="dashboard-lower">
+      <section class="dashboard-panel">
+        <div class="section-heading"><h2>Alertas y Pendientes Críticos</h2><button type="button" class="text-action" onclick="go('kanban')">Ver tablero →</button></div>
+        <div class="quick-links">
+          <button class="quick-link" onclick="go('kanban')"><b>▦</b><span><strong>Tablero Kanban</strong><small id="menuTaskCount">Cargando tareas…</small></span><i>→</i></button>
+          <button class="quick-link" onclick="openPreventiveCalendar()"><b>◷</b><span><strong>Calendario preventivo</strong><small id="menuCalendarCount">Cargando órdenes…</small></span><i>→</i></button>
+          <button class="quick-link" onclick="openReminders()"><b>◉</b><span><strong>Recordatorios</strong><small id="menuReminderCount">Cargando avisos…</small></span><i>→</i></button>
+          <button class="quick-link" onclick="openNotes()"><b>▤</b><span><strong>Notas técnicas y evidencias</strong><small>Bitácora local de mantenimiento</small></span><i>→</i></button>
+        </div>
+      </section>
+      <section class="dashboard-panel">
+        <div class="section-heading"><h2>Últimos Folios Oficiales</h2><button type="button" class="text-action" onclick="go('notes')">Historial completo →</button></div>
+        <div class="f history-search"><label for="historySearch">Buscar folio, máquina o área</label><input id="historySearch" type="search" placeholder="Ej. MTTO-2026-00001, DIM, BM-1" oninput="filterReportHistory()"></div>
+        <div id="recent"></div>
+      </section>
+    </div>
   </div>
 </section>
 
@@ -593,6 +716,12 @@ body{background:var(--bg);color:var(--ink)}
 <section id="kanban" class="screen">
   <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban</h1></header>
   <div class="body">
+    <div class="workspace-tabs" aria-label="Herramientas de planificación">
+      <button type="button" class="selected" onclick="go('kanban')">▤ Tablero Kanban</button>
+      <button type="button" onclick="openPreventiveCalendar()">▦ Calendario Preventivo</button>
+      <button type="button" onclick="openReminders()">◷ Recordatorios</button>
+      <span class="workspace-count" id="kanbanOpenCount">Tareas locales</span>
+    </div>
     <div class="card"><h2 style="margin-top:0">Nueva tarea</h2>
       <div class="f"><label for="kanbanTitle">Tarea</label><input id="kanbanTitle" maxlength="140" placeholder="Ej. Cambiar chumacera de BM-2"></div>
       <div class="two"><div class="f"><label for="kanbanArea">Área / máquina</label><input id="kanbanArea" maxlength="80" placeholder="DIM · BM-2"></div><div class="f"><label for="kanbanDue">Fecha límite</label><input id="kanbanDue" type="date"></div></div>
@@ -621,6 +750,11 @@ body{background:var(--bg);color:var(--ink)}
       <button class="btn btn-p" style="width:100%;flex:none" onclick="saveNote()">Guardar nota y evidencias</button>
     </div>
     <div class="h2" style="margin-top:18px">Notas guardadas</div><div id="notesList"></div>
+    <section class="notes-history">
+      <div class="section-heading"><h2>Historial de Folios y Exportaciones</h2><span id="notesHistoryCount"></span></div>
+      <div class="f history-search"><label for="notesHistorySearch">Buscar folio, máquina, área o fecha</label><input id="notesHistorySearch" type="search" placeholder="Ej. MTTO-2026-00001, DIM, BM-1" oninput="renderRecent('notesRecent','notesHistorySearch')"></div>
+      <div id="notesRecent"></div>
+    </section>
   </div>
 </section>
 
@@ -688,6 +822,7 @@ function chooseDailyArea(area,code){
   $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+(done.has(m.name)?' ✓':'')+'</b></button>').join('');
   go('dailyMachine');
 }
+function startDailyArea(area,code){beginDailyBatch();chooseDailyArea(area,code)}
 function chooseCustomDailyMachine(){
   const name=$('customMachine').value.trim();
   if(!name){toast('Escribe el nombre de la máquina.');$('customMachine').focus();return}
@@ -772,15 +907,20 @@ AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.
 
 /* Navegación con soporte del botón Atrás de Android */
 function show(id){
+  const app=document.querySelector('.app');
+  const showChrome=id!=='splash'&&id!=='login';
+  app.classList.toggle('has-chrome',showChrome);
+  document.querySelectorAll('.app-sidebar [data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===id||(id==='preventiveCalendar'&&button.dataset.nav==='kanban')));
+  $('topbarUser').textContent=currentUser()||'Técnico';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  if(id==='menu'){renderRecent();renderHomeFollowup()}
+  if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics()}
   if(id==='preventiveCalendar')renderPreventiveCalendar();
   if(id==='preventiveOrder')renderPreventiveOrder();
   if(id==='dailyBatch') renderDailyBatch();
   if(id==='kanban') renderKanban();
-  if(id==='notes') renderNotes();
+  if(id==='notes'){renderNotes();renderRecent('notesRecent','notesHistorySearch')}
   if(id==='reminders'){
     const when=reminderDefault();$('reminderDate').min=when.date;
     if(!$('reminderDate').value)$('reminderDate').value=when.date;
@@ -790,6 +930,23 @@ function show(id){
   }
 }
 function go(id){history.pushState({s:id},'');show(id)}
+function renderDashboardMetrics(){
+  const today=new Date().toLocaleDateString('es-MX');
+  const recent=getRecent(),inspections=recent.filter(report=>String(report.w||'').includes(today)).length;
+  const orders=loadPreventiveCalendar().filter(order=>order.status!=='done').length;
+  const tasks=loadKanban().filter(task=>(task.status||'todo')!=='done').length;
+  $('metricInspections').textContent=String(inspections);
+  $('metricInspectionCaption').textContent=inspections===1?'Reporte guardado hoy':'Reportes guardados hoy';
+  $('metricOrders').textContent=String(orders);
+  $('metricOrderCaption').textContent=orders===1?'Orden pendiente':'Órdenes pendientes';
+  $('metricTasks').textContent=String(tasks);
+  $('metricTaskCaption').textContent=tasks===1?'Tarea abierta':'Tareas abiertas';
+}
+function updateDashboardClock(){
+  const now=new Date(),clock=$('dashboardClock');
+  clock.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})+' | '+now.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}).toUpperCase();
+}
+updateDashboardClock();setInterval(updateDashboardClock,30000);
 function openReminders(){go('reminders')}
 function openPreventiveCalendar(){
   if(!$('calendarStartDate').value)$('calendarStartDate').value=calendarToday();
@@ -1505,6 +1662,9 @@ function deleteKanbanTask(id){
 }
 function renderKanban(){
   const tasks=loadKanban(),cols={todo:$('kanbanTodo'),doing:$('kanbanDoing'),done:$('kanbanDone')};if(!cols.todo)return;
+  const openCount=tasks.filter(task=>(task.status||'todo')!=='done').length;
+  const countLabel=$('kanbanOpenCount');
+  if(countLabel)countLabel.textContent=openCount+' '+(openCount===1?'ORDEN ACTIVA':'ÓRDENES ACTIVAS');
   Object.keys(cols).forEach(k=>{
     const subset=tasks.filter(t=>(t.status||'todo')===k);
     cols[k].innerHTML=subset.length?subset.map(t=>'<div class="kanban-item"><b>'+esc(t.title)+'</b>'+(t.area?'<small>'+esc(t.area)+'</small>':'')+(t.due?'<small>Fecha límite: '+esc(fmtD(t.due))+'</small>':'')+(t.details?'<small>'+esc(t.details)+'</small>':'')+'<div class="kanban-actions">'+(k!=='todo'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;todo&quot;)">← Por hacer</button>':'')+(k!=='doing'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;doing&quot;)">En proceso</button>':'')+(k!=='done'?'<button type="button" onclick="moveKanbanTask(&quot;'+esc(t.id)+'&quot;,&quot;done&quot;)">Terminado</button><button type="button" onclick="openReminderForKanbanTask(&quot;'+esc(t.id)+'&quot;)">Programar aviso</button>':'')+'<button type="button" onclick="openNotes(&quot;Kanban&quot;,&quot;'+esc(t.area||'')+'&quot;)">Nota técnica</button><button type="button" onclick="deleteKanbanTask(&quot;'+esc(t.id)+'&quot;)">Eliminar</button></div></div>').join(''):'<div class="empty" style="font-size:12px;padding:10px 4px">Sin tareas</div>';
@@ -1789,14 +1949,18 @@ function renderHomeFollowup(){
   if(taskBox){const count=loadKanban().filter(t=>(t.status||'todo')!=='done').length;taskBox.textContent=count?count+' tarea'+(count===1?' abierta':'s abiertas'):'Sin tareas abiertas'}
   if(calendarBox){const count=loadPreventiveCalendar().filter(order=>order.status!=='done').length;calendarBox.textContent=count?count+' '+(count===1?'orden pendiente':'órdenes pendientes'):'Sin órdenes pendientes'}
 }
-function renderRecent(){
-  const q=(($('historySearch')&&$('historySearch').value)||'').trim().toLowerCase();
+function renderRecent(targetId='recent',searchId='historySearch'){
+  const target=$(targetId),search=$(searchId);
+  if(!target)return;
+  const q=(search&&search.value||'').trim().toLowerCase();
   const l=getRecent().filter(r=>!q||[r.folio,r.id,r.a,r.m,r.w,r.n,r.k].join(' ').toLowerCase().includes(q));
-  $('recent').innerHTML=l.length?l.map(r=>{
+  target.innerHTML=l.length?l.map(r=>{
     const id=esc(r.id||r.folio||'');
     return '<button type="button" class="rec" style="width:100%;text-align:left" data-report-id="'+id+'"><span><b>'+esc(r.folio||r.id||'Reporte anterior')+' · '+esc(r.a||'')+'</b><span>'+esc(r.m||'')+' · '+esc(r.w||'')+' · '+esc(r.n||'')+'</span></span><span>'+(r.k==='daily'?'Diario':'Preventivo')+'</span></button>';
   }).join(''):'<div class="empty">No hay reportes que coincidan con la búsqueda.</div>';
-  $('recent').querySelectorAll('[data-report-id]').forEach(btn=>btn.addEventListener('click',()=>openHistoryReport(btn.getAttribute('data-report-id'))));
+  target.querySelectorAll('[data-report-id]').forEach(btn=>btn.addEventListener('click',()=>openHistoryReport(btn.getAttribute('data-report-id'))));
+  const count=$('notesHistoryCount');
+  if(targetId==='notesRecent'&&count)count.textContent=l.length+' FOLIOS';
 }
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();

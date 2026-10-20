@@ -1,6 +1,6 @@
 # Chiaplast Mantenimiento — APK Android nativa
 
-Proyecto Android Studio con Kotlin + WebView, sin Capacitor. La interfaz se toma directamente de `reportes-mtto (1).html` en cada compilación.
+Proyecto Android Studio con Kotlin + WebView, sin Capacitor. La interfaz se toma directamente de `reportes-mtto (1).html` en cada compilación. En tabletas, la pantalla principal ofrece un centro de control con navegación lateral, resumen operativo, acceso por área, Kanban, calendario, notas e historial; los formularios y acciones de mantenimiento existentes se conservan.
 
 ## Requisitos
 - Android Studio estable y JDK 17.
@@ -29,6 +29,7 @@ El APK `debug` y el APK `release` tienen firmas diferentes. Para pasar de uno al
 
 ## Capacidades
 - Formularios, borradores, recordatorios, Kanban y calendario local de mantenimiento preventivo en WebView. El calendario permite programar una máquina para un día o un periodo de siete días, abrir la orden y marcarla como hecha o aún no hecha.
+- Centro de control adaptable a tabletas con indicadores locales de reportes, tareas y órdenes preventivas; navegación rápida a los flujos existentes de inspección, planificación, bitácora y configuración.
 - Alarmas exactas con `AlarmManager`, reprogramación tras reinicio y notificaciones locales.
 - Cámara y selección de imágenes con almacenamiento privado local.
 - Impresión de notas con fotografías mediante el diálogo nativo de Android (incluye Guardar como PDF).
