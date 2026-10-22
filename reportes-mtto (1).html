@@ -378,6 +378,75 @@ body{background:var(--bg);color:var(--ink)}
   .workspace-count{margin-left:0}
   .plant-status{display:none}
 }
+/* ===== Tablero mensual de mantenimiento preventivo ===== */
+.pm-entry{width:100%;margin:0 0 14px;display:flex;align-items:center;gap:14px;text-align:left;padding:16px 18px;border-radius:12px;background:var(--steel-2);color:#fff;border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow)}
+.pm-entry b{display:block;font-size:18px}
+.pm-entry small{display:block;opacity:.75;font-size:14px;margin-top:2px}
+.pm-entry i{margin-left:auto;font-style:normal;font-size:22px;color:var(--accent)}
+.pm-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:14px}
+.pm-month{display:flex;align-items:center;gap:6px}
+.pm-month button{width:42px;height:42px;border-radius:10px;background:var(--chip);border:1px solid var(--line);font-size:20px;font-weight:800}
+.pm-month strong{min-width:170px;text-align:center;font-size:18px}
+.pm-date{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.pm-date input{min-height:42px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.pm-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.pm-actions .btn{min-height:42px;font-size:14px;padding:0 14px;flex:0 0 auto}
+.pm-summary{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.pm-summary b{font-size:15px;white-space:nowrap}
+.pm-summary small{color:var(--muted);font-size:13px;white-space:nowrap}
+.pm-track{height:12px;border-radius:6px;background:var(--chip);overflow:hidden;flex:1}
+.pm-fill{height:100%;background:var(--ok);border-radius:6px;transition:width .25s}
+.pm-plant{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.pm-zone{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.pm-zone-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.pm-zone-head h3{margin:0;font-size:20px;font-style:italic;letter-spacing:.02em}
+.pm-zone-head span{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+.pm-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.pm-grid{display:grid;gap:6px;grid-template-columns:repeat(var(--cols),minmax(58px,1fr))}
+.pm-cell{position:relative;min-height:58px;padding:6px 2px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;overflow-wrap:anywhere;line-height:1.15}
+.pm-cell.is-long{font-size:9.5px;letter-spacing:-.2px}
+.pm-cell small{font-size:10px;font-weight:700;color:var(--muted);min-height:12px;white-space:nowrap}
+.pm-cell:active{background:var(--chip)}
+.pm-cell.is-done{background:rgba(19,128,74,.16);border-color:var(--ok)}
+.pm-cell.is-done small{color:var(--ok)}
+.pm-cell.is-done::after{content:"✓";position:absolute;top:2px;right:5px;color:var(--ok);font-size:13px;font-weight:900}
+.pm-group{grid-column:span var(--span);border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--bg)}
+.pm-group>b{display:block;text-align:center;font-size:12px;margin-bottom:6px}
+.pm-subs{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px}
+.pm-stats{margin-top:22px}
+.pm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.pm-kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.pm-kpi span{display:block;font:12px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+.pm-kpi b{display:block;font-size:30px;line-height:1;margin:7px 0 4px}
+.pm-kpi small{color:var(--muted);font-size:13px}
+.pm-panels{display:grid;gap:14px;align-items:start;grid-template-columns:repeat(2,minmax(0,1fr))}
+.pm-panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.pm-panel h3{margin:0 0 10px;font-size:16px}
+.pm-row{display:grid;grid-template-columns:64px minmax(0,1fr) 84px;gap:10px;align-items:center;margin:10px 0;font-size:14px}
+.pm-row em{font-style:normal;color:var(--muted);text-align:right;font-size:13px}
+.pm-days{display:flex;align-items:flex-end;gap:3px;height:130px;padding-top:6px;border-bottom:1px solid var(--line)}
+.pm-day{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.pm-day i{display:block;width:100%;background:var(--accent);border-radius:3px 3px 0 0}
+.pm-day u{position:absolute;top:-2px;font-size:9px;text-decoration:none;color:var(--muted)}
+.pm-axis{display:flex;gap:3px;margin-top:3px}
+.pm-axis span{flex:1;min-width:0;text-align:center;font-size:9px;color:var(--muted)}
+.pm-pending-zone{margin:0 0 10px}
+.pm-pending-zone>b{display:block;font-size:13px;margin-bottom:6px}
+.pm-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pm-chip{padding:4px 9px;border-radius:999px;background:var(--chip);border:1px solid var(--line);font-size:12px;font-weight:700}
+.pm-note{color:var(--muted);font-size:13px;margin:10px 2px 0;line-height:1.5}
+@media(min-width:980px){
+  .pm-plant{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .pm-zone[data-z=CAM],.pm-zone[data-z=DIM],.pm-zone[data-z=BSL]{grid-column:span 2}
+  .pm-zone[data-z=EXT1],.pm-zone[data-z=EXT2]{grid-column:span 3}
+}
+@media(max-width:699px){
+  .pm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pm-panels{grid-template-columns:minmax(0,1fr)}
+  .pm-actions{margin-left:0;width:100%}
+  .pm-actions .btn{flex:1}
+  .pm-summary small{display:none}
+}
 </style>
 </head>
 <body>
@@ -493,6 +562,7 @@ body{background:var(--bg);color:var(--ink)}
     <h1>Mantenimiento preventivo</h1>
   </header>
   <div class="body">
+    <button type="button" class="pm-entry" onclick="openPreventiveBoard()"><span><b>Tablero mensual de preventivos</b><small>Check de máquinas con preventivo realizado y estadísticas del mes</small></span><i>→</i></button>
     <div class="areas">
       <button class="area" onclick="choosePreventiveArea('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="choosePreventiveArea('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
@@ -690,6 +760,32 @@ body{background:var(--bg);color:var(--ink)}
   </div>
 </section>
 
+<section id="preventiveBoard" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Tablero mensual<small>Planta CHIAPLAST · Máquinas por mantenimiento preventivo</small></h1>
+  </header>
+  <div class="body">
+    <div class="pm-toolbar">
+      <div class="pm-month">
+        <button type="button" onclick="pmShiftMonth(-1)" aria-label="Mes anterior">‹</button>
+        <strong id="pmMonthLabel"></strong>
+        <button type="button" onclick="pmShiftMonth(1)" aria-label="Mes siguiente">›</button>
+      </div>
+      <label class="pm-date" for="pmDate">Fecha del check <input id="pmDate" type="date" onchange="pmSetDate(this.value)"></label>
+      <div class="pm-actions">
+        <button type="button" class="btn btn-p" onclick="pmSaveNow()">Guardar</button>
+        <button type="button" class="btn btn-s" onclick="pmExportCsv()">Exportar CSV</button>
+        <button type="button" class="btn btn-s" onclick="pmResetMonth()">Reiniciar mes</button>
+      </div>
+    </div>
+    <div class="pm-summary" aria-live="polite"><b id="pmSummaryText"></b><div class="pm-track"><div class="pm-fill" id="pmSummaryFill" style="width:0"></div></div><small id="pmSavedAt"></small></div>
+    <div id="pmPlant" class="pm-plant"></div>
+    <p class="pm-note">Toca una máquina para marcar que ya tiene su preventivo del mes (se registra con la fecha elegida arriba). Vuelve a tocarla para quitar el check. Los cambios se guardan solos en este dispositivo.</p>
+    <section class="pm-stats" id="pmStats" aria-label="Estadísticas del mes"></section>
+  </div>
+</section>
+
 <section id="preventiveCalendar" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
@@ -788,7 +884,7 @@ body{background:var(--bg);color:var(--ink)}
 
 <script>
 const $=id=>document.getElementById(id);
-const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado."};
+const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo."};
 function showHelp(){const a=document.querySelector('.screen.active');$('helpText').textContent=HELP[a&&a.id]||HELP.menu;$('helpModal').hidden=false}
 document.querySelectorAll('.screen:not(.splash):not(.login) .bar').forEach(b=>{const h=document.createElement('button');h.className='iconbtn';h.style.cssText='width:38px;height:38px;font-size:17px;margin-left:auto';h.textContent='?';h.setAttribute('aria-label','Ayuda');h.onclick=showHelp;b.appendChild(h)});
 const AppState={session:false,user:'',settings:{},history:[]};
@@ -921,13 +1017,14 @@ function show(id){
   const app=document.querySelector('.app');
   const showChrome=id!=='splash'&&id!=='login';
   app.classList.toggle('has-chrome',showChrome);
-  const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
+  const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
   document.querySelectorAll('.app-sidebar [data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===id||(preventiveScreen&&button.dataset.nav==='preventive')));
   $('topbarUser').textContent=currentUser()||'Técnico';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
   if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics()}
+  if(id==='preventiveBoard')renderPmBoard();
   if(id==='preventiveCalendar')renderPreventiveCalendar();
   if(id==='preventiveOrder')renderPreventiveOrder();
   if(id==='dailyBatch') renderDailyBatch();
@@ -1745,6 +1842,180 @@ function setPreventiveOrderStatus(status){
   if(!savePreventiveCalendar(orders)){order.status=previousStatus;order.completedAt=previousCompletedAt;toast('No se pudo actualizar el estado de la orden.');return}
   renderPreventiveOrder();renderPreventiveCalendar();renderHomeFollowup();
 }
+/* ===== Tablero mensual de mantenimiento preventivo =====
+   Replica el plano de la planta. El check de cada mes se guarda en este dispositivo
+   bajo la clave mtto_pm_board_AAAA-MM. */
+const pmM=(name,key)=>({name,short:name,key:key||name});
+const pmList=names=>names.map(n=>pmM(n));
+const pmG=(name,span,count,cols)=>({group:name,span,cols:cols||count,subs:Array.from({length:count},(_,i)=>({name:name+' '+(i+1),short:String(i+1),key:name.replace(/\s+/g,'-')+'-'+(i+1)}))});
+const PM_LAYOUT=[
+  {code:'CAM',title:'CAM',cols:4,items:[
+    ...pmList(['BK-1','BK-2','BK-3','BK-4','BK-5','BK-6','BK-7','BK-8','BNG-1','BNG-2','BC-1']),pmM('BC-1','BC-1#2'),
+    ...pmList(['IMP-1','IMP-2','IMP-3','FLEJADORA'])]},
+  {code:'DIM',title:'DIM',cols:4,items:[
+    ...pmList(['BM-1','BM-2','BM-3','BM-4','BM-5','BD-1','BD-2','BD-3']),
+    pmG('SELLADORA',4,5),pmG('HORNO M',2,4,2),pmM('FLEJADORA','FLEJADORA-1'),pmM('FLEJADORA','FLEJADORA-2')]},
+  {code:'BSL',title:'BSL',cols:4,items:pmList(['BW-1','BN-1','BN-2','BN-3','BN-4','B-02','B-03','B-06','BSL-1','BSL-2','BSL-3','BSL-4','BSL-5','BSL-6','BD-4','ELEVADOR'])},
+  {code:'EXT1',title:'EXT1',cols:7,items:pmList(['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','RF 2','EXT-N1','EXT-N2','FUELLADORA','FUELLADORA 2','EXT-A3'])},
+  {code:'EXT2',title:'EXT2',cols:7,items:pmList(['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2'])}
+];
+const PM_PREFIX='mtto_pm_board_';
+const PMBoard={month:'',date:'',data:{},savedAt:0};
+const pmKey=month=>PM_PREFIX+month;
+const pmMonthNow=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+const pmDaysIn=month=>{const p=month.split('-').map(Number);return new Date(p[0],p[1],0).getDate()};
+const pmMonthName=(month,short)=>{const p=month.split('-').map(Number);return new Date(p[0],p[1]-1,1).toLocaleDateString('es-MX',{month:short?'short':'long',year:'numeric'})};
+const pmDefaultDate=month=>month===pmMonthNow()?calendarToday():month+'-01';
+/* Lista plana de máquinas: [{id,name,short,zone}] */
+const PM_ITEMS=(()=>{
+  const out=[];
+  PM_LAYOUT.forEach(z=>z.items.forEach(it=>{
+    if(it.group)it.subs.forEach(s=>out.push({id:z.code+':'+s.key,name:s.name,zone:z.code}));
+    else out.push({id:z.code+':'+it.key,name:it.name,zone:z.code});
+  }));
+  return out;
+})();
+function pmParse(raw){
+  try{const v=JSON.parse(raw);return v&&typeof v==='object'&&v.done&&typeof v.done==='object'&&!Array.isArray(v.done)?v:null}
+  catch(e){return null}
+}
+function pmLoadMonth(month){
+  const v=pmParse(store.get(pmKey(month),''));
+  PMBoard.data=v?v.done:{};PMBoard.savedAt=v&&v.savedAt||0;
+}
+function pmPersist(){
+  const savedAt=Date.now();
+  const ok=store.set(pmKey(PMBoard.month),JSON.stringify({v:1,month:PMBoard.month,savedAt,done:PMBoard.data}));
+  if(ok)PMBoard.savedAt=savedAt;
+  return ok;
+}
+function openPreventiveBoard(){go('preventiveBoard')}
+function pmShiftMonth(delta){
+  const p=PMBoard.month.split('-').map(Number),d=new Date(p[0],p[1]-1+delta,1);
+  PMBoard.month=d.getFullYear()+'-'+pad(d.getMonth()+1);
+  pmLoadMonth(PMBoard.month);PMBoard.date=pmDefaultDate(PMBoard.month);
+  renderPmBoard();
+}
+function pmSetDate(value){
+  const n=pmDaysIn(PMBoard.month);
+  if(!value||value<PMBoard.month+'-01'||value>PMBoard.month+'-'+pad(n)){
+    toast('La fecha debe estar dentro de '+pmMonthName(PMBoard.month)+'.');
+    $('pmDate').value=PMBoard.date;return;
+  }
+  PMBoard.date=value;
+}
+function pmToggle(id){
+  const item=PM_ITEMS.find(i=>i.id===id);if(!item)return;
+  const had=Object.prototype.hasOwnProperty.call(PMBoard.data,id),prev=PMBoard.data[id];
+  if(had){
+    if(!window.confirm('¿Quitar el check de '+item.name+'?'))return;
+    delete PMBoard.data[id];
+  }else PMBoard.data[id]={d:PMBoard.date,t:Date.now()};
+  if(!pmPersist()){
+    if(had)PMBoard.data[id]=prev;else delete PMBoard.data[id];
+    toast('No se pudo guardar el cambio en este dispositivo.');return;
+  }
+  buzz(10);renderPmBoard();
+}
+function pmSaveNow(){
+  if(pmPersist()){renderPmBoard();toast('Tablero de '+pmMonthName(PMBoard.month)+' guardado en este dispositivo.')}
+  else toast('No se pudo guardar el tablero en este dispositivo.');
+}
+function pmResetMonth(){
+  const n=Object.keys(PMBoard.data).length;
+  if(!n){toast('Este mes no tiene checks que reiniciar.');return}
+  if(!window.confirm('Se quitarán los '+n+' checks de '+pmMonthName(PMBoard.month)+'. ¿Continuar?'))return;
+  const prev=PMBoard.data;PMBoard.data={};
+  if(!pmPersist()){PMBoard.data=prev;toast('No se pudo reiniciar el mes.');return}
+  renderPmBoard();toast('Mes reiniciado.');
+}
+async function pmExportCsv(){
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const rows=[['Zona','Máquina','Preventivo','Fecha']];
+  PM_ITEMS.forEach(i=>{const r=PMBoard.data[i.id];rows.push([i.zone,i.name,r?'Hecho':'Pendiente',r?fmtD(r.d):''])});
+  const blob=new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  try{
+    const mode=await exportReport(blob,'PREVENTIVO_'+PMBoard.month.replace('-','')+'.csv','text/csv');
+    LastExports.length=0;
+    toast(mode==='android-saved'?'CSV guardado en Descargas/Chiaplast':'CSV exportado.');
+  }catch(e){toast(e&&e.message?e.message:'No se pudo exportar el CSV.')}
+}
+function pmCellHtml(zone,m){
+  const id=zone+':'+m.key,rec=PMBoard.data[id];
+  return '<button type="button" class="pm-cell'+(rec?' is-done':'')+(m.short.length>=9&&m.short.indexOf(' ')<0?' is-long':'')+'" data-id="'+esc(id)+'" aria-pressed="'+(rec?'true':'false')+'" title="'+esc(m.name)+'">'+esc(m.short)+'<small>'+(rec?esc(fmtD(rec.d).slice(0,5)):'')+'</small></button>';
+}
+function pmZoneStats(code){
+  const items=PM_ITEMS.filter(i=>i.zone===code);
+  return{total:items.length,done:items.filter(i=>PMBoard.data[i.id]).length};
+}
+function pmHistory(){
+  const rows=[];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k||k.indexOf(PM_PREFIX)!==0)continue;
+      const month=k.slice(PM_PREFIX.length);if(!/^\d{4}-\d{2}$/.test(month))continue;
+      const v=pmParse(localStorage.getItem(k));if(!v)continue;
+      rows.push({month,done:PM_ITEMS.filter(it=>v.done[it.id]).length});
+    }
+  }catch(e){}
+  return rows.sort((a,b)=>b.month.localeCompare(a.month)).slice(0,6);
+}
+function renderPmBoard(){
+  if(!PMBoard.month){PMBoard.month=pmMonthNow();pmLoadMonth(PMBoard.month);PMBoard.date=pmDefaultDate(PMBoard.month)}
+  const month=PMBoard.month,days=pmDaysIn(month),total=PM_ITEMS.length;
+  const doneItems=PM_ITEMS.filter(i=>PMBoard.data[i.id]),done=doneItems.length,pending=total-done,pct=total?Math.round(done*100/total):0;
+  const monthLabel=pmMonthName(month);$('pmMonthLabel').textContent=monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1);
+  const dateInput=$('pmDate');dateInput.min=month+'-01';dateInput.max=month+'-'+pad(days);dateInput.value=PMBoard.date;
+
+  $('pmPlant').innerHTML=PM_LAYOUT.map(z=>{
+    const s=pmZoneStats(z.code);
+    const cells=z.items.map(it=>it.group
+      ?'<div class="pm-group" style="--span:'+it.span+'"><b>'+esc(it.group)+'</b><div class="pm-subs" style="--n:'+it.cols+'">'+it.subs.map(sub=>pmCellHtml(z.code,sub)).join('')+'</div></div>'
+      :pmCellHtml(z.code,it)).join('');
+    return '<section class="pm-zone" data-z="'+z.code+'"><div class="pm-zone-head"><h3>'+esc(z.title)+'</h3><span>'+s.done+'/'+s.total+'</span></div><div class="pm-scroll"><div class="pm-grid" style="--cols:'+z.cols+'">'+cells+'</div></div></section>';
+  }).join('');
+
+  $('pmSummaryText').textContent=done+' de '+total+' · '+pct+'%';
+  $('pmSummaryFill').style.width=pct+'%';
+  $('pmSavedAt').textContent=PMBoard.savedAt?'Guardado '+new Date(PMBoard.savedAt).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Sin cambios guardados';
+
+  /* Estadísticas */
+  const now=pmMonthNow(),elapsed=month===now?new Date().getDate():month<now?days:0;
+  const rate=elapsed?done/elapsed:0;
+  const rateText=elapsed?(rate<10?rate.toFixed(1):Math.round(rate))+'':'—';
+  const rateNote=month===now&&elapsed?'Proyección al cierre: '+Math.min(total,Math.round(rate*days)):month<now?'Mes cerrado':'Mes por iniciar';
+  const perDay=Array(days).fill(0);
+  doneItems.forEach(i=>{const d=Number(String(PMBoard.data[i.id].d||'').slice(8,10));if(d>=1&&d<=days)perDay[d-1]++});
+  const maxDay=Math.max(1,...perDay);
+  const zoneRows=PM_LAYOUT.map(z=>{const s=pmZoneStats(z.code),p=s.total?Math.round(s.done*100/s.total):0;
+    return '<div class="pm-row"><b>'+esc(z.title)+'</b><div class="pm-track"><div class="pm-fill" style="width:'+p+'%"></div></div><em>'+s.done+'/'+s.total+' · '+p+'%</em></div>'}).join('');
+  const dayBars=perDay.map((n,i)=>'<div class="pm-day" title="Día '+(i+1)+': '+n+'">'+(n?'<u>'+n+'</u>':'')+'<i style="height:'+Math.round(n*100/maxDay)+'%"></i></div>').join('');
+  const axis=perDay.map((n,i)=>'<span>'+((i+1===1||(i+1)%5===0)?i+1:'')+'</span>').join('');
+  const pendingHtml=pending?PM_LAYOUT.map(z=>{
+    const list=PM_ITEMS.filter(i=>i.zone===z.code&&!PMBoard.data[i.id]);
+    return list.length?'<div class="pm-pending-zone"><b>'+esc(z.title)+' · '+list.length+'</b><div class="pm-chips">'+list.map(i=>'<span class="pm-chip">'+esc(i.name)+'</span>').join('')+'</div></div>':'';
+  }).join(''):'<p class="empty">Todas las máquinas ya tienen su preventivo de este mes.</p>';
+  const hist=pmHistory();
+  const histHtml=hist.length?hist.map(h=>{const p=total?Math.round(h.done*100/total):0;
+    return '<div class="pm-row"><b>'+esc(pmMonthName(h.month,true))+'</b><div class="pm-track"><div class="pm-fill" style="width:'+p+'%"></div></div><em>'+h.done+'/'+total+' · '+p+'%</em></div>'}).join(''):'<p class="empty">Aún no hay meses guardados.</p>';
+  $('pmStats').innerHTML=
+    '<div class="h2" style="margin-top:0">Estadísticas de '+esc(pmMonthName(month))+'</div>'+
+    '<div class="pm-kpis">'+
+      '<div class="pm-kpi"><span>CON PREVENTIVO</span><b>'+done+'</b><small>de '+total+' máquinas</small></div>'+
+      '<div class="pm-kpi"><span>PENDIENTES</span><b>'+pending+'</b><small>por atender</small></div>'+
+      '<div class="pm-kpi"><span>AVANCE DEL MES</span><b>'+pct+'%</b><small>cumplimiento</small></div>'+
+      '<div class="pm-kpi"><span>RITMO DIARIO</span><b>'+rateText+'</b><small>'+esc(rateNote)+'</small></div>'+
+    '</div>'+
+    '<div class="pm-panels">'+
+      '<div class="pm-panel"><h3>Avance por área</h3>'+zoneRows+'</div>'+
+      '<div class="pm-panel"><h3>Preventivos por día</h3><div class="pm-days">'+dayBars+'</div><div class="pm-axis">'+axis+'</div></div>'+
+      '<div class="pm-panel"><h3>Máquinas pendientes</h3>'+pendingHtml+'</div>'+
+      '<div class="pm-panel"><h3>Historial de meses</h3>'+histHtml+'</div>'+
+    '</div>';
+}
+$('pmPlant').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)pmToggle(b.dataset.id)});
+
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
 const NOTES_DB=()=> 'chiaplast-notes-v1',NOTES_STORE='notes';
 let notePhotosDraft=[];
