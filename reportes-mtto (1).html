@@ -552,6 +552,7 @@ body{background:var(--bg);color:var(--ink)}
           <button class="quick-link" onclick="openPreventiveCalendar()"><b>◷</b><span><strong>Calendario preventivo</strong><small id="menuCalendarCount">Cargando órdenes…</small></span><i>→</i></button>
           <button class="quick-link" onclick="openReminders()"><b>◉</b><span><strong>Recordatorios</strong><small id="menuReminderCount">Cargando avisos…</small></span><i>→</i></button>
           <button class="quick-link" onclick="openNotes()"><b>▤</b><span><strong>Notas técnicas y evidencias</strong><small>Bitácora local de mantenimiento</small></span><i>→</i></button>
+          <button class="quick-link" onclick="openSpecialWorks()"><b>TE</b><span><strong>Trabajos especiales</strong><small id="specialWorkCount">Órdenes pendientes</small></span><i>→</i></button>
         </div>
       </section>
       <section class="dashboard-panel">
@@ -681,6 +682,22 @@ body{background:var(--bg);color:var(--ink)}
       <button class="link" onclick="setNow();saveDraft()">Ahora</button>
     </div>
 
+    <div class="card" id="preventiveTimesCard" hidden>
+      <h3>Tiempo de intervención</h3>
+      <div class="two">
+        <div class="f"><label for="pmStartDate">Fecha de inicio</label><input id="pmStartDate" type="date" onchange="saveDraft()"></div>
+        <div class="f"><label for="pmStartTime">Hora de inicio</label><input id="pmStartTime" type="time" onchange="saveDraft()"></div>
+      </div>
+      <div class="two">
+        <div class="f"><label for="pmStopDate">Fecha de parada / término</label><input id="pmStopDate" type="date" onchange="saveDraft()"></div>
+        <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft()"></div>
+      </div>
+      <small>Si el mantenimiento sigue en curso, puede dejar vacíos los campos de parada.</small>
+    </div>
+    <div class="card" id="motorHzCard" hidden>
+      <h3>Motor principal</h3>
+      <div class="f"><label for="motorHz">Frecuencia del motor (Hz)</label><input id="motorHz" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="Ej. 60" onchange="saveDraft()"></div>
+    </div>
     <div id="ext" hidden></div>
     <div class="context-actions" aria-label="Acciones de seguimiento para esta máquina">
       <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
@@ -924,6 +941,37 @@ body{background:var(--bg);color:var(--ink)}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 
+<!-- Trabajos especiales: órdenes pendientes y cierre -->
+<section id="specialWorks" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Trabajos especiales<small>Órdenes de intervención y seguimiento</small></h1></header>
+  <div class="body">
+    <div class="card">
+      <div class="section-heading"><h2 id="specialFormTitle">Nueva orden especial</h2><span id="specialFormStatus">BORRADOR</span></div>
+      <input id="specialId" type="hidden">
+      <div class="two">
+        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="EXT1">Extrusión 1 (zona general)</option><option value="EXT2">Extrusión 2 (zona general)</option><option value="OTRA">Otra / servicios</option></select></div>
+        <div class="f"><label for="specialMachine">Máquina / equipo</label><select id="specialMachine"><option value="">Seleccionar máquina</option></select></div>
+      </div>
+      <div class="f"><label for="specialActivitiesToDo">Actividades por hacer</label><textarea id="specialActivitiesToDo" rows="3" placeholder="Describe el trabajo requerido"></textarea></div>
+      <div class="f"><label for="specialActivitiesDone">Actividades realizadas</label><textarea id="specialActivitiesDone" rows="3" placeholder="Se completa al retomar y cerrar la orden"></textarea></div>
+      <div class="f"><label for="specialUrgent">Tareas urgentes / riesgo operativo</label><textarea id="specialUrgent" rows="2" placeholder="Indica qué requiere atención prioritaria"></textarea></div>
+      <div class="f"><label for="specialParts">Refacciones usadas (nombre y cantidad)</label><textarea id="specialParts" rows="3" placeholder="Ej. balero 6204 — 2 piezas"></textarea></div>
+      <div class="f"><label for="specialNotes">Observaciones</label><textarea id="specialNotes" rows="2" placeholder="Datos adicionales, seguridad, pruebas..."></textarea></div>
+      <div class="card" style="padding:12px">
+        <h3>Fotografías del trabajo</h3>
+        <p class="muted">Hasta 5 fotografías de antes y 5 de después. Las fotos se conservan en el dispositivo; el formato exportado indica la evidencia asociada.</p>
+        <div class="f"><label>Antes</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="specialPick('before')">Adjuntar antes</button></div><input id="specialBeforeInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'before')"><div id="specialBeforePreview" class="parts-photo-preview"></div></div>
+        <div class="f"><label>Después</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="specialPick('after')">Adjuntar después</button></div><input id="specialAfterInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'after')"><div id="specialAfterPreview" class="parts-photo-preview"></div></div>
+      </div>
+      <div class="f"><label for="specialPriority">Prioridad</label><select id="specialPriority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+      <div class="f"><label for="specialStart">Inicio de trabajo</label><input id="specialStart" type="datetime-local"></div>
+      <div class="f"><label for="specialStop">Término de trabajo</label><input id="specialStop" type="datetime-local"></div>
+      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialReset()">Limpiar formulario</button><button class="btn btn-p" type="button" onclick="specialSavePending()">Guardar como pendiente</button></div>
+      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialExport('pending')">Formato de pendiente</button><button class="btn btn-p" type="button" onclick="specialComplete()">Terminar trabajo y liberar formato</button></div>
+    </div>
+    <div class="dashboard-section"><div class="section-heading"><h2>Órdenes pendientes y terminadas</h2><span id="specialListCount">0 ÓRDENES</span></div><div id="specialList"></div></div>
+  </div>
+</section>
 <script>
 const $=id=>document.getElementById(id);
 const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo."};
@@ -1065,7 +1113,8 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics()}
+  if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics();if($('specialWorkCount'))$('specialWorkCount').textContent=specialAll().filter(x=>x.status!=='done').length+' pendiente(s)'}
+  if(id==='specialWorks')specialRender();
   if(id==='preventiveBoard')renderPmBoard();
   if(id==='preventiveCalendar')renderPreventiveCalendar();
   if(id==='preventiveOrder')renderPreventiveOrder();
@@ -1222,6 +1271,10 @@ function sigCapture(){
 function startCheck(kind){
   Runtime.checkType=kind;
   $('partsCard').hidden=kind==='daily';
+  $('preventiveTimesCard').hidden=kind==='daily';
+  $('motorHzCard').hidden=kind==='daily'||!isExt();
+  ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz'].forEach(id=>{const el=$(id);if(el)el.value=''});
+
   if(kind==='preventive'){loadParts();loadPartsPhotos();}
   $('sigCard').hidden=kind==='daily';sigClear();$('sigName').value=store.get('mtto_sig_name','');Sig.name=$('sigName').value.trim();
   const dailyMeasurements=isDaily()&&isExt();
@@ -1248,6 +1301,13 @@ function review(){
   const d=$('d').value,t=$('t').value;
   const type=$('gType').dataset.v,st=$('gStatus').dataset.v;
   let bad=null;
+  if(!isDaily()){
+    const sd=$('pmStartDate').value,stt=$('pmStartTime').value,ed=$('pmStopDate').value,ett=$('pmStopTime').value;
+    if((sd&&!stt)||(!sd&&stt)){toast('Completa fecha y hora de inicio, o deja ambos vacíos.');bad=$(!sd?'pmStartDate':'pmStartTime')}
+    if((ed&&!ett)||(!ed&&ett)){toast('Completa fecha y hora de parada, o deja ambos vacíos.');bad=bad||$(!ed?'pmStopDate':'pmStopTime')}
+    if(sd&&ed&&(ed+'T'+ett)<(sd+'T'+stt)){toast('La parada no puede ser anterior al inicio.');bad=bad||$('pmStopDate')}
+    if(isExt()&&$('motorHz').value.trim()!==''&&(!Number.isFinite(Number($('motorHz').value))||Number($('motorHz').value)<0)){toast('Indica una frecuencia válida en Hz.');bad=bad||$('motorHz')}
+  }
   if(!d||!t){toast('Indica la fecha y la hora.');bad=$(!d?'d':'t')}
   const dailyMeasurementsForValidation=isDaily()&&isExt();
   if(!dailyMeasurementsForValidation){
@@ -1265,6 +1325,11 @@ function review(){
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
   const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
+  if(!isDaily()){
+    if($('pmStartDate').value||$('pmStartTime').value)rows.push(['Inicio de mantenimiento',($('pmStartDate').value?fmtD($('pmStartDate').value):'')+' '+$('pmStartTime').value]);
+    if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
+    if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
+  }
   if(dailyMeasurements)rows.push(['Tipo de chequeo','DIARIO'],...dailyRows());
   else rows.push(['Tipo',type],['Estado',st],...(isExt()?extRows():mqRows()));
   if(!isDaily()){
@@ -1660,7 +1725,7 @@ function loadParts(){
 }
 function saveParts(){store.set(partsStorageKey(),JSON.stringify(readParts()));}
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
+function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value}))}
 function loadDraft(){
   let dr=null;try{dr=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
   const ok=dr&&dr.c===Runtime.code&&(isDaily()?dr.k==='daily':!dr.k||dr.k==='preventive');
@@ -1669,6 +1734,7 @@ function loadDraft(){
   $('d').classList.remove('bad');$('t').classList.remove('bad');
   [['gType',ok?dr.t:''],['gStatus',ok?dr.s:'']].forEach(([g,v])=>{const x=$(g);x.dataset.v=v||'';x.classList.remove('bad');x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
   $('obs').value=ok?dr.o:'';
+  ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz'].forEach(id=>{const el=$(id);if(el)el.value=ok&&dr[id]?dr[id]:''});
   extLoad(ok&&dr.x?dr.x:{});
 }
 
@@ -2199,6 +2265,11 @@ window.onEvidenceCaptured=function(raw){
   try{
     const data=typeof raw==='string'?JSON.parse(raw):raw;
     if(!data||!data.uri)return;
+    if(partsPhotoTarget==='specialBefore'||partsPhotoTarget==='specialAfter'){
+      const stage=partsPhotoTarget==='specialBefore'?'before':'after';
+      if(specialPhotos[stage].length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
+      specialPhotos[stage].push(data.uri);specialRenderPhotos();specialSaveDraftOnly();toast('Evidencia del trabajo especial agregada.');return;
+    }
     if(partsPhotoTarget==='parts'){
       if(partsPhotosDraft.length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías de refacciones.');return}
       partsPhotosDraft.push(data.uri);renderPartsPhotos();savePartsPhotos().then(()=>toast('Fotografía de refacción guardada.')).catch(()=>toast('La fotografía no se pudo guardar localmente.'));
@@ -2388,6 +2459,101 @@ function renderRecent(targetId='recent',searchId='historySearch'){
   const count=$('notesHistoryCount');
   if(targetId==='notesRecent'&&count)count.textContent=l.length+' FOLIOS';
 }
+
+/* ===== Trabajos especiales: persistencia local y ciclo pendiente/terminado ===== */
+const SPECIAL_KEY='chiaplast_special_works_v1';
+let specialPhotoTarget='before',specialPhotos={before:[],after:[]};
+function specialAll(){try{const a=JSON.parse(store.get(SPECIAL_KEY,'[]'));return Array.isArray(a)?a:[]}catch(e){return[]}}
+function specialPutAll(a){return store.set(SPECIAL_KEY,JSON.stringify(a))}
+function specialFormatDate(v){return v?new Date(v).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):'—'}
+function openSpecialWorks(){specialReset();go('specialWorks');specialRender()}
+function specialAreaChanged(){
+ const code=$('specialArea').value,db=MACHINE_DB[code],sel=$('specialMachine');
+ const machines=db?db.machines:(code==='EXT1'||code==='EXT2'?['Zona general']:code==='OTRA'?['Servicios generales','Infraestructura','Otra máquina']:[]);
+ sel.innerHTML='<option value="">Seleccionar máquina</option>'+machines.map(m=>'<option value="'+esc(m)+'">'+esc(m)+'</option>').join('');
+}
+function specialCapture(stage){
+ if(specialPhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
+ specialPhotoTarget=stage;partsPhotoTarget=stage==='before'?'specialBefore':'specialAfter';
+ if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('special-'+stage);return}
+ $('special'+(stage==='before'?'Before':'After')+'Input').click();
+}
+function specialPick(stage){
+ if(specialPhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
+ specialPhotoTarget=stage;partsPhotoTarget=stage==='before'?'specialBefore':'specialAfter';
+ if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('special-'+stage);return}
+ $('special'+(stage==='before'?'Before':'After')+'Input').click();
+}
+async function specialFiles(input,stage){
+ const files=Array.from(input.files||[]);input.value='';
+ for(const f of files){
+  if(specialPhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');break}
+  try{specialPhotos[stage].push(await resizeNoteImage(f))}catch(e){toast('No se pudo leer una fotografía.')}
+ }
+ specialRenderPhotos();
+}
+function specialRenderPhotos(){
+ ['before','after'].forEach(stage=>{
+  const id=stage==='before'?'specialBeforePreview':'specialAfterPreview',el=$(id);
+  el.innerHTML=specialPhotos[stage].map((src,i)=>'<div class="photo-thumb"><span>Foto '+(i+1)+'</span><button type="button" onclick="specialRemovePhoto(\''+stage+'\','+i+')" aria-label="Quitar foto">×</button></div>').join('');
+ });
+}
+function specialRemovePhoto(stage,i){specialPhotos[stage].splice(i,1);specialRenderPhotos();specialSaveDraftOnly()}
+function specialReadForm(){
+ return {id:$('specialId').value||'TE-'+Date.now().toString(36).toUpperCase(),area:$('specialArea').value,areaName:$('specialArea').selectedOptions[0]?.textContent||'',machine:$('specialMachine').value,activitiesToDo:$('specialActivitiesToDo').value.trim(),activitiesDone:$('specialActivitiesDone').value.trim(),urgent:$('specialUrgent').value.trim(),parts:$('specialParts').value.trim(),notes:$('specialNotes').value.trim(),priority:$('specialPriority').value,start:$('specialStart').value,stop:$('specialStop').value,photos:{before:specialPhotos.before.slice(),after:specialPhotos.after.slice()},status:'pending',created:Date.now(),updated:Date.now(),createdBy:currentUser()||'—'} 
+}
+function specialSaveDraftOnly(){const id=$('specialId').value;if(!id)return;const old=specialAll().find(x=>x.id===id);if(!old)return;const v=specialReadForm();v.id=id;v.created=old.created;v.status=old.status;const all=specialAll(),i=all.findIndex(x=>x.id===id);all[i]=v;specialPutAll(all)}
+function specialReset(){
+ $('specialId').value='';['specialArea','specialMachine','specialPriority'].forEach(id=>$(id).value='');specialAreaChanged();
+ ['specialActivitiesToDo','specialActivitiesDone','specialUrgent','specialParts','specialNotes','specialStart','specialStop'].forEach(id=>$(id).value='');
+ $('specialPriority').value='normal';specialPhotos={before:[],after:[]};specialRenderPhotos();
+ $('specialFormTitle').textContent='Nueva orden especial';$('specialFormStatus').textContent='BORRADOR';
+}
+function specialLoad(id){
+ const j=specialAll().find(x=>x.id===id);if(!j)return;
+ $('specialId').value=j.id;$('specialArea').value=j.area;specialAreaChanged();$('specialMachine').value=j.machine||'';
+ $('specialActivitiesToDo').value=j.activitiesToDo||'';$('specialActivitiesDone').value=j.activitiesDone||'';$('specialUrgent').value=j.urgent||'';
+ $('specialParts').value=j.parts||'';$('specialNotes').value=j.notes||'';$('specialPriority').value=j.priority||'normal';$('specialStart').value=j.start||'';$('specialStop').value=j.stop||'';
+ specialPhotos={before:Array.isArray(j.photos?.before)?j.photos.before.slice():[],after:Array.isArray(j.photos?.after)?j.photos.after.slice():[]};specialRenderPhotos();
+ $('specialFormTitle').textContent='Editar orden '+j.id;$('specialFormStatus').textContent=j.status==='done'?'TERMINADA':'PENDIENTE';
+}
+function specialSavePending(){
+ const v=specialReadForm();if(!v.area||!v.machine||!v.activitiesToDo){toast('Selecciona área, máquina y describe las actividades por hacer.');return}
+ const all=specialAll(),old=all.find(x=>x.id===v.id);
+ if(old){v.created=old.created;v.status=old.status;v.updated=Date.now();all[all.findIndex(x=>x.id===v.id)]=v}
+ else{v.status='pending';v.created=Date.now();all.unshift(v)}
+ if(!specialPutAll(all)){toast('No se pudo guardar localmente. Reduce las fotos o exporta los datos.');return}
+ $('specialId').value=v.id;specialExport('pending',v);specialRender();toast('Trabajo guardado como pendiente.');$('specialFormStatus').textContent='PENDIENTE';$('specialFormTitle').textContent='Orden '+v.id+' · Pendiente';
+}
+function specialReportRows(j,status){
+ const rows=[['FORMATO DE TRABAJO ESPECIAL · '+(status==='done'?'TÉRMINO':'PENDIENTE'),'',3],['Folio',j.id,2],['Estado',status==='done'?'TERMINADO':'PENDIENTE',2],['Prioridad',String(j.priority||'normal').toUpperCase(),2],['Área',j.areaName||j.area,2],['Máquina',j.machine,2],['Fecha de creación',specialFormatDate(j.created),2],['Responsable',j.createdBy||'—',2],['Inicio de trabajo',specialFormatDate(j.start),2]];
+ if(status==='done')rows.push(['Término de trabajo',specialFormatDate(j.stop),2]);
+ rows.push(['Actividades por hacer','',1],['Detalle',j.activitiesToDo||'—'],['Actividades realizadas','',1],['Detalle',j.activitiesDone||'—'],['Tareas urgentes','',1],['Detalle',j.urgent||'Sin tareas urgentes registradas'],['Refacciones usadas','',1],['Detalle',j.parts||'Sin refacciones registradas'],['Observaciones','',1],['Detalle',j.notes||'—'],['Evidencia fotográfica','',1],['Fotos antes',String((j.photos?.before||[]).length)+' fotografía(s). Evidencia almacenada en el dispositivo.'],['Fotos después',String((j.photos?.after||[]).length)+' fotografía(s). Evidencia almacenada en el dispositivo.']);
+ (j.photos?.before||[]).forEach((p,i)=>rows.push(['Referencia foto antes '+(i+1),String(p).slice(0,180)]));
+ (j.photos?.after||[]).forEach((p,i)=>rows.push(['Referencia foto después '+(i+1),String(p).slice(0,180)]));
+ return rows;
+}
+async function specialExport(status,j){
+ j=j||specialAll().find(x=>x.id===$('specialId').value)||specialReadForm();
+ const rows=specialReportRows(j,status);
+ const base='TRABAJO_ESPECIAL_'+j.id+'_'+(status==='done'?'TERMINO':'PENDIENTE');
+ try{const results=await generateExports(rows,base,'both',null);toast('Formato '+(status==='done'?'de término':'de pendiente')+' generado en PDF y Excel.');return results}catch(e){toast(e?.message||'No se pudo exportar el formato.');return []}
+}
+async function specialComplete(){
+ const id=$('specialId').value,all=specialAll(),i=all.findIndex(x=>x.id===id);
+ if(i<0){toast('Primero guarda el trabajo como pendiente.');return}
+ const j=all[i];j.activitiesDone=$('specialActivitiesDone').value.trim();j.urgent=$('specialUrgent').value.trim();j.parts=$('specialParts').value.trim();j.notes=$('specialNotes').value.trim();j.start=$('specialStart').value||j.start;j.stop=$('specialStop').value||new Date().toISOString().slice(0,16);j.photos={before:specialPhotos.before.slice(),after:specialPhotos.after.slice()};j.status='done';j.updated=Date.now();
+ if(!j.activitiesDone&&!window.confirm('No registraste actividades realizadas. ¿Cerrar de todos modos?'))return;
+ all[i]=j;if(!specialPutAll(all)){toast('No se pudo guardar el cierre.');return}
+ specialRender();$('specialFormStatus').textContent='TERMINADA';await specialExport('done',j);toast('Trabajo cerrado y guardado en el historial.');
+}
+function specialRender(){
+ const all=specialAll(),pending=all.filter(x=>x.status!=='done');
+ $('specialWorkCount').textContent=pending.length+' pendiente(s)';$('specialListCount').textContent=all.length+' órdenes · '+pending.length+' pendientes';
+ $('specialList').innerHTML=all.length?all.map(j=>'<article class="calendar-item '+(j.status==='done'?'is-done':'')+(j.priority==='urgente'||j.priority==='alta'?' is-overdue':'')+'"><b>'+esc(j.id)+' · '+esc(j.areaName||j.area)+' · '+esc(j.machine)+' '+((j.priority==='urgente'||j.priority==='alta')?'· PRIORIDAD '+esc(j.priority.toUpperCase()):'')+'</b><div class="calendar-meta">'+(j.status==='done'?'TERMINADO':'PENDIENTE')+' · Creado '+esc(specialFormatDate(j.created))+' · Fotos '+((j.photos?.before||[]).length)+' antes / '+((j.photos?.after||[]).length)+' después</div><div class="calendar-detail">'+esc((j.activitiesToDo||'').slice(0,240))+'</div><div class="reminder-actions"><button class="btn btn-s" onclick="specialLoad(\''+j.id+'\')">Retomar / editar</button><button class="btn btn-s" onclick="specialExport(\''+(j.status==='done'?'done':'pending')+'\',specialAll().find(x=>x.id===\''+j.id+'\'))">Formato '+(j.status==='done'?'término':'pendiente')+'</button><button class="btn btn-s" onclick="specialDelete(\''+j.id+'\')">Eliminar</button></div></article>').join(''):'<div class="empty">Aún no hay trabajos especiales. Crea una orden para comenzar.</div>';
+}
+function specialDelete(id){if(!window.confirm('¿Eliminar definitivamente este trabajo especial?'))return;specialPutAll(specialAll().filter(x=>x.id!==id));if($('specialId').value===id)specialReset();specialRender()}
+
 /* Inicio: splash visible y restauración de sesión coherente */
 syncAppState();
 setTimeout(()=>{
@@ -2396,6 +2562,7 @@ setTimeout(()=>{
   purgeExpiredNotes().catch(()=>{});
 },1500);
 setInterval(()=>{if(!document.hidden)purgeExpiredNotes().catch(()=>{})},60*60*1000);
+
 </script>
 </body>
 </html>
