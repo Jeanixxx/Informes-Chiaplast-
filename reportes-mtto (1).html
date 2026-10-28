@@ -941,6 +941,37 @@ body{background:var(--bg);color:var(--ink)}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 
+<!-- Trabajos especiales: órdenes pendientes y cierre -->
+<section id="specialWorks" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Trabajos especiales<small>Órdenes de intervención y seguimiento</small></h1></header>
+  <div class="body">
+    <div class="card">
+      <div class="section-heading"><h2 id="specialFormTitle">Nueva orden especial</h2><span id="specialFormStatus">BORRADOR</span></div>
+      <input id="specialId" type="hidden">
+      <div class="two">
+        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="EXT1">Extrusión 1 (zona general)</option><option value="EXT2">Extrusión 2 (zona general)</option><option value="OTRA">Otra / servicios</option></select></div>
+        <div class="f"><label for="specialMachine">Máquina / equipo</label><select id="specialMachine"><option value="">Seleccionar máquina</option></select></div>
+      </div>
+      <div class="f"><label for="specialActivitiesToDo">Actividades por hacer</label><textarea id="specialActivitiesToDo" rows="3" placeholder="Describe el trabajo requerido"></textarea></div>
+      <div class="f"><label for="specialActivitiesDone">Actividades realizadas</label><textarea id="specialActivitiesDone" rows="3" placeholder="Se completa al retomar y cerrar la orden"></textarea></div>
+      <div class="f"><label for="specialUrgent">Tareas urgentes / riesgo operativo</label><textarea id="specialUrgent" rows="2" placeholder="Indica qué requiere atención prioritaria"></textarea></div>
+      <div class="f"><label for="specialParts">Refacciones usadas (nombre y cantidad)</label><textarea id="specialParts" rows="3" placeholder="Ej. balero 6204 — 2 piezas"></textarea></div>
+      <div class="f"><label for="specialNotes">Observaciones</label><textarea id="specialNotes" rows="2" placeholder="Datos adicionales, seguridad, pruebas..."></textarea></div>
+      <div class="card" style="padding:12px">
+        <h3>Fotografías del trabajo</h3>
+        <p class="muted">Hasta 5 fotografías de antes y 5 de después. Las fotos se conservan en el dispositivo; el formato exportado indica la evidencia asociada.</p>
+        <div class="f"><label>Antes</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="specialPick('before')">Adjuntar antes</button></div><input id="specialBeforeInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'before')"><div id="specialBeforePreview" class="parts-photo-preview"></div></div>
+        <div class="f"><label>Después</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="specialPick('after')">Adjuntar después</button></div><input id="specialAfterInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'after')"><div id="specialAfterPreview" class="parts-photo-preview"></div></div>
+      </div>
+      <div class="f"><label for="specialPriority">Prioridad</label><select id="specialPriority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+      <div class="f"><label for="specialStart">Inicio de trabajo</label><input id="specialStart" type="datetime-local"></div>
+      <div class="f"><label for="specialStop">Término de trabajo</label><input id="specialStop" type="datetime-local"></div>
+      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialReset()">Limpiar formulario</button><button class="btn btn-p" type="button" onclick="specialSavePending()">Guardar como pendiente</button></div>
+      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialExport('pending')">Formato de pendiente</button><button class="btn btn-p" type="button" onclick="specialComplete()">Terminar trabajo y liberar formato</button></div>
+    </div>
+    <div class="dashboard-section"><div class="section-heading"><h2>Órdenes pendientes y terminadas</h2><span id="specialListCount">0 ÓRDENES</span></div><div id="specialList"></div></div>
+  </div>
+</section>
 <script>
 const $=id=>document.getElementById(id);
 const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo."};
@@ -2531,37 +2562,7 @@ setTimeout(()=>{
   purgeExpiredNotes().catch(()=>{});
 },1500);
 setInterval(()=>{if(!document.hidden)purgeExpiredNotes().catch(()=>{})},60*60*1000);
-<!-- Trabajos especiales: órdenes pendientes y cierre -->
-<section id="specialWorks" class="screen">
-  <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Trabajos especiales<small>Órdenes de intervención y seguimiento</small></h1></header>
-  <div class="body">
-    <div class="card">
-      <div class="section-heading"><h2 id="specialFormTitle">Nueva orden especial</h2><span id="specialFormStatus">BORRADOR</span></div>
-      <input id="specialId" type="hidden">
-      <div class="two">
-        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="EXT1">Extrusión 1 (zona general)</option><option value="EXT2">Extrusión 2 (zona general)</option><option value="OTRA">Otra / servicios</option></select></div>
-        <div class="f"><label for="specialMachine">Máquina / equipo</label><select id="specialMachine"><option value="">Seleccionar máquina</option></select></div>
-      </div>
-      <div class="f"><label for="specialActivitiesToDo">Actividades por hacer</label><textarea id="specialActivitiesToDo" rows="3" placeholder="Describe el trabajo requerido"></textarea></div>
-      <div class="f"><label for="specialActivitiesDone">Actividades realizadas</label><textarea id="specialActivitiesDone" rows="3" placeholder="Se completa al retomar y cerrar la orden"></textarea></div>
-      <div class="f"><label for="specialUrgent">Tareas urgentes / riesgo operativo</label><textarea id="specialUrgent" rows="2" placeholder="Indica qué requiere atención prioritaria"></textarea></div>
-      <div class="f"><label for="specialParts">Refacciones usadas (nombre y cantidad)</label><textarea id="specialParts" rows="3" placeholder="Ej. balero 6204 — 2 piezas"></textarea></div>
-      <div class="f"><label for="specialNotes">Observaciones</label><textarea id="specialNotes" rows="2" placeholder="Datos adicionales, seguridad, pruebas..."></textarea></div>
-      <div class="card" style="padding:12px">
-        <h3>Fotografías del trabajo</h3>
-        <p class="muted">Hasta 5 fotografías de antes y 5 de después. Las fotos se conservan en el dispositivo; el formato exportado indica la evidencia asociada.</p>
-        <div class="f"><label>Antes</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="specialPick('before')">Adjuntar antes</button></div><input id="specialBeforeInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'before')"><div id="specialBeforePreview" class="parts-photo-preview"></div></div>
-        <div class="f"><label>Después</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="specialPick('after')">Adjuntar después</button></div><input id="specialAfterInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'after')"><div id="specialAfterPreview" class="parts-photo-preview"></div></div>
-      </div>
-      <div class="f"><label for="specialPriority">Prioridad</label><select id="specialPriority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
-      <div class="f"><label for="specialStart">Inicio de trabajo</label><input id="specialStart" type="datetime-local"></div>
-      <div class="f"><label for="specialStop">Término de trabajo</label><input id="specialStop" type="datetime-local"></div>
-      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialReset()">Limpiar formulario</button><button class="btn btn-p" type="button" onclick="specialSavePending()">Guardar como pendiente</button></div>
-      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialExport('pending')">Formato de pendiente</button><button class="btn btn-p" type="button" onclick="specialComplete()">Terminar trabajo y liberar formato</button></div>
-    </div>
-    <div class="dashboard-section"><div class="section-heading"><h2>Órdenes pendientes y terminadas</h2><span id="specialListCount">0 ÓRDENES</span></div><div id="specialList"></div></div>
-  </div>
-</section>
+
 </script>
 </body>
 </html>
