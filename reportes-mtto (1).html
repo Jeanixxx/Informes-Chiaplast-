@@ -378,6 +378,23 @@ body{background:var(--bg);color:var(--ink)}
   .workspace-count{margin-left:0}
   .plant-status{display:none}
 }
+/* ===== Refacciones utilizadas en mantenimiento preventivo ===== */
+.parts-card{margin:0 0 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.parts-card>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;cursor:pointer;list-style:none}
+.parts-card>summary::-webkit-details-marker{display:none}
+.parts-card>summary b,.parts-card>summary small{display:block}
+.parts-card>summary b{font-size:16px}
+.parts-card>summary small{font-size:12px;color:var(--muted);margin-top:3px}
+.parts-chevron{font-size:22px;transition:transform .2s}
+.parts-card[open] .parts-chevron{transform:rotate(180deg)}
+.parts-content{padding:0 14px 14px}
+.parts-head,.parts-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 34px;gap:8px;align-items:center}
+.parts-head{padding:8px 2px;font-size:12px;font-weight:700;color:var(--muted)}
+.parts-row{margin-bottom:8px}
+.parts-row input{width:100%;min-width:0;min-height:42px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.parts-remove{height:38px;width:34px;border-radius:8px;background:var(--chip);font-size:18px}
+.parts-add{width:100%;margin-top:4px}
+@media(max-width:420px){.parts-head,.parts-row{grid-template-columns:minmax(0,1fr) 76px 30px;gap:5px}.parts-row input{padding:6px;font-size:13px}.parts-remove{width:30px}}
 /* ===== Tablero mensual de mantenimiento preventivo ===== */
 .pm-entry{width:100%;margin:0 0 14px;display:flex;align-items:center;gap:14px;text-align:left;padding:16px 18px;border-radius:12px;background:var(--steel-2);color:#fff;border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow)}
 .pm-entry b{display:block;font-size:18px}
@@ -685,6 +702,14 @@ body{background:var(--bg);color:var(--ink)}
           <div class="err">Elige el estado del equipo.</div>
         </div>
       </div>
+      <details class="parts-card" id="partsCard" hidden>
+        <summary><span><b>Refacciones usadas</b><small>Registra cada refacción y la cantidad utilizada</small></span><span class="parts-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="parts-content">
+          <div class="parts-head"><span>Refacción</span><span>Cantidad</span><span></span></div>
+          <div id="partsList"></div>
+          <button class="btn btn-s parts-add" type="button" onclick="addPartRow()">＋ Agregar refacción</button>
+        </div>
+      </details>
       <div class="f"><label for="obs">Observaciones</label>
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
     </div>
@@ -1179,6 +1204,8 @@ function sigCapture(){
 })();
 function startCheck(kind){
   Runtime.checkType=kind;
+  $('partsCard').hidden=kind==='daily';
+  if(kind==='preventive')loadParts();
   $('sigCard').hidden=kind==='daily';sigClear();$('sigName').value=store.get('mtto_sig_name','');Sig.name=$('sigName').value.trim();
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
@@ -1223,6 +1250,13 @@ function review(){
   const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
   if(dailyMeasurements)rows.push(['Tipo de chequeo','DIARIO'],...dailyRows());
   else rows.push(['Tipo',type],['Estado',st],...(isExt()?extRows():mqRows()));
+  if(!isDaily()){
+    const parts=readParts();
+    rows.push(['Refacciones usadas','',1],['Refacción','Cantidad',4]);
+    if(parts.length)parts.forEach(p=>rows.push([p.name,p.quantity,0]));
+    else rows.push(['Sin refacciones registradas','—',0]);
+    saveParts();
+  }
   rows.push(['Observaciones',$('obs').value.trim()||'—']);
   Runtime.rows=[['Campo','Valor']].concat(rows,[['Reportó',currentUser()||'—']]);
   if(Runtime.batchMode){
@@ -1523,6 +1557,33 @@ function finish(){
   history.replaceState({s:'menu'},'');show('menu');
 }
 
+/* Refacciones: almacenamiento local independiente por máquina */
+const partsStorageKey=()=> 'mtto_parts_'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
+function readParts(){
+  return [...document.querySelectorAll('#partsList .parts-row')].map(row=>({
+    name:row.querySelector('.part-name').value.trim(),
+    quantity:row.querySelector('.part-quantity').value.trim()
+  })).filter(p=>p.name&&p.quantity&&Number(p.quantity)>0);
+}
+function renderParts(parts){
+  const list=$('partsList');
+  list.innerHTML='';
+  (Array.isArray(parts)&&parts.length?parts:[{name:'',quantity:''}]).forEach(p=>addPartRow(p.name,p.quantity,false));
+}
+function addPartRow(name='',quantity='',persist=true){
+  const list=$('partsList');if(!list)return;
+  const row=document.createElement('div');row.className='parts-row';
+  const nameInput=document.createElement('input');nameInput.className='part-name';nameInput.type='text';nameInput.maxLength=100;nameInput.placeholder='Ej. Rodamiento';nameInput.setAttribute('aria-label','Nombre de la refacción');nameInput.value=name||'';nameInput.addEventListener('input',saveParts);
+  const qtyInput=document.createElement('input');qtyInput.className='part-quantity';qtyInput.type='number';qtyInput.min='0.01';qtyInput.step='any';qtyInput.inputMode='decimal';qtyInput.placeholder='0';qtyInput.setAttribute('aria-label','Cantidad utilizada');qtyInput.value=quantity||'';qtyInput.addEventListener('input',saveParts);
+  const remove=document.createElement('button');remove.type='button';remove.className='parts-remove';remove.textContent='×';remove.title='Eliminar refacción';remove.setAttribute('aria-label','Eliminar refacción');remove.addEventListener('click',()=>{row.remove();if(!$('partsList').children.length)addPartRow();saveParts()});
+  row.append(nameInput,qtyInput,remove);list.appendChild(row);
+  if(persist)saveParts();
+}
+function loadParts(){
+  let parts=[];try{parts=JSON.parse(store.get(partsStorageKey(),'[]'))}catch(e){}
+  renderParts(parts);
+}
+function saveParts(){store.set(partsStorageKey(),JSON.stringify(readParts()));}
 /* Borrador: si la app se cierra no se pierde lo escrito */
 function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState()}))}
 function loadDraft(){
