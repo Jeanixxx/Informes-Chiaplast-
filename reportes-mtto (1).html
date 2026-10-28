@@ -395,6 +395,13 @@ body{background:var(--bg);color:var(--ink)}
 .parts-remove{height:38px;width:34px;border-radius:8px;background:var(--chip);font-size:18px}
 .parts-add{width:100%;margin-top:4px}
 @media(max-width:420px){.parts-head,.parts-row{grid-template-columns:minmax(0,1fr) 76px 30px;gap:5px}.parts-row input{padding:6px;font-size:13px}.parts-remove{width:30px}}
+.parts-photo-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.parts-photo-tools button{flex:1;min-width:130px}
+.parts-photo-note{display:block;color:var(--muted);font-size:12px;line-height:1.4;margin-top:7px}
+.parts-photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.parts-photo-preview figure{position:relative;margin:0}
+.parts-photo-preview img{width:88px;height:88px;object-fit:cover;border:1px solid var(--line);border-radius:8px}
+.parts-photo-preview button{position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;background:var(--steel);color:#fff}
 /* ===== Tablero mensual de mantenimiento preventivo ===== */
 .pm-entry{width:100%;margin:0 0 14px;display:flex;align-items:center;gap:14px;text-align:left;padding:16px 18px;border-radius:12px;background:var(--steel-2);color:#fff;border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow)}
 .pm-entry b{display:block;font-size:18px}
@@ -708,6 +715,16 @@ body{background:var(--bg);color:var(--ink)}
           <div class="parts-head"><span>Refacción</span><span>Cantidad</span><span></span></div>
           <div id="partsList"></div>
           <button class="btn btn-s parts-add" type="button" onclick="addPartRow()">＋ Agregar refacción</button>
+          <div class="f" style="margin-top:16px;margin-bottom:0">
+            <label>Fotografías de las refacciones (máximo 5)</label>
+            <div class="parts-photo-tools">
+              <button class="btn btn-s" type="button" onclick="capturePartsPhoto()">Tomar fotografía</button>
+              <button class="btn btn-s" type="button" onclick="pickPartsPhoto()">Adjuntar imagen</button>
+            </div>
+            <input id="partsPhotosInput" style="display:none" type="file" accept="image/*" capture="environment" multiple onchange="previewPartsPhotos(this)">
+            <small class="parts-photo-note">Las imágenes se guardan localmente para esta máquina. Puede tomar fotos con la cámara o seleccionar imágenes del dispositivo.</small>
+            <div id="partsPhotoPreview" class="parts-photo-preview"></div>
+          </div>
         </div>
       </details>
       <div class="f"><label for="obs">Observaciones</label>
@@ -1205,7 +1222,7 @@ function sigCapture(){
 function startCheck(kind){
   Runtime.checkType=kind;
   $('partsCard').hidden=kind==='daily';
-  if(kind==='preventive')loadParts();
+  if(kind==='preventive'){loadParts();loadPartsPhotos();}
   $('sigCard').hidden=kind==='daily';sigClear();$('sigName').value=store.get('mtto_sig_name','');Sig.name=$('sigName').value.trim();
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
@@ -1256,6 +1273,7 @@ function review(){
     if(parts.length)parts.forEach(p=>rows.push([p.name,p.quantity,0]));
     else rows.push(['Sin refacciones registradas','—',0]);
     saveParts();
+    rows.push(['Evidencia fotográfica','',1],['Fotografías anexas',String(partsPhotosDraft.length)+' fotografía(s) guardadas en el dispositivo',0]);
   }
   rows.push(['Observaciones',$('obs').value.trim()||'—']);
   Runtime.rows=[['Campo','Valor']].concat(rows,[['Reportó',currentUser()||'—']]);
@@ -1557,8 +1575,65 @@ function finish(){
   history.replaceState({s:'menu'},'');show('menu');
 }
 
-/* Refacciones: almacenamiento local independiente por máquina */
+/* Refacciones y fotografías: almacenamiento local independiente por máquina */
 const partsStorageKey=()=> 'mtto_parts_'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
+const partsPhotosKey=()=> 'parts-photos-'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
+let partsPhotosDraft=[];
+let partsPhotoTarget='parts';
+function openPartsPhotosDB(){
+  return new Promise((resolve,reject)=>{
+    if(!('indexedDB' in window)){reject(new Error('Este dispositivo no permite guardar fotografías localmente.'));return}
+    const req=indexedDB.open('chiaplast-parts-photos-v1',1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('photos'))db.createObjectStore('photos',{keyPath:'key'})};
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacenamiento de fotografías.'));
+  });
+}
+async function loadPartsPhotos(){
+  try{
+    const db=await openPartsPhotosDB(),key=partsPhotosKey();
+    const photos=await new Promise((resolve,reject)=>{const tx=db.transaction('photos','readonly'),req=tx.objectStore('photos').get(key);req.onsuccess=()=>resolve(req.result&&Array.isArray(req.result.photos)?req.result.photos:[]);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close()});
+    partsPhotosDraft=photos.slice(0,5);renderPartsPhotos();
+  }catch(e){partsPhotosDraft=[];renderPartsPhotos();toast('No se pudieron cargar las fotografías guardadas.')}
+}
+async function savePartsPhotos(){
+  const db=await openPartsPhotosDB(),record={key:partsPhotosKey(),photos:partsPhotosDraft.slice(0,5),updated:Date.now()};
+  return new Promise((resolve,reject)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put(record);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error||new Error('No se pudieron guardar las fotografías.'))};tx.onabort=()=>{db.close();reject(tx.error||new Error('Se canceló el guardado de fotografías.'))}});
+}
+function capturePartsPhoto(){
+  if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
+  partsPhotoTarget='parts';
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('parts');return}
+  $('partsPhotosInput').click();
+}
+function pickPartsPhoto(){
+  if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
+  partsPhotoTarget='parts';
+  if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('parts');return}
+  $('partsPhotosInput').removeAttribute('capture');$('partsPhotosInput').click();
+}
+async function previewPartsPhotos(input){
+  const files=Array.from(input.files||[]);
+  if(partsPhotosDraft.length+files.length>5)toast('Solo se permiten 5 fotografías en total.');
+  const room=Math.max(0,5-partsPhotosDraft.length),selected=files.slice(0,room);
+  try{
+    for(const file of selected){if(file.type.startsWith('image/'))partsPhotosDraft.push(await resizeNoteImage(file))}
+    renderPartsPhotos();await savePartsPhotos();
+    if(selected.length)toast(selected.length+' fotografía(s) agregadas.');
+  }catch(e){toast(e.message||'No se pudieron preparar las fotografías.')}
+  input.value='';
+}
+function renderPartsPhotos(){
+  const box=$('partsPhotoPreview');if(!box)return;
+  box.innerHTML=partsPhotosDraft.map((src,i)=>'<figure><img src="'+esc(src)+'" alt="Fotografía de refacción '+(i+1)+'"><button type="button" aria-label="Quitar fotografía" onclick="removePartsPhoto('+i+')">×</button></figure>').join('');
+  const label=document.querySelector('#partsCard .parts-photo-note');
+  if(label)label.textContent='Fotografías guardadas: '+partsPhotosDraft.length+' de 5. Se conservan localmente para esta máquina.';
+}
+async function removePartsPhoto(index){
+  const src=partsPhotosDraft[index];partsPhotosDraft.splice(index,1);
+  if(typeof src==='string'&&src.includes('/evidence/')&&window.ChiaplastNative&&typeof window.ChiaplastNative.deleteEvidence==='function')window.ChiaplastNative.deleteEvidence(src);
+  renderPartsPhotos();
+  try{await savePartsPhotos()}catch(e){toast('No se pudo actualizar el almacenamiento de fotografías.')}
+}
 function readParts(){
   return [...document.querySelectorAll('#partsList .parts-row')].map(row=>({
     name:row.querySelector('.part-name').value.trim(),
@@ -2110,11 +2185,13 @@ function deleteNoteEvidence(note){
 }
 function captureNotePhoto(){
   if(notePhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías por nota.');return}
+  partsPhotoTarget='note';
   if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('note');return}
   $('notePhotos').click();
 }
 function pickNotePhoto(){
   if(notePhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías por nota.');return}
+  partsPhotoTarget='note';
   if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('note');return}
   $('notePhotos').removeAttribute('capture');$('notePhotos').click();
 }
@@ -2122,6 +2199,11 @@ window.onEvidenceCaptured=function(raw){
   try{
     const data=typeof raw==='string'?JSON.parse(raw):raw;
     if(!data||!data.uri)return;
+    if(partsPhotoTarget==='parts'){
+      if(partsPhotosDraft.length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías de refacciones.');return}
+      partsPhotosDraft.push(data.uri);renderPartsPhotos();savePartsPhotos().then(()=>toast('Fotografía de refacción guardada.')).catch(()=>toast('La fotografía no se pudo guardar localmente.'));
+      return;
+    }
     if(notePhotosDraft.length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías por nota.');return}
     notePhotosDraft.push(data.uri);renderPhotoPreview();toast('Evidencia agregada.');
   }catch(e){toast('No se pudo agregar la fotografía.')}
