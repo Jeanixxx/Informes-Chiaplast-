@@ -14,7 +14,7 @@ function moveKanbanTask(id,status){
   if(linked){
     linked.status=status==='done'?'done':'pending';
     saveReminders(reminders);
-    if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function'&&linked.status==='done')window.ChiaplastNative.cancelReminder(linked.id);
+    if(Bridge.has('cancelReminder')&&linked.status==='done')Bridge.cancelReminder(linked.id);
     else if(linked.status!=='done'&&Date.parse(linked.due)>Date.now())scheduleNativeReminder(linked);
   }
   renderKanban();renderReminders();renderHomeFollowup();

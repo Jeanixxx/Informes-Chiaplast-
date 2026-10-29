@@ -1,10 +1,10 @@
 async function loadPreventivePhotos(){try{const db=await openPartsPhotosDB(),key=preventivePhotoKey();const saved=await new Promise((resolve,reject)=>{const tx=db.transaction('photos','readonly'),req=tx.objectStore('photos').get(key);req.onsuccess=()=>resolve(req.result&&req.result.photos?req.result.photos:{before:[],after:[]});req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close()});preventivePhotos={before:(saved.before||[]).slice(0,5),after:(saved.after||[]).slice(0,5)};renderPreventivePhotos()}catch(e){preventivePhotos={before:[],after:[]};renderPreventivePhotos();toast('No se pudieron cargar las fotos del preventivo.')}}
 async function savePreventivePhotos(){const db=await openPartsPhotosDB(),key=preventivePhotoKey(),record={key,photos:{before:preventivePhotos.before.slice(0,5),after:preventivePhotos.after.slice(0,5)},updated:Date.now()};return new Promise((resolve,reject)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put(record);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error||new Error('No se pudo guardar la evidencia.'))};tx.onabort=()=>{db.close();reject(tx.error||new Error('Se canceló el guardado.'))}})}
 function renderPreventivePhotos(){['before','after'].forEach(stage=>{const box=$(stage==='before'?'pmBeforePreview':'pmAfterPreview');if(!box)return;box.innerHTML=preventivePhotos[stage].map((src,i)=>'<figure><img src="'+esc(src)+'" alt="Foto '+(stage==='before'?'antes':'después')+' '+(i+1)+'"><button type="button" aria-label="Quitar fotografía" onclick="removePreventivePhoto(\''+stage+'\','+i+')">×</button></figure>').join('')})}
-function capturePreventivePhoto(stage){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}partsPhotoTarget=stage==='before'?'pmBefore':'pmAfter';if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('preventive-'+stage);return}$('pm'+(stage==='before'?'Before':'After')+'Input').click()}
-function pickPreventivePhoto(stage){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}partsPhotoTarget=stage==='before'?'pmBefore':'pmAfter';if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('preventive-'+stage);return}$('pm'+(stage==='before'?'Before':'After')+'Input').click()}
+function capturePreventivePhoto(stage){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}partsPhotoTarget=stage==='before'?'pmBefore':'pmAfter';if(Bridge.has('takePhoto')){Bridge.takePhoto('preventive-'+stage);return}$('pm'+(stage==='before'?'Before':'After')+'Input').click()}
+function pickPreventivePhoto(stage){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}partsPhotoTarget=stage==='before'?'pmBefore':'pmAfter';if(Bridge.has('pickPhoto')){Bridge.pickPhoto('preventive-'+stage);return}$('pm'+(stage==='before'?'Before':'After')+'Input').click()}
 async function previewPreventivePhotos(input,stage){const files=Array.from(input.files||[]);input.value='';for(const file of files){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');break}if(file.type.startsWith('image/')){try{preventivePhotos[stage].push(await resizeNoteImage(file))}catch(e){toast('No se pudo preparar una foto.')}}}renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo guardar la evidencia.')}}
-async function removePreventivePhoto(stage,index){const src=preventivePhotos[stage][index];preventivePhotos[stage].splice(index,1);if(typeof src==='string'&&src.includes('/evidence/')&&window.ChiaplastNative&&typeof window.ChiaplastNative.deleteEvidence==='function')window.ChiaplastNative.deleteEvidence(src);renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo actualizar la evidencia.')}}
+async function removePreventivePhoto(stage,index){const src=preventivePhotos[stage][index];preventivePhotos[stage].splice(index,1);if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src);renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo actualizar la evidencia.')}}
 
 /* Refacciones y fotografías: almacenamiento local independiente por máquina */
 const partsStorageKey=()=> 'mtto_parts_'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
@@ -35,13 +35,13 @@ async function savePartsPhotos(){
 function capturePartsPhoto(){
   if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
   partsPhotoTarget='parts';
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('parts');return}
+  if(Bridge.has('takePhoto')){Bridge.takePhoto('parts');return}
   $('partsPhotosInput').click();
 }
 function pickPartsPhoto(){
   if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
   partsPhotoTarget='parts';
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('parts');return}
+  if(Bridge.has('pickPhoto')){Bridge.pickPhoto('parts');return}
   $('partsPhotosInput').removeAttribute('capture');$('partsPhotosInput').click();
 }
 async function previewPartsPhotos(input){
@@ -63,7 +63,7 @@ function renderPartsPhotos(){
 }
 async function removePartsPhoto(index){
   const src=partsPhotosDraft[index];partsPhotosDraft.splice(index,1);
-  if(typeof src==='string'&&src.includes('/evidence/')&&window.ChiaplastNative&&typeof window.ChiaplastNative.deleteEvidence==='function')window.ChiaplastNative.deleteEvidence(src);
+  if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src);
   renderPartsPhotos();
   try{await savePartsPhotos()}catch(e){toast('No se pudo actualizar el almacenamiento de fotografías.')}
 }

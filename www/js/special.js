@@ -13,13 +13,13 @@ function specialAreaChanged(){
 function specialCapture(stage){
  if(specialPhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
  specialPhotoTarget=stage;partsPhotoTarget=stage==='before'?'specialBefore':'specialAfter';
- if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('special-'+stage);return}
+ if(Bridge.has('takePhoto')){Bridge.takePhoto('special-'+stage);return}
  $('special'+(stage==='before'?'Before':'After')+'Input').click();
 }
 function specialPick(stage){
  if(specialPhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
  specialPhotoTarget=stage;partsPhotoTarget=stage==='before'?'specialBefore':'specialAfter';
- if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('special-'+stage);return}
+ if(Bridge.has('pickPhoto')){Bridge.pickPhoto('special-'+stage);return}
  $('special'+(stage==='before'?'Before':'After')+'Input').click();
 }
 async function specialFiles(input,stage){

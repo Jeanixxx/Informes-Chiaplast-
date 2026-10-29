@@ -27,18 +27,18 @@ async function purgeExpiredNotes(){
   return expired.length;
 }
 function deleteNoteEvidence(note){
-  try{if(window.ChiaplastNative&&typeof window.ChiaplastNative.deleteEvidence==='function')(note.photos||[]).forEach(src=>{if(typeof src==='string'&&src.includes('/evidence/'))window.ChiaplastNative.deleteEvidence(src)})}catch(e){}
+  try{if(Bridge.has('deleteEvidence'))(note.photos||[]).forEach(src=>{if(typeof src==='string'&&src.includes('/evidence/'))Bridge.deleteEvidence(src)})}catch(e){}
 }
 function captureNotePhoto(){
   if(notePhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías por nota.');return}
   partsPhotoTarget='note';
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.takePhoto==='function'){window.ChiaplastNative.takePhoto('note');return}
+  if(Bridge.has('takePhoto')){Bridge.takePhoto('note');return}
   $('notePhotos').click();
 }
 function pickNotePhoto(){
   if(notePhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías por nota.');return}
   partsPhotoTarget='note';
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.pickPhoto==='function'){window.ChiaplastNative.pickPhoto('note');return}
+  if(Bridge.has('pickPhoto')){Bridge.pickPhoto('note');return}
   $('notePhotos').removeAttribute('capture');$('notePhotos').click();
 }
 window.onEvidenceCaptured=function(raw){
@@ -47,20 +47,20 @@ window.onEvidenceCaptured=function(raw){
     if(!data||!data.uri)return;
     if(partsPhotoTarget==='specialBefore'||partsPhotoTarget==='specialAfter'){
       const stage=partsPhotoTarget==='specialBefore'?'before':'after';
-      if(specialPhotos[stage].length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
+      if(specialPhotos[stage].length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
       specialPhotos[stage].push(data.uri);specialRenderPhotos();specialSaveDraftOnly();toast('Evidencia del trabajo especial agregada.');return;
     }
     if(partsPhotoTarget==='pmBefore'||partsPhotoTarget==='pmAfter'){
       const stage=partsPhotoTarget==='pmBefore'?'before':'after';
-      if(preventivePhotos[stage].length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
+      if(preventivePhotos[stage].length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
       preventivePhotos[stage].push(data.uri);renderPreventivePhotos();savePreventivePhotos().then(()=>toast('Fotografía preventiva guardada.')).catch(()=>toast('No se pudo guardar la fotografía.'));return;
     }
     if(partsPhotoTarget==='parts'){
-      if(partsPhotosDraft.length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías de refacciones.');return}
+      if(partsPhotosDraft.length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías de refacciones.');return}
       partsPhotosDraft.push(data.uri);renderPartsPhotos();savePartsPhotos().then(()=>toast('Fotografía de refacción guardada.')).catch(()=>toast('La fotografía no se pudo guardar localmente.'));
       return;
     }
-    if(notePhotosDraft.length>=5){if(window.ChiaplastNative&&window.ChiaplastNative.deleteEvidence)window.ChiaplastNative.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías por nota.');return}
+    if(notePhotosDraft.length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías por nota.');return}
     notePhotosDraft.push(data.uri);renderPhotoPreview();toast('Evidencia agregada.');
   }catch(e){toast('No se pudo agregar la fotografía.')}
 };
@@ -110,8 +110,8 @@ async function printNote(id){
   try{
     const n=(await notesAll()).find(x=>x.id===id);if(!n){toast('La nota ya no está disponible.');return}
     const doc=buildNotePrintHtml(n);
-    if(window.ChiaplastNative&&typeof window.ChiaplastNative.printHtmlReport==='function'){
-      const result=window.ChiaplastNative.printHtmlReport(doc,n.title||'Nota Chiaplast');
+    if(Bridge.has('printHtmlReport')){
+      const result=Bridge.printHtmlReport(doc,n.title||'Nota Chiaplast');
       if(result!=='ok')toast('No se pudo abrir la impresión del PDF.');
       return;
     }

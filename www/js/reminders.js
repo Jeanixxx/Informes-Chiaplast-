@@ -14,11 +14,11 @@ function renderReminders(){
   }).join('');
 }
 function scheduleNativeReminder(item){
-  if(!window.ChiaplastNative||typeof window.ChiaplastNative.scheduleReminder!=='function')return null;
-  return window.ChiaplastNative.scheduleReminder(JSON.stringify({id:item.id,title:item.text,machine:item.machine||'',when:item.date+'T'+item.time+':00',status:item.status||'pending'}));
+  if(!Bridge.has('scheduleReminder'))return null;
+  return Bridge.scheduleReminder(JSON.stringify({id:item.id,title:item.text,machine:item.machine||'',when:item.date+'T'+item.time+':00',status:item.status||'pending'}));
 }
 function syncNativeReminders(){
-  if(!window.ChiaplastNative||typeof window.ChiaplastNative.scheduleReminder!=='function')return;
+  if(!Bridge.has('scheduleReminder'))return;
   loadReminders().forEach(item=>{
     const due=Date.parse(item.due);
     if(item.status!=='done'&&!item.notified&&item.date&&item.time&&Number.isFinite(due)&&due>Date.now()){
@@ -49,7 +49,7 @@ function addReminder(event){
   saveReminders(items);
   if(item.taskId){const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId);if(task){task.reminderId=id;if(!task.due)task.due=date;saveKanban(tasks)}}
   let message='Recordatorio guardado en este dispositivo. En navegador, el aviso requiere mantener Chiaplast abierta.';
-  if(window.ChiaplastNative){const result=scheduleNativeReminder(item);if(result==='permission_required')message='Guardado. Autoriza las alarmas exactas en Ajustes para recibir el aviso puntual.';else if(result==='error')message='Guardado localmente; Android no pudo programar la notificación.';else message='Recordatorio guardado y programado en Android.'}
+  if(Bridge.available){const result=scheduleNativeReminder(item);if(result==='permission_required')message='Guardado. Autoriza las alarmas exactas en Ajustes para recibir el aviso puntual.';else if(result==='error')message='Guardado localmente; Android no pudo programar la notificación.';else message='Recordatorio guardado y programado en Android.'}
   $('reminderId').value='';$('reminderTaskId').value='';$('reminderText').value='';$('reminderMachine').value='';
   renderReminders();renderKanban();renderHomeFollowup();toast(message);
 }
@@ -67,14 +67,14 @@ function toggleReminderStatus(id){
   saveReminders(items);
   const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId||t.reminderId===id);
   if(task){task.status=item.status==='done'?'done':'todo';saveKanban(tasks)}
-  if(item.status==='done'&&window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
+  if(item.status==='done'&&Bridge.has('cancelReminder'))Bridge.cancelReminder(id);
   else if(item.status!=='done'&&Date.parse(item.due)>Date.now())scheduleNativeReminder(item);
   renderReminders();renderKanban();renderHomeFollowup();
 }
 function deleteReminder(id){
   const items=loadReminders(),item=items.find(r=>r.id===id);saveReminders(items.filter(r=>r.id!==id));
   if(item&&item.taskId){const tasks=loadKanban(),task=tasks.find(t=>t.id===item.taskId);if(task)delete task.reminderId;saveKanban(tasks)}
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.cancelReminder==='function')window.ChiaplastNative.cancelReminder(id);
+  if(Bridge.has('cancelReminder'))Bridge.cancelReminder(id);
   renderReminders();renderKanban();renderHomeFollowup();toast('Recordatorio eliminado.');
 }
 async function enableReminderNotifications(){
@@ -83,7 +83,7 @@ async function enableReminderNotifications(){
   catch(e){toast('No fue posible solicitar permiso de notificaciones en este entorno.')}
 }
 function checkReminders(){
-  if(document.hidden||window.ChiaplastNative)return;
+  if(document.hidden||Bridge.available)return;
   const now=Date.now(),items=loadReminders();let changed=false;
   items.forEach(item=>{
     const due=Date.parse(item.due);

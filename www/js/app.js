@@ -11,7 +11,7 @@ function showDone(results,title){
   $('rMsg').textContent=saved?'Guardado en Descargas/Chiaplast':'Descargado en el dispositivo';
   $('shareBtns').innerHTML=LastExports.map((f,k)=>'<button class="btn btn-s" style="flex:none;width:100%;margin-bottom:8px" onclick="shareLast('+k+')">Compartir '+esc(f.name.split('.').pop().toUpperCase())+'</button>').join('');
 }
-function shareLast(k){const f=LastExports[k];if(f&&window.ChiaplastNative)window.ChiaplastNative.shareReport(f.name,f.mime,f.b64)}
+function shareLast(k){const f=LastExports[k];if(f&&Bridge.available)Bridge.shareReport(f.name,f.mime,f.b64)}
 function currentUser(){return AppState.user||store.get('mtto_user','')}
 function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
 AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
@@ -39,7 +39,7 @@ function show(id){
     const when=reminderDefault();$('reminderDate').min=when.date;
     if(!$('reminderDate').value)$('reminderDate').value=when.date;
     if(!$('reminderTime').value)$('reminderTime').value=when.time;
-    $('browserNotificationBtn').hidden=!!(window.ChiaplastNative);
+    $('browserNotificationBtn').hidden=!!(Bridge.available);
     renderReminders();syncNativeReminders();
   }
 }

@@ -28,9 +28,9 @@ function blobBase64(blob){
 }
 async function exportReport(blob,name,mime){
   mime=mime||XLSX_MIME;
-  if(window.ChiaplastNative&&typeof window.ChiaplastNative.saveReport==='function'){
+  if(Bridge.has('saveReport')){
     const b64=await blobBase64(blob);
-    if(window.ChiaplastNative.saveReport(name,mime,b64)!=='ok')throw new Error('No se pudo guardar el reporte en el dispositivo.');
+    if(Bridge.saveReport(name,mime,b64)!=='ok')throw new Error('No se pudo guardar el reporte en el dispositivo.');
     LastExports.push({name,mime,b64});
     return 'android-saved';
   }
