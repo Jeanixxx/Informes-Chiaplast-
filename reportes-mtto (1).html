@@ -1722,7 +1722,7 @@ function loadParts(){
 }
 function saveParts(){store.set(partsStorageKey(),JSON.stringify(readParts()));}
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value,ccmApproval:$('ccmApproval').value,ccmName:$('ccmName').value,pmObservations:$('pmObservations').value}))
+function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value,ccmApproval:$('ccmApproval').value,ccmName:$('ccmName').value,pmObservations:$('pmObservations').value}))}
 function loadDraft(){
   let dr=null;try{dr=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
   const ok=dr&&dr.c===Runtime.code&&(isDaily()?dr.k==='daily':!dr.k||dr.k==='preventive');
