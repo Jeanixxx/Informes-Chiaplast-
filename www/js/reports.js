@@ -309,6 +309,21 @@ function selectedExport(name){
   const input=document.querySelector('input[name="'+name+'"]:checked');
   return input?input.value:'excel';
 }
+async function resolveReportEvidence(rows){
+ const out=[];
+ for(const row of rows){
+  if(row[2]!==5||typeof row[1]!=='string'||!row[1]){out.push(row);continue}
+  const src=row[1];
+  if(src.startsWith('data:image/jpeg;base64,')){out.push(row);continue}
+  if(src.includes('/evidence/')){
+   try{const response=await fetch(src);if(!response.ok)throw new Error('HTTP '+response.status);const jpeg=await resizeNoteImage(await response.blob());out.push([row[0],jpeg,row[2]])}
+   catch(e){throw new Error('No se pudo incorporar la fotografía '+String(row[0]).replace('__PHOTO__','')+' al reporte. Abra el borrador y vuelva a adjuntarla.')}
+   continue;
+  }
+  out.push(row);
+ }
+ return out;
+}
 async function generateExports(rows,baseName,choice,sig){
   LastExports.length=0;
   const formats=choice==='both'?['excel','pdf']:[choice],results=[];
@@ -325,7 +340,8 @@ async function send(){
   const b=$('sendBtn');b.disabled=true;offerFailureFollowup();currentReportFolio=currentFolio();const baseName=fileName();
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
-    const exportRows=singleReportDoc(Runtime.rows.slice(1),isDaily()?[]:[['Responsable',Sig.name]]);
+    const resolvedRows=await resolveReportEvidence(Runtime.rows.slice(1));
+    const exportRows=singleReportDoc(resolvedRows,[]);
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()?null:{ccm:Signatures.ccm,responsable:Signatures.responsable});
     showDone(results,'Reporte generado');
     addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});

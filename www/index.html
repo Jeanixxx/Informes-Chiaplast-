@@ -186,7 +186,7 @@
 <section id="form" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <h1 id="fTitle">Área</h1>
+    <h1 id="fTitle">Área</h1><button class="btn btn-s" type="button" style="flex:none;padding:9px 12px" onclick="closeFormToTools()">Guardar y cerrar</button>
   </header>
   <div class="steps"><div class="on"></div><div></div></div>
   <div class="body">
@@ -214,7 +214,7 @@
       <h3>Evidencia del mantenimiento preventivo</h3>
       <div class="f"><label>Fotografías antes (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('before')">Adjuntar foto antes</button></div><input id="pmBeforeInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'before')"><div id="pmBeforePreview" class="parts-photo-preview"></div></div>
       <div class="f"><label>Fotografías después (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('after')">Adjuntar foto después</button></div><input id="pmAfterInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'after')"><div id="pmAfterPreview" class="parts-photo-preview"></div></div>
-      <div class="two"><div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div><div class="f"><label for="ccmName">Nombre de quien valida (CCM)</label><input id="ccmName" placeholder="Nombre / responsable" onchange="saveDraft()"></div></div>
+      <div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div>
       <div class="f"><label for="pmObservations">Observaciones del mantenimiento</label><textarea id="pmObservations" rows="3" placeholder="Observaciones, pendientes y condiciones al entregar" oninput="saveDraft()"></textarea></div>
       <small>Las fotografías se conservarán en este dispositivo y se incorporarán al PDF; el Excel incluirá el registro de evidencia y su cantidad.</small>
     </div>
@@ -274,7 +274,7 @@
     <div class="card" id="sigCard" hidden>
       <h3>Firmas de conformidad</h3><p class="muted" style="margin:0 0 14px">Registre ambas firmas antes de generar el reporte.</p>
       <div class="two">
-        <div class="f"><span class="lbl">CCM<em>*</em></span><input id="ccmSigName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
+        <div class="f"><span class="lbl">CCM<em>*</em></span><input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
         <div class="f"><span class="lbl">Responsable<em>*</em></span><input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas><button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button></div>
       </div>
     </div>
@@ -452,11 +452,10 @@
 <section id="tools" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
-    <h1>Configuración</h1>
+    <h1>Herramientas de MTTO</h1>
   </header>
   <div class="body">
-    <div class="card">
-    </div>
+    <div class="card"><h2 style="margin-top:0">Preventivos en curso</h2><p class="muted">Continúe un reporte que guardó para terminarlo más tarde.</p><div id="savedPreventiveDrafts" class="dashboard-tools"></div></div>
     <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
   </div>
 </section>
