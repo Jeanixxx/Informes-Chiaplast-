@@ -3,18 +3,18 @@ const dailyBatchKey=()=>'mtto_daily_batch';
 function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveDailyBatch(){store.set(dailyBatchKey(),JSON.stringify(DailyBatch.reports))}
 function startWorkflow(kind){
-  Runtime.workflow=kind;Runtime.checkType=kind==='daily'?'daily':'preventive';
+  resetRuntime(kind==='daily'?'daily':'preventive');Runtime.workflow=kind;
   if(kind==='daily')beginDailyBatch();else go('preventiveArea');
 }
 function choosePreventiveArea(area,code){
-  Runtime.area=area;Runtime.code=code;Runtime.machine='';
+  resetRuntime('preventive',{area,code});
   const data=MACHINE_DB[code];if(!data){toast('No se encontró el área en el catálogo.');return}
   $('preventiveMachineSubtitle').textContent=area+' · '+data.machines.length+' máquinas';
   $('preventiveMachineChoices').innerHTML=data.machines.map(name=>'<button class="area" onclick="choosePreventiveMachine(&quot;'+esc(name)+'&quot;,&quot;'+esc(code)+'&quot;)"><b>'+esc(name)+'</b></button>').join('');
   go('preventiveMachine');
 }
 function choosePreventiveMachine(machine,code){
-  Runtime.area=MACHINE_DB[code].area;Runtime.code=code;Runtime.machine=machine;Runtime.workflow='preventive';Runtime.batchMode=false;
+  resetRuntime('preventive',{area:MACHINE_DB[code].area,code,machine});
   startCheck('preventive');
 }
 function beginDailyBatch(){
@@ -38,7 +38,7 @@ function chooseCustomDailyMachine(){
   selectDailyMachine(name,code);
 }
 function selectDailyMachine(machine,code){
-  DailyBatch.machine=machine;Runtime.area=DailyBatch.area;Runtime.code=code;Runtime.machine=machine;Runtime.batchMode=true;
+  DailyBatch.machine=machine;resetRuntime('daily',{area:DailyBatch.area,code,machine,batchMode:true});
   startCheck('daily');
 }
 function renderDailyBatch(){
@@ -50,13 +50,10 @@ function renderDailyBatch(){
 }
 function editDailyReport(i){
   const report=DailyBatch.reports[i];if(!report)return;
+  resetRuntime('daily',{area:report.area,code:report.code,machine:report.machine,batchMode:true});
   DailyBatch.editIndex=i;DailyBatch.area=report.area;DailyBatch.code=report.code==='E1'||report.code==='E2'?'EXT':report.code;DailyBatch.machine=report.machine;
-  Runtime.area=report.area;Runtime.code=report.code;Runtime.machine=report.machine;Runtime.batchMode=true;
   startCheck('daily');
-  $('d').value=report.draft.d||'';$('t').value=report.draft.t||'';
-  $('gType').dataset.v=report.draft.type||'';$('gStatus').dataset.v=report.draft.st||'';
-  ['gType','gStatus'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===$(id).dataset.v)));
-  $('obs').value=report.draft.obs||'';extLoad(report.draft.fields||{});
+  setFormState(normalizeDraft(report.draft));
   toast('Edita el informe y vuelve a agregarlo al lote.');
 }
 function removeDailyReport(i){
