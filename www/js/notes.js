@@ -1,5 +1,5 @@
 /* ===== Notas técnicas con fotografías y caducidad de 30 días ===== */
-const NOTES_DB=()=> 'chiaplast-notes-v1',NOTES_STORE='notes';
+const NOTES_DB=()=> KEYS.idb.notes,NOTES_STORE='notes';
 let notePhotosDraft=[];
 function openNotesDB(){
   return new Promise((resolve,reject)=>{

@@ -1,5 +1,5 @@
 /* ===== Tablero Kanban local ===== */
-const kanbanKey=()=>'mtto_kanban';
+const kanbanKey=()=>KEYS.kanban;
 function loadKanban(){try{const a=JSON.parse(store.get(kanbanKey(),'[]'));return Array.isArray(a)?a:[]}catch(e){return[]}}
 function saveKanban(a){store.set(kanbanKey(),JSON.stringify(a))}
 function addKanbanTask(){
