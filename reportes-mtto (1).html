@@ -1458,15 +1458,18 @@ function buildXlsx(rows,photoRows=[]){
     else if(t===4)add(a,b,4,4,20);
     else add(a,b,7,VS[statusKind(b)]||8);
   });
-  add('','',0,0,10,true);
-  add('FIRMAS DE CONFORMIDAD','',3,3,22,true);
-  const ccmNameRow=rows.find(q=>/nombre.*ccm|ccm.*nombre/i.test(String(q[0]||'')));
-  const responsableRow=rows.find(q=>/^responsable$/i.test(String(q[0]||'')));
+  const hasPreventiveSignatures=rows.some(q=>/visto bueno de ccm/i.test(String(q[0]||'')));
+  if(hasPreventiveSignatures){
+    add('','',0,0,10,true);
+    add('FIRMAS DE CONFORMIDAD','',3,3,22,true);
+    const ccmNameRow=rows.find(q=>/^(responsable de ccm|nombre de quien valida \(ccm\))$/i.test(String(q[0]||'')));
+    const responsableRow=rows.find(q=>/^responsable$/i.test(String(q[0]||'')));
   add('CCM · Nombre',ccmNameRow?ccmNameRow[1]:'',5,6,24);
   add('Firma CCM','____________________________________________','7',7,30);
   add('Responsable · Nombre',responsableRow?responsableRow[1]:'',5,6,24);
   add('Firma Responsable','____________________________________________',7,7,30);
   add('','',0,0,8,true);
+  }
   add('Documento generado por la aplicación de Mantenimiento Chiaplast · '+new Date().toLocaleString('es-MX'),'',14,14,18,true);
   const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',R='http://schemas.openxmlformats.org/officeDocument/2006/relationships',M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',P='http://schemas.openxmlformats.org/package/2006/relationships';
   const bd='<border><left style="thin"><color rgb="FFD0D9E0"/></left><right style="thin"><color rgb="FFD0D9E0"/></right><top style="thin"><color rgb="FFD0D9E0"/></top><bottom style="thin"><color rgb="FFD0D9E0"/></bottom><diagonal/></border>';
@@ -1585,23 +1588,24 @@ function buildPdf(rows,sig){
     row(a,b,300,{zebra:zebra++%2});prevMeta=false;
   });
   photoRows.forEach((r,index)=>{newPage();pagePhotoRefs[pages.length-1]=index;const dim=photoDimensions(r[1]),scale=Math.min(CW/dim.w,650/dim.h),iw=dim.w*scale,ih=dim.h*scale,x=(W-iw)/2,top=110;T(M,72,'EVIDENCIA FOTOGRÁFICA · '+String(r[0]).replace('__PHOTO__',''),13,true,STEEL);ops.push('q '+iw.toFixed(2)+' 0 0 '+ih.toFixed(2)+' '+x.toFixed(2)+' '+(H-top-ih).toFixed(2)+' cm /Img1 Do Q')});
-  {
+  const hasPreventiveSignatures=rows.some(q=>/visto bueno de ccm/i.test(String(q[0]||'')));
+  if(sig||hasPreventiveSignatures){
     ensure(150);y+=20;
     R(M,y,CW,20,STEEL);T(M+8,y+14,'Firmas de conformidad',10,true,'1 1 1');y+=20;
     const gap=12,boxW=(CW-gap)/2,boxH=112,leftX=M,rightX=M+boxW+gap;
     R(leftX,y,boxW,boxH,'1 1 1',LINE);R(rightX,y,boxW,boxH,'1 1 1',LINE);
-    const ccmRow=rows.find(q=>/nombre.*ccm|ccm.*nombre/i.test(String(q[0]||'')));
+    const ccmRow=rows.find(q=>/^(responsable de ccm|nombre de quien valida \(ccm\))$/i.test(String(q[0]||'')));
     const respRow=rows.find(q=>/^responsable$/i.test(String(q[0]||'')));
     T(leftX+10,y+18,'CCM',10,true,STEEL);
     const ccmNm=pdfWrap(ccmRow?ccmRow[1]:'',boxW-20,9.5,true)[0]||'';
     T(leftX+10,y+36,ccmNm,9.5,true,COL['']);
-    ops.push(LINE+' RG 0.8 w '+(leftX+12)+' '+(842-y-76)+' m '+(leftX+boxW-12)+' '+(842-y-76)+' l S');
+    ops.push(LINE+' RG 0.8 w '+(leftX+12)+' '+(H-y-76)+' m '+(leftX+boxW-12)+' '+(H-y-76)+' l S');
     T(leftX+10,y+94,'Nombre y firma de CCM',8,false,COL.na);
     T(rightX+10,y+18,'Responsable',10,true,STEEL);
     const respNm=pdfWrap((respRow&&respRow[1])||(sig&&sig.name)||'',boxW-20,9.5,true)[0]||'';
     T(rightX+10,y+36,respNm,9.5,true,COL['']);
     if(sig&&sig.hex){sigPage=pages.length-1;ops.push('q 100 0 0 33 '+(rightX+10)+' '+(H-y-70-33).toFixed(2)+' cm /Sig Do Q')}
-    ops.push(LINE+' RG 0.8 w '+(rightX+12)+' '+(842-y-76)+' m '+(rightX+boxW-12)+' '+(842-y-76)+' l S');
+    ops.push(LINE+' RG 0.8 w '+(rightX+12)+' '+(H-y-76)+' m '+(rightX+boxW-12)+' '+(H-y-76)+' l S');
     T(rightX+10,y+94,'Nombre y firma del responsable',8,false,COL.na);
     y+=boxH;
   }
@@ -1620,7 +1624,7 @@ function buildPdf(rows,sig){
   const photoStartId=5+pages.length*2+1,sigId=sig?photoStartId+photoRows.length:0,refs=[];
   pages.forEach((p,i)=>{
     const pid=objs.length+1,cid=pid+1;refs.push(pid+' 0 R');
-    const xo=[];if(i===sigPage)xo.push('/Sig '+sigId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
+    const xo=[];if(i===sigPage&&sig&&sig.hex)xo.push('/Sig '+sigId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
     add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
     const stream=p.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
   });
