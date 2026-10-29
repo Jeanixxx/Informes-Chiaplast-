@@ -739,10 +739,19 @@ body{background:var(--bg);color:var(--ink)}
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
     </div>
     <div class="card" id="sigCard" hidden>
-      <div class="f" style="margin-bottom:0"><span class="lbl">Firma<em>*</em></span>
+      <h3>Firma del responsable</h3>
+      <div class="f" style="margin-bottom:0">
+        <label for="sigName">Nombre del responsable</label>
         <input id="sigName" maxlength="60" placeholder="Nombre de quien firma" autocomplete="name" oninput="this.classList.remove('bad');Sig.name=this.value.trim();store.set('mtto_sig_name',this.value.trim())" style="width:100%;margin-bottom:10px">
-        <canvas id="sigPad" width="600" height="200" aria-label="Espacio para firmar"></canvas>
-        <button class="link" type="button" onclick="sigClear()">Borrar firma</button>
+        <canvas id="sigPad" width="600" height="200" aria-label="Firma del responsable"></canvas>
+        <button class="link" type="button" onclick="sigClear()">Borrar firma del responsable</button>
+      </div>
+      <div class="f" style="margin-top:18px;margin-bottom:0">
+        <h3 style="margin:0 0 8px">Firma de CCM</h3>
+        <label for="ccmSignerName">Nombre de la persona de CCM</label>
+        <input id="ccmSignerName" maxlength="60" placeholder="Nombre de quien firma por CCM" autocomplete="name" oninput="Sig.ccmName=this.value.trim();saveDraft()" style="width:100%;margin-bottom:10px">
+        <canvas id="ccmSigPad" width="600" height="200" aria-label="Firma de CCM"></canvas>
+        <button class="link" type="button" onclick="ccmSigClear()">Borrar firma de CCM</button>
       </div>
     </div>
   </div>
@@ -1239,27 +1248,33 @@ function pick(name,code){
   startCheck('preventive');
 }
 /* Firma: solo preventivos; se anexa únicamente a los PDF */
-const Sig={hex:'',w:0,h:0,drawing:false,name:''};
-function sigClear(){
-  const c=$('sigPad'),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
-  Sig.hex='';c.classList.remove('bad');
+const Sig={hex:'',w:0,h:0,drawing:false,name:'',ccmHex:'',ccmW:0,ccmH:0,ccmDrawing:false,ccmName:''};
+function clearSignatureCanvas(id,key){
+  const c=$(id);if(!c)return;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  Sig[key]='';c.classList.remove('bad');
 }
-function sigCapture(){
-  const c=$('sigPad'),W=300,H=100,t=document.createElement('canvas');t.width=W;t.height=H;
+function sigClear(){clearSignatureCanvas('sigPad','hex')}
+function ccmSigClear(){clearSignatureCanvas('ccmSigPad','ccmHex')}
+function captureSignatureCanvas(id,key,wKey,hKey){
+  const c=$(id),W=300,H=100,t=document.createElement('canvas');t.width=W;t.height=H;
   const g=t.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(c,0,0,W,H);
   const d=g.getImageData(0,0,W,H).data;let hex='',ink=0;
   for(let i=0;i<d.length;i+=4){const v=Math.round(d[i]*.3+d[i+1]*.59+d[i+2]*.11);if(v<200)ink++;hex+=(v<16?'0':'')+v.toString(16)}
-  Sig.hex=ink>40?hex:'';Sig.w=W;Sig.h=H;
+  Sig[key]=ink>40?hex:'';Sig[wKey]=W;Sig[hKey]=H;
 }
-(function(){
-  const c=$('sigPad'),x=c.getContext('2d');sigClear();
+function sigCapture(){captureSignatureCanvas('sigPad','hex','w','h')}
+function ccmSigCapture(){captureSignatureCanvas('ccmSigPad','ccmHex','ccmW','ccmH')}
+function wireSignaturePad(id,flag,capture){
+  const c=$(id);if(!c)return;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
   x.lineWidth=5;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';
   const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
-  c.addEventListener('pointerdown',e=>{Sig.drawing=true;c.setPointerCapture(e.pointerId);const[a,b]=pt(e);x.beginPath();x.moveTo(a,b);x.lineTo(a+.1,b+.1);x.stroke();c.classList.remove('bad')});
-  c.addEventListener('pointermove',e=>{if(!Sig.drawing)return;const[a,b]=pt(e);x.lineTo(a,b);x.stroke()});
-  const end=()=>{if(Sig.drawing){Sig.drawing=false;sigCapture()}};
+  c.addEventListener('pointerdown',e=>{Sig[flag]=true;c.setPointerCapture(e.pointerId);const[a,b]=pt(e);x.beginPath();x.moveTo(a,b);x.lineTo(a+.1,b+.1);x.stroke();c.classList.remove('bad')});
+  c.addEventListener('pointermove',e=>{if(!Sig[flag])return;const[a,b]=pt(e);x.lineTo(a,b);x.stroke()});
+  const end=()=>{if(Sig[flag]){Sig[flag]=false;capture()}};
   c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
-})();
+}
+wireSignaturePad('sigPad','drawing',sigCapture);
+wireSignaturePad('ccmSigPad','ccmDrawing',ccmSigCapture);
 function startCheck(kind){
   Runtime.checkType=kind;
   $('partsCard').hidden=kind==='daily';
