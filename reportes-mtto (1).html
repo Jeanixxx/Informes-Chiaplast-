@@ -1595,13 +1595,13 @@ function buildPdf(rows,sig){
     T(leftX+10,y+18,'CCM',10,true,STEEL);
     const ccmNm=pdfWrap(ccmRow?ccmRow[1]:'',boxW-20,9.5,true)[0]||'';
     T(leftX+10,y+36,ccmNm,9.5,true,COL['']);
-    R(leftX+12,y+76,boxW-24,0,null,LINE);
+    ops.push(LINE+' RG 0.8 w '+(leftX+12)+' '+(842-y-76)+' m '+(leftX+boxW-12)+' '+(842-y-76)+' l S');
     T(leftX+10,y+94,'Nombre y firma de CCM',8,false,COL.na);
     T(rightX+10,y+18,'Responsable',10,true,STEEL);
     const respNm=pdfWrap((respRow&&respRow[1])||(sig&&sig.name)||'',boxW-20,9.5,true)[0]||'';
     T(rightX+10,y+36,respNm,9.5,true,COL['']);
-    if(sig&&sig.hex){ops.push('q 100 0 0 33 '+(rightX+10)+' '+(H-y-70-33).toFixed(2)+' cm /Sig Do Q')}
-    R(rightX+12,y+76,boxW-24,0,null,LINE);
+    if(sig&&sig.hex){sigPage=pages.length-1;ops.push('q 100 0 0 33 '+(rightX+10)+' '+(H-y-70-33).toFixed(2)+' cm /Sig Do Q')}
+    ops.push(LINE+' RG 0.8 w '+(rightX+12)+' '+(842-y-76)+' m '+(rightX+boxW-12)+' '+(842-y-76)+' l S');
     T(rightX+10,y+94,'Nombre y firma del responsable',8,false,COL.na);
     y+=boxH;
   }
