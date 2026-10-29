@@ -1523,7 +1523,7 @@ function buildPdf(rows,sig){
   const STEEL='0.09 0.17 0.23',ACC='0.94 0.73 0',LINE='0.82 0.86 0.89',LIGHT='0.92 0.94 0.96';
   const COL={ok:'0.07 0.50 0.29',bad:'0.70 0.15 0.12',warn:'0.65 0.42 0',na:'0.48 0.53 0.57','':'0.09 0.17 0.23'};
   const trow=rows.find(r=>r[2]===3);const docTitle=trow?trow[0]:'REPORTE DE MANTENIMIENTO';
-  const pages=[];let ops,y,sigPage=-1;
+  const pages=[],pagePhotoRefs=[];let ops,y,sigPage=-1;
   const R=(x,yt,w,h,fill,stroke)=>{ops.push((fill?fill+' rg ':'')+(stroke?stroke+' RG 0.5 w ':'')+x.toFixed(2)+' '+(H-yt-h).toFixed(2)+' '+w.toFixed(2)+' '+h.toFixed(2)+' re '+(fill&&stroke?'B':fill?'f':'S'))};
   const T=(x,yt,s,size,bold,col,right)=>{const px=right?x-pdfWidth(s,size,bold):x;ops.push('BT /'+(bold?'F2':'F1')+' '+size+' Tf '+col+' rg '+px.toFixed(2)+' '+(H-yt).toFixed(2)+' Td ('+pdfEnc(s)+') Tj ET')};
   const newPage=()=>{
@@ -1551,16 +1551,20 @@ function buildPdf(rows,sig){
     lb.forEach((s,i)=>T(M+lw+pad,y+pad+8+i*lh,s,size,!!kind||!!opt.valBold,COL[kind]));
     y+=h;
   };
+  const photoRows=rows.filter(r=>r[2]===5&&typeof r[1]==='string'&&r[1].startsWith('data:image/jpeg;base64,'));
+  const photoDimensions=data=>{try{const bin=atob(data.split(',')[1]);for(let i=2;i<bin.length-9;){if(bin.charCodeAt(i)!==255){i++;continue}const marker=bin.charCodeAt(i+1),len=(bin.charCodeAt(i+2)<<8)|bin.charCodeAt(i+3);if([192,193,194,195,197,198,199,201,202,203,205,206,207].includes(marker))return{w:(bin.charCodeAt(i+7)<<8)|bin.charCodeAt(i+8),h:(bin.charCodeAt(i+5)<<8)|bin.charCodeAt(i+6)};i+=Math.max(2,len)}}catch(e){}return{w:1280,h:720}};
   newPage();
   let zebra=0,prevMeta=false;
   rows.forEach(r=>{
     const a=r[0],b=r[1]==null?'':r[1],t=r[2];
+    if(t===5)return;
     if(t===3)return;
     if(t===1){ensure(20+34);y+=prevMeta?0:8;R(M,y,CW,20,STEEL);T(M+8,y+14,a,10,true,'1 1 1');y+=20;zebra=0;prevMeta=false;return}
     if(t===2){row(a,b,150,{labelBold:true,labelFill:LIGHT});prevMeta=true;return}
     if(t===4){if(prevMeta)y+=10;ensure(18+30);R(M,y,CW,18,LIGHT,LINE);T(M+6,y+12.5,a,9,true,COL['']);T(M+300+6,y+12.5,b,9,true,COL['']);y+=18;zebra=0;prevMeta=false;return}
     row(a,b,300,{zebra:zebra++%2});prevMeta=false;
   });
+  photoRows.forEach((r,index)=>{newPage();pagePhotoRefs[pages.length-1]=index;const dim=photoDimensions(r[1]),scale=Math.min(CW/dim.w,650/dim.h),iw=dim.w*scale,ih=dim.h*scale,x=(W-iw)/2,top=110;T(M,72,'EVIDENCIA FOTOGRÁFICA · '+String(r[0]).replace('__PHOTO__',''),13,true,STEEL);ops.push('q '+iw.toFixed(2)+' 0 0 '+ih.toFixed(2)+' '+x.toFixed(2)+' '+(H-top-ih).toFixed(2)+' cm /Img1 Do Q')});
   if(sig){
     ensure(150);y+=20;
     R(M,y,CW,20,STEEL);T(M+8,y+14,'Firma de conformidad',10,true,'1 1 1');y+=20;
@@ -1588,13 +1592,15 @@ function buildPdf(rows,sig){
   add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
   add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
   const info=add('<< /Title ('+pdfEnc(docTitle+' - Chiaplast')+') /Author (Chiaplast Mantenimiento) /Creator (Aplicacion de Mantenimiento Chiaplast) >>');
-  const sigId=sig?5+pages.length*2+1:0,refs=[];
+  const photoStartId=5+pages.length*2+1,sigId=sig?photoStartId+photoRows.length:0,refs=[];
   pages.forEach((p,i)=>{
     const pid=objs.length+1,cid=pid+1;refs.push(pid+' 0 R');
-    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(i===sigPage?' /XObject << /Sig '+sigId+' 0 R >>':'')+' >> /Contents '+cid+' 0 R >>');
+    const xo=[];if(i===sigPage)xo.push('/Sig '+sigId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
+    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
     const stream=p.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
   });
   objs[1]='<< /Type /Pages /Kids ['+refs.join(' ')+'] /Count '+pages.length+' >>';
+  photoRows.forEach(r=>{const bin=atob(r[1].split(',')[1]);let hex='';for(let i=0;i<bin.length;i++)hex+=bin.charCodeAt(i).toString(16).padStart(2,'0');const dim=photoDimensions(r[1]);add('<< /Type /XObject /Subtype /Image /Width '+dim.w+' /Height '+dim.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length '+(hex.length+1)+' >>\nstream\n'+hex+'>\nendstream')});
   if(sig){const d=sig.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+sig.w+' /Height '+sig.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
   let pdf='%PDF-1.4\n%CHIA\n';const off=[];
   objs.forEach((o,i)=>{off.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n'});
@@ -1612,7 +1618,8 @@ async function generateExports(rows,baseName,choice,sig){
   const formats=choice==='both'?['excel','pdf']:[choice],results=[];
   for(const format of formats){
     const isPdf=format==='pdf',name=baseName+(isPdf?'.pdf':'.xlsx');
-    const blob=isPdf?buildPdf(rows,sig):buildXlsx(rows);
+    const exportRows=isPdf?rows:rows.filter(r=>r[2]!==5);
+    const blob=isPdf?buildPdf(exportRows,sig):buildXlsx(exportRows);
     const mode=await exportReport(blob,name,isPdf?PDF_MIME:XLSX_MIME);
     results.push({name,format,mode});
   }
