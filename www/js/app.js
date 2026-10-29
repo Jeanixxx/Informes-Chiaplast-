@@ -28,6 +28,7 @@ function show(id){
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
   if(id==='menu'){renderRecent();renderHomeFollowup()}
+  if(id==='tools')renderSavedPreventiveDrafts();
   if(id==='specialWorks')specialRender();
   if(id==='preventiveBoard')renderPmBoard();
   if(id==='preventiveCalendar')renderPreventiveCalendar();
@@ -148,7 +149,7 @@ function startCheck(kind){
   ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz'].forEach(id=>{const el=$(id);if(el)el.value=''});
 
   if(kind==='preventive'){loadParts();loadPartsPhotos();loadPreventivePhotos();}
-  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get('mtto_signature_names','{}'));$('ccmSigName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
+  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get('mtto_signature_names','{}'));$('ccmName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
@@ -191,7 +192,7 @@ function review(){
     if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(!isDaily()){
-    if(!Signatures.ccm.name){$('ccmSigName').classList.add('bad');bad=bad||$('ccmSigName')}
+    if(!Signatures.ccm.name){$('ccmName').classList.add('bad');bad=bad||$('ccmName')}
     if(!Signatures.ccm.hex){$('ccmSigPad').classList.add('bad');bad=bad||$('ccmSigPad')}
     if(!Signatures.responsable.name){$('respSigName').classList.add('bad');bad=bad||$('respSigName')}
     if(!Signatures.responsable.hex){$('respSigPad').classList.add('bad');bad=bad||$('respSigPad')}
@@ -238,7 +239,12 @@ function finish(){
 }
 
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value,ccmApproval:$('ccmApproval').value,ccmName:$('ccmName').value,pmObservations:$('pmObservations').value}))}
+function draftIndex(){try{return JSON.parse(store.get('mtto_preventive_drafts','[]'))}catch(e){return[]}}
+function saveDraft(){
+ const key=draftStorageKey(),record={key,c:Runtime.code,k:Runtime.checkType,area:Runtime.area,machine:Runtime.machine||'',updated:Date.now(),d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value,ccmApproval:$('ccmApproval').value,ccmName:$('ccmName').value,pmObservations:$('pmObservations').value,respSigner:$('respSigName').value.trim(),ccmSig:Signatures.ccm.hex,respSig:Signatures.responsable.hex};
+ store.set(key,JSON.stringify(record));
+ if(!isDaily()){const all=draftIndex().filter(x=>x.key!==key);all.unshift({key,area:Runtime.area,code:Runtime.code,machine:Runtime.machine||Runtime.area,updated:record.updated});store.set('mtto_preventive_drafts',JSON.stringify(all.slice(0,50)))}
+}
 function loadDraft(){
   let dr=null;try{dr=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
   const ok=dr&&dr.c===Runtime.code&&(isDaily()?dr.k==='daily':!dr.k||dr.k==='preventive');
@@ -249,6 +255,28 @@ function loadDraft(){
   $('obs').value=ok?dr.o:'';
   ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz','ccmApproval','ccmName','pmObservations'].forEach(id=>{const el=$(id);if(el)el.value=ok&&dr[id]?dr[id]:''});
   extLoad(ok&&dr.x?dr.x:{});
+  if(ok&&!isDaily()){
+    $('respSigName').value=dr.respSigner||$('respSigName').value||'';
+    Signatures.ccm.name=$('ccmName').value.trim();Signatures.responsable.name=$('respSigName').value.trim();
+    restoreSignature('ccm',dr.ccmSig||'');restoreSignature('responsable',dr.respSig||'');
+  }
+}
+function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('tools');toast('Borrador guardado. Puede continuar después desde Herramientas de MTTO.')}
+function renderSavedPreventiveDrafts(){
+ const box=$('savedPreventiveDrafts');if(!box)return;
+ const items=draftIndex().filter(x=>store.get(x.key,''));
+ box.innerHTML=items.length?items.map(x=>'<button class="dashboard-area" type="button" onclick="resumePreventiveDraft(&quot;'+esc(x.key)+'&quot;)"><b><i>↻</i><em>'+esc(new Date(x.updated).toLocaleString('es-MX'))+'</em></b><strong>'+esc(x.machine||x.area)+'</strong><small>'+esc(x.area)+' · '+esc(x.code)+'</small><span>Continuar llenando →</span></button>').join(''):'<div class="empty">No hay mantenimientos preventivos guardados como borrador.</div>';
+}
+function resumePreventiveDraft(key){
+ let dr=null;try{dr=JSON.parse(store.get(key,'null'))}catch(e){}
+ if(!dr||!dr.code){toast('No se encontró el borrador.');renderSavedPreventiveDrafts();return}
+ Runtime.area=dr.area||dr.code;Runtime.code=dr.code;Runtime.machine=dr.machine||'';Runtime.batchMode=false;startCheck('preventive');
+}
+function restoreSignature(who,hex){
+ const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':'respSigPad');signatureClear(who);
+ if(!hex)return;const ctx=canvas.getContext('2d'),img=ctx.createImageData(300,100);
+ for(let i=0;i<300*100;i++){const v=parseInt(hex.slice(i*2,i*2+2),16)||255,j=i*4;img.data[j]=img.data[j+1]=img.data[j+2]=v;img.data[j+3]=255}
+ const tmp=document.createElement('canvas');tmp.width=300;tmp.height=100;tmp.getContext('2d').putImageData(img,0,0);ctx.drawImage(tmp,0,0,canvas.width,canvas.height);item.hex=hex;item.w=300;item.h=100;
 }
 
 
