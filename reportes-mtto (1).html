@@ -168,8 +168,8 @@ input.bad{border-color:var(--err);background:rgba(179,38,30,.08)}
 .grease-point:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .grease-help{color:var(--muted);font-size:13px;line-height:1.45;margin:4px 0 0}
 @media(max-width:420px){.grease-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.grease-point{min-height:42px;font-size:13px}}
-#sigPad{display:block;width:100%;height:140px;border:1.5px solid var(--line);border-radius:12px;background:#fff;touch-action:none}
-#sigPad.bad{border-color:var(--err)}
+.signature-pad{display:block;width:100%;height:140px;border:1.5px solid var(--line);border-radius:12px;background:#fff;touch-action:none}
+.signature-pad.bad{border-color:var(--err)}
 /* ===== Refinamiento visual industrial Chiaplast ===== */
 :root{color-scheme:light dark;--bg:#f1f4f6;--surface:#fff;--ink:#172b3a;--muted:#60717e;--line:#d8e0e6;--steel:#172b3a;--steel-2:#213b4c;--accent:#efb900;--accent-2:#e0a900;--accent-ink:#17212a;--chip:#eaf0f4;--r:12px;--shadow:0 8px 24px rgba(23,43,58,.07)}
 @media(prefers-color-scheme:dark){:root{--bg:#111a22;--surface:#192630;--ink:#eaf0f4;--muted:#a5b4bf;--line:#2b3b47;--steel:#101b24;--steel-2:#1a2b37;--chip:#24343f;--shadow:0 8px 24px rgba(0,0,0,.18)}}
@@ -739,10 +739,10 @@ body{background:var(--bg);color:var(--ink)}
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
     </div>
     <div class="card" id="sigCard" hidden>
-      <div class="f" style="margin-bottom:0"><span class="lbl">Firma<em>*</em></span>
-        <input id="sigName" maxlength="60" placeholder="Nombre de quien firma" autocomplete="name" oninput="this.classList.remove('bad');Sig.name=this.value.trim();store.set('mtto_sig_name',this.value.trim())" style="width:100%;margin-bottom:10px">
-        <canvas id="sigPad" width="600" height="200" aria-label="Espacio para firmar"></canvas>
-        <button class="link" type="button" onclick="sigClear()">Borrar firma</button>
+      <h3>Firmas de conformidad</h3><p class="muted" style="margin:0 0 14px">Registre ambas firmas antes de generar el reporte.</p>
+      <div class="two">
+        <div class="f"><span class="lbl">CCM<em>*</em></span><input id="ccmSigName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
+        <div class="f"><span class="lbl">Responsable<em>*</em></span><input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas><button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button></div>
       </div>
     </div>
   </div>
@@ -1238,28 +1238,15 @@ function pick(name,code){
   }
   startCheck('preventive');
 }
-/* Firma: solo preventivos; se anexa únicamente a los PDF */
-const Sig={hex:'',w:0,h:0,drawing:false,name:''};
-function sigClear(){
-  const c=$('sigPad'),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
-  Sig.hex='';c.classList.remove('bad');
-}
-function sigCapture(){
-  const c=$('sigPad'),W=300,H=100,t=document.createElement('canvas');t.width=W;t.height=H;
-  const g=t.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(c,0,0,W,H);
-  const d=g.getImageData(0,0,W,H).data;let hex='',ink=0;
-  for(let i=0;i<d.length;i+=4){const v=Math.round(d[i]*.3+d[i+1]*.59+d[i+2]*.11);if(v<200)ink++;hex+=(v<16?'0':'')+v.toString(16)}
-  Sig.hex=ink>40?hex:'';Sig.w=W;Sig.h=H;
-}
-(function(){
-  const c=$('sigPad'),x=c.getContext('2d');sigClear();
-  x.lineWidth=5;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';
-  const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
-  c.addEventListener('pointerdown',e=>{Sig.drawing=true;c.setPointerCapture(e.pointerId);const[a,b]=pt(e);x.beginPath();x.moveTo(a,b);x.lineTo(a+.1,b+.1);x.stroke();c.classList.remove('bad')});
-  c.addEventListener('pointermove',e=>{if(!Sig.drawing)return;const[a,b]=pt(e);x.lineTo(a,b);x.stroke()});
-  const end=()=>{if(Sig.drawing){Sig.drawing=false;sigCapture()}};
-  c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
-})();
+/* Dos firmas independientes requeridas en mantenimiento preventivo */
+const Signatures={ccm:{hex:'',w:0,h:0,drawing:false,name:''},responsable:{hex:'',w:0,h:0,drawing:false,name:''}};
+function saveSignatureNames(){store.set('mtto_signature_names',JSON.stringify({ccm:$('ccmSigName').value.trim(),responsable:$('respSigName').value.trim()}))}
+function signatureClear(who){const item=Signatures[who],c=$(who==='ccm'?'ccmSigPad':'respSigPad');const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);item.hex='';c.classList.remove('bad')}
+function signatureCapture(who){const item=Signatures[who],c=$(who==='ccm'?'ccmSigPad':'respSigPad'),W=300,H=100,t=document.createElement('canvas');t.width=W;t.height=H;const g=t.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(c,0,0,W,H);const d=g.getImageData(0,0,W,H).data;let hex='',ink=0;for(let i=0;i<d.length;i+=4){const v=Math.round(d[i]*.3+d[i+1]*.59+d[i+2]*.11);if(v<200)ink++;hex+=(v<16?'0':'')+v.toString(16)}item.hex=ink>40?hex:'';item.w=W;item.h=H}
+function initSignaturePad(who){const item=Signatures[who],c=$(who==='ccm'?'ccmSigPad':'respSigPad'),x=c.getContext('2d');signatureClear(who);x.lineWidth=5;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};c.addEventListener('pointerdown',e=>{item.drawing=true;c.setPointerCapture(e.pointerId);const[a,b]=pt(e);x.beginPath();x.moveTo(a,b);x.lineTo(a+.1,b+.1);x.stroke();c.classList.remove('bad')});c.addEventListener('pointermove',e=>{if(!item.drawing)return;const[a,b]=pt(e);x.lineTo(a,b);x.stroke()});const end=()=>{if(item.drawing){item.drawing=false;signatureCapture(who)}};c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end)}
+function sigClear(){signatureClear('ccm');signatureClear('responsable')}
+initSignaturePad('ccm');initSignaturePad('responsable');
+try{const saved=JSON.parse(store.get('mtto_signature_names','{}'));$('ccmSigName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
 function startCheck(kind){
   Runtime.checkType=kind;
   $('partsCard').hidden=kind==='daily';
@@ -1271,7 +1258,7 @@ function startCheck(kind){
   ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz'].forEach(id=>{const el=$(id);if(el)el.value=''});
 
   if(kind==='preventive'){loadParts();loadPartsPhotos();loadPreventivePhotos();}
-  $('sigCard').hidden=kind==='daily';sigClear();$('sigName').value=store.get('mtto_sig_name','');Sig.name=$('sigName').value.trim();
+  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get('mtto_signature_names','{}'));$('ccmSigName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
@@ -1314,8 +1301,10 @@ function review(){
     if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
   if(!isDaily()){
-    if(!Sig.name){$('sigName').classList.add('bad');bad=bad||$('sigName')}
-    if(!Sig.hex){$('sigPad').classList.add('bad');bad=bad||$('sigPad')}
+    if(!Signatures.ccm.name){$('ccmSigName').classList.add('bad');bad=bad||$('ccmSigName')}
+    if(!Signatures.ccm.hex){$('ccmSigPad').classList.add('bad');bad=bad||$('ccmSigPad')}
+    if(!Signatures.responsable.name){$('respSigName').classList.add('bad');bad=bad||$('respSigName')}
+    if(!Signatures.responsable.hex){$('respSigPad').classList.add('bad');bad=bad||$('respSigPad')}
   }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
@@ -1324,7 +1313,7 @@ function review(){
     if($('pmStartDate').value||$('pmStartTime').value)rows.push(['Inicio de mantenimiento',($('pmStartDate').value?fmtD($('pmStartDate').value):'')+' '+$('pmStartTime').value]);
     if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
     if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
-    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
+    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Firmante Responsable',Signatures.responsable.name],['Firma Responsable','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
     rows.push(['Evidencia fotográfica','',1],['Fotografías antes',preventivePhotos.before.length+' de 5'],['Fotografías después',preventivePhotos.after.length+' de 5']);
     preventivePhotos.before.forEach((photo,i)=>rows.push(['__PHOTO__ANTES '+(i+1),photo,5]));
     preventivePhotos.after.forEach((photo,i)=>rows.push(['__PHOTO__DESPUÉS '+(i+1),photo,5]));
@@ -1597,14 +1586,15 @@ function buildPdf(rows,sig){
     const ccmRow=rows.find(q=>/^(responsable de ccm|nombre de quien valida \(ccm\))$/i.test(String(q[0]||'')));
     const respRow=rows.find(q=>/^responsable$/i.test(String(q[0]||'')));
     T(leftX+10,y+18,'CCM',10,true,STEEL);
-    const ccmNm=pdfWrap(ccmRow?ccmRow[1]:'',boxW-20,9.5,true)[0]||'';
+    const ccmNm=pdfWrap((sig&&sig.ccm&&sig.ccm.name)||(ccmRow?ccmRow[1]:''),boxW-20,9.5,true)[0]||'';
     T(leftX+10,y+36,ccmNm,9.5,true,COL['']);
+    if(sig&&sig.ccm&&sig.ccm.hex){sigPage=pages.length-1;ops.push('q 100 0 0 33 '+(leftX+10)+' '+(H-y-70-33).toFixed(2)+' cm /SigCCM Do Q')}
     ops.push(LINE+' RG 0.8 w '+(leftX+12)+' '+(H-y-76)+' m '+(leftX+boxW-12)+' '+(H-y-76)+' l S');
     T(leftX+10,y+94,'Nombre y firma de CCM',8,false,COL.na);
     T(rightX+10,y+18,'Responsable',10,true,STEEL);
-    const respNm=pdfWrap((respRow&&respRow[1])||(sig&&sig.name)||'',boxW-20,9.5,true)[0]||'';
+    const respNm=pdfWrap((sig&&sig.responsable&&sig.responsable.name)||(respRow&&respRow[1])||'',boxW-20,9.5,true)[0]||'';
     T(rightX+10,y+36,respNm,9.5,true,COL['']);
-    if(sig&&sig.hex){sigPage=pages.length-1;ops.push('q 100 0 0 33 '+(rightX+10)+' '+(H-y-70-33).toFixed(2)+' cm /Sig Do Q')}
+    if(sig&&sig.responsable&&sig.responsable.hex){sigPage=pages.length-1;ops.push('q 100 0 0 33 '+(rightX+10)+' '+(H-y-70-33).toFixed(2)+' cm /SigResp Do Q')}
     ops.push(LINE+' RG 0.8 w '+(rightX+12)+' '+(H-y-76)+' m '+(rightX+boxW-12)+' '+(H-y-76)+' l S');
     T(rightX+10,y+94,'Nombre y firma del responsable',8,false,COL.na);
     y+=boxH;
@@ -1621,16 +1611,17 @@ function buildPdf(rows,sig){
   add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
   add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
   const info=add('<< /Title ('+pdfEnc(docTitle+' - Chiaplast')+') /Author (Chiaplast Mantenimiento) /Creator (Aplicacion de Mantenimiento Chiaplast) >>');
-  const photoStartId=5+pages.length*2+1,sigId=sig?photoStartId+photoRows.length:0,refs=[];
+  const photoStartId=5+pages.length*2+1,sigCcmId=sig&&sig.ccm&&sig.ccm.hex?photoStartId+photoRows.length:0,sigRespId=sig&&sig.responsable&&sig.responsable.hex?photoStartId+photoRows.length+(sigCcmId?1:0):0,refs=[];
   pages.forEach((p,i)=>{
     const pid=objs.length+1,cid=pid+1;refs.push(pid+' 0 R');
-    const xo=[];if(i===sigPage&&sig&&sig.hex)xo.push('/Sig '+sigId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
+    const xo=[];if(i===sigPage&&sigCcmId)xo.push('/SigCCM '+sigCcmId+' 0 R');if(i===sigPage&&sigRespId)xo.push('/SigResp '+sigRespId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
     add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
     const stream=p.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
   });
   objs[1]='<< /Type /Pages /Kids ['+refs.join(' ')+'] /Count '+pages.length+' >>';
   photoRows.forEach(r=>{const bin=atob(r[1].split(',')[1]);let hex='';for(let i=0;i<bin.length;i++)hex+=bin.charCodeAt(i).toString(16).padStart(2,'0');const dim=photoDimensions(r[1]);add('<< /Type /XObject /Subtype /Image /Width '+dim.w+' /Height '+dim.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length '+(hex.length+1)+' >>\nstream\n'+hex+'>\nendstream')});
-  if(sig){const d=sig.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+sig.w+' /Height '+sig.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
+  if(sigCcmId){const z=sig.ccm,d=z.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+z.w+' /Height '+z.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
+  if(sigRespId){const z=sig.responsable,d=z.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+z.w+' /Height '+z.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
   let pdf='%PDF-1.4\n%CHIA\n';const off=[];
   objs.forEach((o,i)=>{off.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n'});
   const xr=pdf.length;pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
@@ -1659,7 +1650,7 @@ async function send(){
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
     const exportRows=singleReportDoc(Runtime.rows.slice(1),isDaily()?[]:[['Responsable',Sig.name]]);
-    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()||!Sig.hex?null:{hex:Sig.hex,w:Sig.w,h:Sig.h,name:Sig.name});
+    const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()?null:{ccm:Signatures.ccm,responsable:Signatures.responsable});
     showDone(results,'Reporte generado');
     addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
