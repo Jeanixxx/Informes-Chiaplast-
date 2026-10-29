@@ -1,0 +1,514 @@
+<!-- Publicación: 2026-10-09 flujo diario y preventivo -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#172b3a">
+<title>Chiaplast | Mantenimiento</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div class="app">
+<header class="app-topbar" aria-label="Barra de estado Chiaplast">
+  <button class="brand" type="button" onclick="go('menu')" aria-label="Ir al centro de control">
+    <span class="brand-mark">C</span><span><b>CHIAPLAST</b><small>MANTENIMIENTO DE PLANTA</small></span>
+  </button>
+  <span class="plant-status"><i></i> DATOS LOCALES · SIN SINCRONIZACIÓN</span>
+  <div class="topbar-spacer"></div>
+  <span class="topbar-clock" id="dashboardClock"></span>
+  <button class="topbar-user" type="button" onclick="go('tools')">⚙ <span id="topbarUser">Técnico</span></button>
+</header>
+<nav class="app-sidebar" aria-label="Navegación principal">
+  <button type="button" data-nav="menu" onclick="go('menu')"><span>▦</span>Centro de Control</button>
+  <button type="button" onclick="startWorkflow('daily')"><span>☷</span>Recorrido Diario Ext 1 y 2</button>
+  <button type="button" data-nav="preventive" onclick="startWorkflow('preventive')"><span>◷</span>Generar Reporte MTTO preventivo</button>
+  <button type="button" data-nav="kanban" onclick="go('kanban')"><span>▥</span>Planificación &amp; Kanban</button>
+  <button type="button" data-nav="notes" onclick="go('notes')"><span>▤</span>Bitácora &amp; Historial</button>
+  <button class="sidebar-bottom" type="button" onclick="go('tools')"><span>⚙</span>Ajustes / Configuración</button>
+</nav>
+
+<!-- Splash -->
+<section id="splash" class="screen splash active">
+  <button class="corner-tools" onclick="go('tools')" aria-label="Herramientas">⚙</button>
+  <div><div class="mark">CHIAPLAST</div><i class="rule"></i><div class="sub">Mantenimiento</div></div>
+</section>
+
+<!-- Login -->
+<section id="login" class="screen login">
+  <button class="corner-tools" onclick="go('tools')" aria-label="Herramientas">⚙</button>
+  <div class="top">
+    <div class="mark" style="font-size:30px">CHIAPLAST</div><i class="rule"></i>
+    <h1>Departamento de Mantenimiento</h1>
+    <p>Reportes de mantenimiento de planta.</p>
+  </div>
+  <div class="stripe"></div>
+  <div class="sheet">
+    <button class="btn btn-p" id="loginBtn" onclick="signIn()">Continuar</button>
+    <small id="loginErr" role="alert"></small>
+  </div>
+</section>
+
+<!-- Menú -->
+<section id="menu" class="screen">
+  <header class="bar">
+    <h1>Centro de Control de Planta<small>LÍNEA DE MANDO INDUSTRIAL · OPERACIÓN LOCAL</small></h1>
+    <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
+  </header>
+  <div class="body">
+    <div class="dashboard-heading">
+      <div><span class="eyebrow">LÍNEA DE MANDO INDUSTRIAL · DATOS LOCALES</span><h2>Centro de Control de Planta</h2></div>
+      <div class="dashboard-actions">
+        <button class="btn btn-p" onclick="startWorkflow('daily')">☷ + Recorrido Diario Ext 1 y 2</button>
+        <button class="btn btn-s" onclick="startWorkflow('preventive')">◷ Generar Reporte MTTO preventivo</button>
+      </div>
+    </div>
+    <section class="dashboard-section">
+      <div class="section-heading"><h2>Herramientas de mantenimiento</h2><span>ACCESOS DIRECTOS</span></div>
+      <div class="dashboard-areas dashboard-tools">
+        <button class="dashboard-area" onclick="go('kanban')"><b><i>01</i><em id="widgetKanbanCount">0 por empezar</em></b><strong>Tablero Kanban</strong><small>Actividades por iniciar, en proceso y terminadas</small><span>Abrir tablero →</span></button>
+        <button class="dashboard-area" onclick="openPreventiveBoard()"><b><i>02</i><em id="widgetBoardCount">Tablero mensual</em></b><strong>Tablero mensual de preventivos</strong><small>Seguimiento mensual de máquinas con preventivo realizado</small><span>Abrir tablero →</span></button>
+        <button class="dashboard-area" onclick="openReminders()"><b><i>03</i><em id="menuReminderCount">0 pendientes</em></b><strong>Recordatorios</strong><small>Próximos avisos y tareas programadas</small><span>Ver recordatorios →</span></button>
+        <button class="dashboard-area" onclick="openNotes()"><b><i>04</i><em>Bitácora local</em></b><strong>Notas técnicas y evidencias</strong><small>Notas de intervención y fotografías</small><span>Abrir notas →</span></button>
+        <button class="dashboard-area" onclick="openSpecialWorks()"><b><i>05</i><em id="specialWorkCount">0 pendientes</em></b><strong>Trabajos especiales</strong><small>Órdenes pendientes y formatos de término</small><span>Ver trabajos →</span></button>
+      </div>
+    </section>
+    <section class="dashboard-panel" style="margin-top:18px">
+      <div class="section-heading"><h2>Últimos folios</h2><button type="button" class="text-action" onclick="go('notes')">Historial completo →</button></div>
+      <div class="f history-search"><label for="historySearch">Buscar folio, máquina o área</label><input id="historySearch" type="search" placeholder="Ej. BM-1-DIM-20261029" oninput="filterReportHistory()"></div>
+      <div id="recent"></div>
+    </section>
+  </div>
+</section>
+
+<!-- Selección de chequeo para extrusoras -->
+<section id="checkType" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Tipo de chequeo<small id="checkArea"></small></h1>
+  </header>
+  <div class="body">
+    <button class="area" style="width:100%;margin-bottom:12px" onclick="startCheck('daily')">
+      <b style="font-size:20px">Chequeo diario</b>
+    </button>
+    <button class="area" style="width:100%" onclick="startCheck('preventive')">
+      <b style="font-size:20px">Mantenimiento preventivo</b>
+    </button>
+  </div>
+</section>
+
+<!-- Selección de área para mantenimiento preventivo -->
+<section id="preventiveArea" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="root('menu')" aria-label="Atrás">‹</button>
+    <h1>Generar Reporte MTTO preventivo</h1>
+  </header>
+  <div class="body">
+    <div class="areas">
+      <button class="area" onclick="choosePreventiveArea('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
+      <button class="area" onclick="choosePreventiveArea('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
+      <button class="area" onclick="choosePreventiveArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="choosePreventiveArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
+      <button class="area wide" onclick="choosePreventiveArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+    </div>
+  </div>
+</section>
+
+<section id="preventiveMachine" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('preventiveArea')" aria-label="Atrás">‹</button>
+    <h1>Elegir máquina<small id="preventiveMachineSubtitle"></small></h1>
+  </header>
+  <div class="body">
+    <div id="preventiveMachineChoices" class="areas"></div>
+  </div>
+</section>
+
+<!-- Registro agrupado de reportes diarios -->
+<section id="dailyArea" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="leaveDailyBatch()" aria-label="Atrás">‹</button>
+    <h1>Reportes diarios</h1>
+  </header>
+  <div class="body">
+    <div class="areas">
+      <button class="area" onclick="chooseDailyArea('Extrusión 1','E1AREA')"><b>E1</b><span>Extrusión 1</span></button>
+      <button class="area" onclick="chooseDailyArea('Extrusión 2','E2AREA')"><b>E2</b><span>Extrusión 2</span></button>
+      <button class="area" onclick="chooseDailyArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="chooseDailyArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
+      <button class="area wide" onclick="chooseDailyArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+    </div>
+  </div>
+</section>
+
+<section id="dailyMachine" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('dailyArea')" aria-label="Atrás">‹</button>
+    <h1>Elegir máquina<small id="dailyMachineSubtitle"></small></h1>
+  </header>
+  <div class="body">
+    <div id="dailyMachineChoices" class="areas"></div>
+    <div class="card" style="margin-top:14px">
+      <div class="f"><label for="customMachine">Otra máquina</label>
+        <input id="customMachine" placeholder="Nombre de la máquina" autocomplete="off">
+      </div>
+      <button class="btn btn-s" style="width:100%" onclick="chooseCustomDailyMachine()">Usar este nombre</button>
+    </div>
+  </div>
+</section>
+
+<section id="dailyBatch" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="leaveDailyBatch()" aria-label="Salir">‹</button>
+    <h1>Informes recopilados<small id="dailyBatchCount"></small></h1>
+  </header>
+  <div class="body">
+    <div class="card">
+      <div id="dailyBatchList"></div>
+      <div id="dailyBatchEmpty" class="empty">Sin máquinas agregadas.</div>
+      <div class="f" style="margin-top:18px;margin-bottom:0">
+        <span class="lbl">Formato de salida</span>
+        <div class="export-choice" role="radiogroup" aria-label="Formato de los reportes diarios">
+          <label><input type="radio" name="batchExportChoice" value="pdf"> PDF</label>
+          <label><input type="radio" name="batchExportChoice" value="excel" checked> Excel</label>
+          <label><input type="radio" name="batchExportChoice" value="both"> Ambos</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dock" style="gap:8px">
+    <button class="btn btn-s" onclick="go('dailyArea')">Otra máquina</button>
+    <button class="btn btn-p" id="finishBatchBtn" onclick="finishDailyBatch()">Terminar y guardar</button>
+  </div>
+</section>
+
+<!-- Formulario -->
+<section id="form" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1 id="fTitle">Área</h1>
+  </header>
+  <div class="steps"><div class="on"></div><div></div></div>
+  <div class="body">
+    <div class="card">
+      <div class="two">
+        <div class="f"><label for="d">Fecha</label><input type="date" id="d" onchange="this.classList.remove('bad');saveDraft()"></div>
+        <div class="f"><label for="t">Hora</label><input type="time" id="t" onchange="this.classList.remove('bad');saveDraft()"></div>
+      </div>
+      <button class="link" onclick="setNow();saveDraft()">Ahora</button>
+    </div>
+
+    <div class="card" id="preventiveTimesCard" hidden>
+      <h3>Tiempo de intervención</h3>
+      <div class="two">
+        <div class="f"><label for="pmStartDate">Fecha de inicio</label><input id="pmStartDate" type="date" onchange="saveDraft()"></div>
+        <div class="f"><label for="pmStartTime">Hora de inicio</label><input id="pmStartTime" type="time" onchange="saveDraft()"></div>
+      </div>
+      <div class="two">
+        <div class="f"><label for="pmStopDate">Fecha de parada / término</label><input id="pmStopDate" type="date" onchange="saveDraft()"></div>
+        <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft()"></div>
+      </div>
+      <small>Si el mantenimiento sigue en curso, puede dejar vacíos los campos de parada.</small>
+    </div>
+    <div class="card" id="preventiveEvidenceCard" hidden>
+      <h3>Evidencia del mantenimiento preventivo</h3>
+      <div class="f"><label>Fotografías antes (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('before')">Adjuntar foto antes</button></div><input id="pmBeforeInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'before')"><div id="pmBeforePreview" class="parts-photo-preview"></div></div>
+      <div class="f"><label>Fotografías después (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('after')">Adjuntar foto después</button></div><input id="pmAfterInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'after')"><div id="pmAfterPreview" class="parts-photo-preview"></div></div>
+      <div class="two"><div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div><div class="f"><label for="ccmName">Nombre de quien valida (CCM)</label><input id="ccmName" placeholder="Nombre / responsable" onchange="saveDraft()"></div></div>
+      <div class="f"><label for="pmObservations">Observaciones del mantenimiento</label><textarea id="pmObservations" rows="3" placeholder="Observaciones, pendientes y condiciones al entregar" oninput="saveDraft()"></textarea></div>
+      <small>Las fotografías se conservarán en este dispositivo y se incorporarán al PDF; el Excel incluirá el registro de evidencia y su cantidad.</small>
+    </div>
+    <div class="card" id="motorHzCard" hidden>
+      <h3>Motor principal</h3>
+      <div class="f"><label for="motorHz">Frecuencia del motor (Hz)</label><input id="motorHz" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="Ej. 60" onchange="saveDraft()"></div>
+    </div>
+    <div id="ext" hidden></div>
+    <div class="context-actions" aria-label="Acciones de seguimiento para esta máquina">
+      <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
+      <button class="btn btn-s" type="button" onclick="openReminderForCurrentContext()">＋ Programar recordatorio</button>
+      <button class="btn btn-s" type="button" onclick="openNoteForCurrentContext()">＋ Agregar nota técnica</button>
+    </div>
+    <div class="card">
+      <!-- ZONA RESERVADA: aquí irán los campos reales de cada área (E1, E2, CAM, DIM, BSL).
+           Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
+      <div class="ph" id="ph"><b>Campos del área pendientes.</b> Los campos reales se agregarán aquí.</div>
+
+      <div id="maintenanceFields">
+        <div class="f"><span class="lbl">Tipo<em>*</em></span>
+          <div class="seg" id="gType" data-v="">
+            <button type="button" aria-pressed="false" onclick="choose('gType',this)">PREVENTIVO</button>
+            <button type="button" aria-pressed="false" onclick="choose('gType',this)">CORRECTIVO</button>
+          </div>
+          <div class="err">Elige el tipo de mantenimiento.</div>
+        </div>
+        <div class="f"><span class="lbl">Estado<em>*</em></span>
+          <div class="seg" id="gStatus" data-v="">
+            <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">ENTREGADO</button>
+            <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PROCESO</button>
+            <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PARO</button>
+          </div>
+          <div class="err">Elige el estado del equipo.</div>
+        </div>
+      </div>
+      <details class="parts-card" id="partsCard" hidden>
+        <summary><span><b>Refacciones usadas</b><small>Registra cada refacción y la cantidad utilizada</small></span><span class="parts-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="parts-content">
+          <div class="parts-head"><span>Refacción</span><span>Cantidad</span><span></span></div>
+          <div id="partsList"></div>
+          <button class="btn btn-s parts-add" type="button" onclick="addPartRow()">＋ Agregar refacción</button>
+          <div class="f" style="margin-top:16px;margin-bottom:0">
+            <label>Fotografías de las refacciones (máximo 5)</label>
+            <div class="parts-photo-tools">
+              <button class="btn btn-s" type="button" onclick="capturePartsPhoto()">Tomar fotografía</button>
+              <button class="btn btn-s" type="button" onclick="pickPartsPhoto()">Adjuntar imagen</button>
+            </div>
+            <input id="partsPhotosInput" style="display:none" type="file" accept="image/*" capture="environment" multiple onchange="previewPartsPhotos(this)">
+            <small class="parts-photo-note">Las imágenes se guardan localmente para esta máquina. Puede tomar fotos con la cámara o seleccionar imágenes del dispositivo.</small>
+            <div id="partsPhotoPreview" class="parts-photo-preview"></div>
+          </div>
+        </div>
+      </details>
+      <div class="f"><label for="obs">Observaciones</label>
+        <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
+    </div>
+    <div class="card" id="sigCard" hidden>
+      <h3>Firmas de conformidad</h3><p class="muted" style="margin:0 0 14px">Registre ambas firmas antes de generar el reporte.</p>
+      <div class="two">
+        <div class="f"><span class="lbl">CCM<em>*</em></span><input id="ccmSigName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
+        <div class="f"><span class="lbl">Responsable<em>*</em></span><input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas><button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
+</section>
+
+<!-- Confirmación -->
+<section id="confirm" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Revisar</h1>
+  </header>
+  <div class="steps"><div class="on"></div><div class="on"></div></div>
+  <div class="body">
+    <div class="card"><div id="sum"></div>
+      <div class="fname"><span style="color:var(--muted)">Archivo</span><br><b id="fn"></b></div>
+      <div class="f" style="margin-top:16px;margin-bottom:0">
+        <span class="lbl">Formato</span>
+        <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
+          <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
+          <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
+          <label><input type="radio" name="exportChoice" value="both"> Ambos</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dock">
+    <button class="btn btn-s" onclick="history.back()">Editar</button>
+    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar reporte</button>
+  </div>
+</section>
+
+<!-- Resultado -->
+<section id="done" class="screen done">
+  <div class="tick">✓</div>
+  <h2 id="rTitle">Listo</h2>
+  <p id="rMsg"></p>
+  <div class="card"><span style="color:var(--muted);font-size:13px">Archivo</span><div id="rFile" style="font-weight:700;word-break:break-all;margin-top:4px"></div></div>
+  <div id="shareBtns"></div>
+  <button class="btn btn-p" style="flex:none;width:100%" onclick="finish()">Nuevo reporte</button>
+</section>
+
+<!-- Tablero Kanban -->
+<section id="reminders" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <h1>Recordatorios</h1>
+  </header>
+  <div class="body">
+    <form class="card" id="remindersCard" onsubmit="addReminder(event)">
+      <input id="reminderId" type="hidden">
+      <input id="reminderTaskId" type="hidden">
+      <div class="f"><label for="reminderText">Tarea de mantenimiento</label><input id="reminderText" maxlength="140" required placeholder="Ej. Revisar resistencia de la BSL-3"></div>
+      <div class="f"><label for="reminderMachine">Área / máquina</label><input id="reminderMachine" maxlength="100" placeholder="Ej. Extrusión 1 · EXT-19"></div>
+      <div class="two">
+        <div class="f"><label for="reminderDate">Fecha</label><input id="reminderDate" type="date" required></div>
+        <div class="f"><label for="reminderTime">Hora</label><input id="reminderTime" type="time" required></div>
+      </div>
+      <button class="btn btn-p" type="submit" style="width:100%;margin-bottom:10px">Guardar recordatorio</button>
+      <button class="btn btn-s" id="browserNotificationBtn" type="button" style="width:100%" onclick="enableReminderNotifications()">Permitir avisos del navegador</button>
+    </form>
+    <div class="h2">Avisos programados</div>
+    <div id="reminderList" aria-live="polite"></div>
+    <button class="btn btn-s" style="width:100%;margin-top:12px;flex:none" onclick="openNotes('Recordatorios','')">＋ Agregar nota técnica</button>
+  </div>
+</section>
+
+<section id="preventiveBoard" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Tablero mensual<small>Planta CHIAPLAST · Máquinas por mantenimiento preventivo</small></h1>
+  </header>
+  <div class="body">
+    <div class="pm-toolbar">
+      <div class="pm-month">
+        <button type="button" onclick="pmShiftMonth(-1)" aria-label="Mes anterior">‹</button>
+        <strong id="pmMonthLabel"></strong>
+        <button type="button" onclick="pmShiftMonth(1)" aria-label="Mes siguiente">›</button>
+      </div>
+      <label class="pm-date" for="pmDate">Fecha del check <input id="pmDate" type="date" onchange="pmSetDate(this.value)"></label>
+      <div class="pm-actions">
+        <button type="button" class="btn btn-p" onclick="pmSaveNow()">Guardar</button>
+        <button type="button" class="btn btn-s" onclick="pmExportCsv()">Exportar CSV</button>
+        <button type="button" class="btn btn-s" onclick="pmResetMonth()">Reiniciar mes</button>
+      </div>
+    </div>
+    <div class="pm-summary" aria-live="polite"><b id="pmSummaryText"></b><div class="pm-track"><div class="pm-fill" id="pmSummaryFill" style="width:0"></div></div><small id="pmSavedAt"></small></div>
+    <div id="pmPlant" class="pm-plant"></div>
+    <p class="pm-note">Toca una máquina para marcar que ya tiene su preventivo del mes (se registra con la fecha elegida arriba). Vuelve a tocarla para quitar el check. Los cambios se guardan solos en este dispositivo.</p>
+    <section class="pm-stats" id="pmStats" aria-label="Estadísticas del mes"></section>
+  </div>
+</section>
+
+<section id="preventiveCalendar" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <h1>Tablero mensual de preventivos<small>Seguimiento mensual por máquina</small></h1>
+  </header>
+  <div class="body">
+    <form class="card" id="preventiveCalendarForm" onsubmit="addPreventiveOrder(event)">
+      <h2 style="margin:0 0 16px">Nueva orden preventiva</h2>
+      <div class="f"><label for="calendarTitle">Trabajo pendiente</label><input id="calendarTitle" maxlength="140" required placeholder="Ej. Lubricar chumaceras"></div>
+      <div class="two">
+        <div class="f"><label for="calendarArea">Área</label><select id="calendarArea" required onchange="updateCalendarMachines()"><option value="">Selecciona un área</option></select></div>
+        <div class="f"><label for="calendarMachine">Máquina</label><select id="calendarMachine" required disabled><option value="">Primero selecciona un área</option></select></div>
+      </div>
+      <div class="f"><label for="calendarPeriod">Periodo</label><select id="calendarPeriod" onchange="updateCalendarPeriodHint()"><option value="day">Día específico</option><option value="week">Periodo de una semana (7 días)</option></select></div>
+      <div class="f"><label for="calendarStartDate">Fecha</label><input id="calendarStartDate" type="date" required onchange="updateCalendarPeriodHint()"><small id="calendarPeriodHint" class="muted"></small></div>
+      <div class="f"><label for="calendarDetails">Detalle de la orden (opcional)</label><textarea id="calendarDetails" rows="2" maxlength="500" placeholder="Materiales, responsable u observaciones"></textarea></div>
+      <button class="btn btn-p" type="submit" style="width:100%">Agregar al calendario</button>
+    </form>
+    <div class="h2">Órdenes programadas</div>
+    <div id="preventiveCalendarList" aria-live="polite"></div>
+    <p class="muted" style="font-size:12px">Las órdenes se guardan en este dispositivo y se separan del modo demo.</p>
+  </div>
+</section>
+
+<section id="preventiveOrder" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('preventiveCalendar')" aria-label="Volver al calendario">‹</button>
+    <h1>Orden preventiva<small id="preventiveOrderSubtitle"></small></h1>
+  </header>
+  <div class="body">
+    <div id="preventiveOrderDetail" class="card calendar-detail"></div>
+  </div>
+</section>
+
+<section id="kanban" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Tablero Kanban</h1></header>
+  <div class="body">
+    <div class="workspace-tabs" aria-label="Herramientas de planificación">
+      <button type="button" class="selected" onclick="go('kanban')">▤ Tablero Kanban</button>
+      <button type="button" onclick="openPreventiveBoard()">▦ Calendario Preventivo</button>
+      <button type="button" onclick="openReminders()">◷ Recordatorios</button>
+      <span class="workspace-count" id="kanbanOpenCount">Tareas locales</span>
+    </div>
+    <div class="card"><h2 style="margin-top:0">Nueva tarea</h2>
+      <div class="f"><label for="kanbanTitle">Tarea</label><input id="kanbanTitle" maxlength="140" placeholder="Ej. Cambiar chumacera de BM-2"></div>
+      <div class="two"><div class="f"><label for="kanbanArea">Área / máquina</label><input id="kanbanArea" maxlength="80" placeholder="DIM · BM-2"></div><div class="f"><label for="kanbanDue">Fecha límite</label><input id="kanbanDue" type="date"></div></div>
+      <div class="f"><label for="kanbanDetails">Detalle (opcional)</label><textarea id="kanbanDetails" rows="2" maxlength="500" placeholder="Materiales, causa, responsable…"></textarea></div>
+      <button class="btn btn-p" style="width:100%;flex:none" onclick="addKanbanTask()">Agregar al tablero</button>
+    </div>
+    <button class="btn btn-s" style="width:100%;margin:0 0 12px;flex:none" onclick="openNotes(&quot;Kanban&quot;,&quot;&quot;)">＋ Añadir nota con fotos</button>
+    <div class="kanban-columns">
+      <div class="kanban-column"><h3>Por hacer</h3><div id="kanbanTodo"></div></div>
+      <div class="kanban-column"><h3>En proceso</h3><div id="kanbanDoing"></div></div>
+      <div class="kanban-column"><h3>Terminado</h3><div id="kanbanDone"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Notas técnicas -->
+<section id="notes" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button><h1>Notas técnicas</h1></header>
+  <div class="body">
+    <div class="card"><h2 style="margin-top:0">Nueva nota</h2>
+      <div class="f"><label for="noteTitle">Título</label><input id="noteTitle" maxlength="120" placeholder="Ej. Fuga de aceite en reductor"></div>
+      <div class="two"><div class="f"><label for="noteArea">Apartado</label><select id="noteArea"><option value="General">General</option><option value="Extrusión 1">Extrusión 1</option><option value="Extrusión 2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="Chequeo diario">Chequeo diario</option><option value="Recordatorios">Recordatorios</option><option value="Kanban">Kanban</option><option value="Otro">Otro</option></select></div><div class="f"><label for="noteMachine">Máquina / referencia</label><input id="noteMachine" maxlength="80" placeholder="Ej. BM-3"></div></div>
+      <div class="f"><label for="noteText">Nota / observaciones</label><textarea id="noteText" rows="4" maxlength="3000" placeholder="Describe el hallazgo, trabajo realizado o pendiente…"></textarea></div>
+      <div class="f"><label>Fotografías (máximo 5 por nota)</label><div class="two"><button class="btn btn-s" type="button" onclick="captureNotePhoto()">Tomar fotografía</button><button class="btn btn-s" type="button" onclick="pickNotePhoto()">Adjuntar imagen</button></div><input id="notePhotos" style="display:none" type="file" accept="image/*" capture="environment" multiple onchange="previewNotePhotos(this)"><small class="muted">En la APK se usa la cámara o el selector de Android. Las evidencias quedan en este dispositivo.</small></div>
+      <div id="notePhotoPreview" class="photo-preview"></div>
+      <button class="btn btn-p" style="width:100%;flex:none" onclick="saveNote()">Guardar nota y evidencias</button>
+    </div>
+    <div class="h2" style="margin-top:18px">Notas guardadas</div><div id="notesList"></div>
+    <section class="notes-history">
+      <div class="section-heading"><h2>Historial de Folios y Exportaciones</h2><span id="notesHistoryCount"></span></div>
+      <div class="f history-search"><label for="notesHistorySearch">Buscar folio, máquina, área o fecha</label><input id="notesHistorySearch" type="search" placeholder="Ej. MTTO-2026-00001, DIM, BM-1" oninput="renderRecent('notesRecent','notesHistorySearch')"></div>
+      <div id="notesRecent"></div>
+    </section>
+  </div>
+</section>
+
+<!-- Herramientas -->
+<section id="tools" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
+    <h1>Configuración</h1>
+  </header>
+  <div class="body">
+    <div class="card">
+    </div>
+    <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
+  </div>
+</section>
+
+<div id="helpModal" class="helpm" hidden onclick="this.hidden=true"><div class="helpbox"><p id="helpText"></p><button class="btn btn-p">Entendido</button></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<!-- Trabajos especiales: órdenes pendientes y cierre -->
+<section id="specialWorks" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Trabajos especiales<small>Órdenes de intervención y seguimiento</small></h1></header>
+  <div class="body">
+    <div class="card">
+      <div class="section-heading"><h2 id="specialFormTitle">Nueva orden especial</h2><span id="specialFormStatus">BORRADOR</span></div>
+      <input id="specialId" type="hidden">
+      <div class="two">
+        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option></select></div>
+        <div class="f"><label for="specialMachine">Máquina / equipo</label><select id="specialMachine"><option value="">Seleccionar máquina</option></select></div>
+      </div>
+      <div class="f"><label>Actividades por hacer</label><div id="specialActivitiesToDoList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('activitiesToDo')">＋ Agregar actividad por hacer</button></div>
+      <div class="f"><label>Actividades realizadas</label><div id="specialActivitiesDoneList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('activitiesDone')">＋ Agregar actividad realizada</button></div>
+      <div class="f"><label>Tareas urgentes / riesgo operativo</label><div id="specialUrgentList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('urgent')">＋ Agregar tarea urgente</button></div>
+      <div class="f"><label>Refacciones usadas</label><div id="specialPartsList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('parts')">＋ Agregar refacción</button></div>
+      <div class="f"><label for="specialNotes">Observaciones</label><textarea id="specialNotes" rows="2" placeholder="Datos adicionales, seguridad, pruebas..."></textarea></div>
+      <div class="card" style="padding:12px">
+        <h3>Fotografías del trabajo</h3>
+        <p class="muted">Hasta 5 fotografías de antes y 5 de después. Las fotos se conservan en el dispositivo; el formato exportado indica la evidencia asociada.</p>
+        <div class="f"><label>Antes</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="specialPick('before')">Adjuntar antes</button></div><input id="specialBeforeInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'before')"><div id="specialBeforePreview" class="parts-photo-preview"></div></div>
+        <div class="f"><label>Después</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="specialCapture('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="specialPick('after')">Adjuntar después</button></div><input id="specialAfterInput" type="file" accept="image/*" multiple hidden onchange="specialFiles(this,'after')"><div id="specialAfterPreview" class="parts-photo-preview"></div></div>
+      </div>
+      <div class="f"><label for="specialPriority">Prioridad</label><select id="specialPriority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+      <div class="f"><label for="specialStart">Inicio de trabajo</label><input id="specialStart" type="datetime-local"></div>
+      <div class="f"><label for="specialStop">Término de trabajo</label><input id="specialStop" type="datetime-local"></div>
+      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialReset()">Limpiar formulario</button><button class="btn btn-p" type="button" onclick="specialSavePending()">Guardar como pendiente</button></div>
+      <div class="context-actions"><button class="btn btn-s" type="button" onclick="specialExport('pending')">Formato de pendiente</button><button class="btn btn-p" type="button" onclick="specialComplete()">Terminar trabajo y liberar formato</button></div>
+    </div>
+    <div class="dashboard-section"><div class="section-heading"><h2>Órdenes pendientes y terminadas</h2><span id="specialListCount">0 ÓRDENES</span></div><div id="specialList"></div></div>
+  </div>
+</section>
+<script src="js/bridge.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/store.js"></script>
+<script src="js/machines.js"></script>
+<script src="js/signatures.js"></script>
+<script src="js/kanban.js"></script>
+<script src="js/notes.js"></script>
+<script src="js/reminders.js"></script>
+<script src="js/special.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/checklists.js"></script>
+<script src="js/preventive.js"></script>
+<script src="js/daily.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

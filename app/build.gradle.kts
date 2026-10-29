@@ -58,9 +58,8 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
 }
 val copyMainWebApp by tasks.registering(Sync::class) {
-    from(rootProject.file("reportes-mtto (1).html"))
+    from(rootProject.file("www"))
     into(layout.buildDirectory.dir("generated/chiaplastAssets/www"))
-    rename { "index.html" }
 }
 android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/chiaplastAssets"))
 tasks.named("preBuild").configure { dependsOn(copyMainWebApp) }
