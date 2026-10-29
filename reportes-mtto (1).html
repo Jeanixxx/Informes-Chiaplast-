@@ -486,8 +486,8 @@ body{background:var(--bg);color:var(--ink)}
 </header>
 <nav class="app-sidebar" aria-label="Navegación principal">
   <button type="button" data-nav="menu" onclick="go('menu')"><span>▦</span>Centro de Control</button>
-  <button type="button" onclick="startWorkflow('daily')"><span>☷</span>Chequeo e Inspección</button>
-  <button type="button" data-nav="preventive" onclick="startWorkflow('preventive')"><span>◷</span>Mantenimiento preventivo</button>
+  <button type="button" onclick="startWorkflow('daily')"><span>☷</span>Recorrido Diario Ext 1 y 2</button>
+  <button type="button" data-nav="preventive" onclick="startWorkflow('preventive')"><span>◷</span>Generar Reporte MTTO preventivo</button>
   <button type="button" data-nav="kanban" onclick="go('kanban')"><span>▥</span>Planificación &amp; Kanban</button>
   <button type="button" data-nav="notes" onclick="go('notes')"><span>▤</span>Bitácora &amp; Historial</button>
   <button class="sidebar-bottom" type="button" onclick="go('tools')"><span>⚙</span>Ajustes / Configuración</button>
@@ -524,43 +524,25 @@ body{background:var(--bg);color:var(--ink)}
     <div class="dashboard-heading">
       <div><span class="eyebrow">LÍNEA DE MANDO INDUSTRIAL · DATOS LOCALES</span><h2>Centro de Control de Planta</h2></div>
       <div class="dashboard-actions">
-        <button class="btn btn-p" onclick="startWorkflow('daily')">☷ + Chequeo Diario Lote</button>
-        <button class="btn btn-s" onclick="startWorkflow('preventive')">◷ Mantenimiento preventivo</button>
+        <button class="btn btn-p" onclick="startWorkflow('daily')">☷ + Recorrido Diario Ext 1 y 2</button>
+        <button class="btn btn-s" onclick="startWorkflow('preventive')">◷ Generar Reporte MTTO preventivo</button>
       </div>
-    </div>
-    <div class="dashboard-metrics" aria-label="Resumen operativo">
-      <article class="metric"><span>INSPECCIONES HOY</span><b id="metricInspections">0</b><small id="metricInspectionCaption">Reportes guardados hoy</small></article>
-      <article class="metric"><span>ÓRDENES PREVENTIVAS</span><b id="metricOrders">0</b><small id="metricOrderCaption">Pendientes</small></article>
-      <article class="metric"><span>TAREAS ACTIVAS</span><b id="metricTasks">0</b><small id="metricTaskCaption">Tareas abiertas</small></article>
-      <article class="metric"><span>ÁREAS OPERATIVAS</span><b>5</b><small>E1 · E2 · CAM · DIM · BSL</small></article>
     </div>
     <section class="dashboard-section">
-      <div class="section-heading"><h2>Matriz Operativa por Área</h2><span id="areaMatrixTotal">ÁREAS DE MANTENIMIENTO</span></div>
-      <div class="dashboard-areas">
-        <button class="dashboard-area" onclick="startDailyArea('Extrusión 1','E1AREA')"><b><i>E1</i><em>● Catálogo</em></b><strong>Extrusión 1</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
-        <button class="dashboard-area" onclick="startDailyArea('Extrusión 2','E2AREA')"><b><i>E2</i><em>● Catálogo</em></b><strong>Extrusión 2</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
-        <button class="dashboard-area" onclick="startDailyArea('CAM','CAM')"><b><i>CAM</i><em>● Catálogo</em></b><strong>Confección &amp; Sellado</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
-        <button class="dashboard-area" onclick="startDailyArea('DIM','DIM')"><b><i>DIM</i><em>● Catálogo</em></b><strong>Dimensionado</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
-        <button class="dashboard-area" onclick="startDailyArea('BSL','BSL')"><b><i>BSL</i><em>● Catálogo</em></b><strong>Bolsas Especiales</strong><small>Inspección diaria y mantenimiento</small><span>Chequear área →</span></button>
+      <div class="section-heading"><h2>Herramientas de mantenimiento</h2><span>ACCESOS DIRECTOS</span></div>
+      <div class="dashboard-areas dashboard-tools">
+        <button class="dashboard-area" onclick="go('kanban')"><b><i>01</i><em id="widgetKanbanCount">0 por empezar</em></b><strong>Tablero Kanban</strong><small>Actividades por iniciar, en proceso y terminadas</small><span>Abrir tablero →</span></button>
+        <button class="dashboard-area" onclick="openPreventiveBoard()"><b><i>02</i><em id="widgetBoardCount">Tablero mensual</em></b><strong>Tablero mensual de preventivos</strong><small>Seguimiento mensual de máquinas con preventivo realizado</small><span>Abrir tablero →</span></button>
+        <button class="dashboard-area" onclick="openReminders()"><b><i>03</i><em id="menuReminderCount">0 pendientes</em></b><strong>Recordatorios</strong><small>Próximos avisos y tareas programadas</small><span>Ver recordatorios →</span></button>
+        <button class="dashboard-area" onclick="openNotes()"><b><i>04</i><em>Bitácora local</em></b><strong>Notas técnicas y evidencias</strong><small>Notas de intervención y fotografías</small><span>Abrir notas →</span></button>
+        <button class="dashboard-area" onclick="openSpecialWorks()"><b><i>05</i><em id="specialWorkCount">0 pendientes</em></b><strong>Trabajos especiales</strong><small>Órdenes pendientes y formatos de término</small><span>Ver trabajos →</span></button>
       </div>
     </section>
-    <div class="dashboard-lower">
-      <section class="dashboard-panel">
-        <div class="section-heading"><h2>Alertas y Pendientes Críticos</h2><button type="button" class="text-action" onclick="go('kanban')">Ver tablero →</button></div>
-        <div class="quick-links">
-          <button class="quick-link" onclick="go('kanban')"><b>▦</b><span><strong>Tablero Kanban</strong><small id="menuTaskCount">Cargando tareas…</small></span><i>→</i></button>
-          <button class="quick-link" onclick="openPreventiveCalendar()"><b>◷</b><span><strong>Calendario preventivo</strong><small id="menuCalendarCount">Cargando órdenes…</small></span><i>→</i></button>
-          <button class="quick-link" onclick="openReminders()"><b>◉</b><span><strong>Recordatorios</strong><small id="menuReminderCount">Cargando avisos…</small></span><i>→</i></button>
-          <button class="quick-link" onclick="openNotes()"><b>▤</b><span><strong>Notas técnicas y evidencias</strong><small>Bitácora local de mantenimiento</small></span><i>→</i></button>
-          <button class="quick-link" onclick="openSpecialWorks()"><b>TE</b><span><strong>Trabajos especiales</strong><small id="specialWorkCount">Órdenes pendientes</small></span><i>→</i></button>
-        </div>
-      </section>
-      <section class="dashboard-panel">
-        <div class="section-heading"><h2>Últimos Folios Oficiales</h2><button type="button" class="text-action" onclick="go('notes')">Historial completo →</button></div>
-        <div class="f history-search"><label for="historySearch">Buscar folio, máquina o área</label><input id="historySearch" type="search" placeholder="Ej. MTTO-2026-00001, DIM, BM-1" oninput="filterReportHistory()"></div>
-        <div id="recent"></div>
-      </section>
-    </div>
+    <section class="dashboard-panel" style="margin-top:18px">
+      <div class="section-heading"><h2>Últimos folios</h2><button type="button" class="text-action" onclick="go('notes')">Historial completo →</button></div>
+      <div class="f history-search"><label for="historySearch">Buscar folio, máquina o área</label><input id="historySearch" type="search" placeholder="Ej. BM-1-DIM-20261029" oninput="filterReportHistory()"></div>
+      <div id="recent"></div>
+    </section>
   </div>
 </section>
 
@@ -584,10 +566,9 @@ body{background:var(--bg);color:var(--ink)}
 <section id="preventiveArea" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="root('menu')" aria-label="Atrás">‹</button>
-    <h1>Mantenimiento preventivo</h1>
+    <h1>Generar Reporte MTTO preventivo</h1>
   </header>
   <div class="body">
-    <button type="button" class="pm-entry" onclick="openPreventiveBoard()"><span><b>Tablero mensual de preventivos</b><small>Check de máquinas con preventivo realizado y estadísticas del mes</small></span><i>→</i></button>
     <div class="areas">
       <button class="area" onclick="choosePreventiveArea('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="choosePreventiveArea('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
@@ -693,6 +674,14 @@ body{background:var(--bg);color:var(--ink)}
         <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft()"></div>
       </div>
       <small>Si el mantenimiento sigue en curso, puede dejar vacíos los campos de parada.</small>
+    </div>
+    <div class="card" id="preventiveEvidenceCard" hidden>
+      <h3>Evidencia del mantenimiento preventivo</h3>
+      <div class="f"><label>Fotografías antes (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('before')">Adjuntar foto antes</button></div><input id="pmBeforeInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'before')"><div id="pmBeforePreview" class="parts-photo-preview"></div></div>
+      <div class="f"><label>Fotografías después (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('after')">Adjuntar foto después</button></div><input id="pmAfterInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'after')"><div id="pmAfterPreview" class="parts-photo-preview"></div></div>
+      <div class="two"><div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div><div class="f"><label for="ccmName">Nombre de quien valida (CCM)</label><input id="ccmName" placeholder="Nombre / responsable" onchange="saveDraft()"></div></div>
+      <div class="f"><label for="pmObservations">Observaciones del mantenimiento</label><textarea id="pmObservations" rows="3" placeholder="Observaciones, pendientes y condiciones al entregar" oninput="saveDraft()"></textarea></div>
+      <small>Las fotografías se conservarán en este dispositivo y se incorporarán al PDF; el Excel incluirá el registro de evidencia y su cantidad.</small>
     </div>
     <div class="card" id="motorHzCard" hidden>
       <h3>Motor principal</h3>
@@ -848,7 +837,7 @@ body{background:var(--bg);color:var(--ink)}
 <section id="preventiveCalendar" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
-    <h1>Calendario preventivo<small>Programa y consulta órdenes por máquina</small></h1>
+    <h1>Tablero mensual de preventivos<small>Seguimiento mensual por máquina</small></h1>
   </header>
   <div class="body">
     <form class="card" id="preventiveCalendarForm" onsubmit="addPreventiveOrder(event)">
@@ -1113,7 +1102,7 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics();if($('specialWorkCount'))$('specialWorkCount').textContent=specialAll().filter(x=>x.status!=='done').length+' pendiente(s)'}
+  if(id==='menu'){renderRecent();renderHomeFollowup()}
   if(id==='specialWorks')specialRender();
   if(id==='preventiveBoard')renderPmBoard();
   if(id==='preventiveCalendar')renderPreventiveCalendar();
@@ -1149,6 +1138,7 @@ function updateDashboardClock(){
 updateDashboardClock();setInterval(updateDashboardClock,30000);
 function openReminders(){go('reminders')}
 function openPreventiveCalendar(){
+  openPreventiveBoard();return;
   if(!$('calendarStartDate').value)$('calendarStartDate').value=calendarToday();
   if(!$('calendarArea').options.length||$('calendarArea').options.length===1){
     $('calendarArea').innerHTML='<option value="">Selecciona un área</option>'+Object.keys(MACHINE_DB).map(code=>'<option value="'+code+'">'+esc(MACHINE_DB[code].area)+'</option>').join('');
@@ -1273,9 +1263,12 @@ function startCheck(kind){
   $('partsCard').hidden=kind==='daily';
   $('preventiveTimesCard').hidden=kind==='daily';
   $('motorHzCard').hidden=kind==='daily'||!isExt();
+  $('preventiveEvidenceCard').hidden=kind==='daily';
+  ['ccmApproval','ccmName','pmObservations'].forEach(id=>{const el=$(id);if(el)el.value=''});
+  preventivePhotos={before:[],after:[]};renderPreventivePhotos();
   ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz'].forEach(id=>{const el=$(id);if(el)el.value=''});
 
-  if(kind==='preventive'){loadParts();loadPartsPhotos();}
+  if(kind==='preventive'){loadParts();loadPartsPhotos();loadPreventivePhotos();}
   $('sigCard').hidden=kind==='daily';sigClear();$('sigName').value=store.get('mtto_sig_name','');Sig.name=$('sigName').value.trim();
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
@@ -1329,6 +1322,10 @@ function review(){
     if($('pmStartDate').value||$('pmStartTime').value)rows.push(['Inicio de mantenimiento',($('pmStartDate').value?fmtD($('pmStartDate').value):'')+' '+$('pmStartTime').value]);
     if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
     if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
+    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
+    rows.push(['Evidencia fotográfica','',1],['Fotografías antes',preventivePhotos.before.length+' de 5'],['Fotografías después',preventivePhotos.after.length+' de 5']);
+    preventivePhotos.before.forEach((photo,i)=>rows.push(['__PHOTO__ANTES '+(i+1),photo,5]));
+    preventivePhotos.after.forEach((photo,i)=>rows.push(['__PHOTO__DESPUÉS '+(i+1),photo,5]));
   }
   if(dailyMeasurements)rows.push(['Tipo de chequeo','DIARIO'],...dailyRows());
   else rows.push(['Tipo',type],['Estado',st],...(isExt()?extRows():mqRows()));
@@ -1353,7 +1350,7 @@ function review(){
   go('confirm');
 }
 let currentReportFolio='';
-const fileName=()=>Runtime.code+(isDaily()?'_DIARIO':'')+'_'+$('d').value.replaceAll('-','')+'_'+$('t').value.replace(':','')+'_'+(currentReportFolio||'MTTO');
+const fileName=()=>{const clean=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'').toUpperCase();const machine=clean(Runtime.machine||Runtime.area||'MAQUINA'),area=clean(Runtime.area||Runtime.code||'AREA'),date=String($('d').value||new Date().toISOString().slice(0,10)).replaceAll('-','');return machine+'-'+area+'-'+date;};
 function blobBase64(blob){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -1725,7 +1722,7 @@ function loadParts(){
 }
 function saveParts(){store.set(partsStorageKey(),JSON.stringify(readParts()));}
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value}))}
+function saveDraft(){store.set(draftStorageKey(),JSON.stringify({c:Runtime.code,k:Runtime.checkType,d:$('d').value,h:$('t').value,t:$('gType').dataset.v,s:$('gStatus').dataset.v,o:$('obs').value,x:extState(),pmStartDate:$('pmStartDate').value,pmStartTime:$('pmStartTime').value,pmStopDate:$('pmStopDate').value,pmStopTime:$('pmStopTime').value,motorHz:$('motorHz').value,ccmApproval:$('ccmApproval').value,ccmName:$('ccmName').value,pmObservations:$('pmObservations').value}))
 function loadDraft(){
   let dr=null;try{dr=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
   const ok=dr&&dr.c===Runtime.code&&(isDaily()?dr.k==='daily':!dr.k||dr.k==='preventive');
@@ -1734,7 +1731,7 @@ function loadDraft(){
   $('d').classList.remove('bad');$('t').classList.remove('bad');
   [['gType',ok?dr.t:''],['gStatus',ok?dr.s:'']].forEach(([g,v])=>{const x=$(g);x.dataset.v=v||'';x.classList.remove('bad');x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
   $('obs').value=ok?dr.o:'';
-  ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz'].forEach(id=>{const el=$(id);if(el)el.value=ok&&dr[id]?dr[id]:''});
+  ['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz','ccmApproval','ccmName','pmObservations'].forEach(id=>{const el=$(id);if(el)el.value=ok&&dr[id]?dr[id]:''});
   extLoad(ok&&dr.x?dr.x:{});
 }
 
@@ -2441,10 +2438,14 @@ function getRecent(){try{const v=JSON.parse(store.get('mtto_hist','[]'));return 
 function filterReportHistory(){renderRecent()}
 function openHistoryReport(id){const r=getRecent().find(x=>x.id===id||x.folio===id);if(!r)return;const rows=Array.isArray(r.rows)?r.rows:[];const preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\\n');if(window.confirm((r.folio||'Reporte')+'\\n\\n'+(r.a||'')+' · '+(r.w||'')+'\\n\\n'+preview.slice(0,1800)+'\\n\\n¿Deseas compartir los datos de este reporte?')){try{if(navigator.share)navigator.share({title:r.folio||'Reporte Chiaplast',text:preview});else if(navigator.clipboard)navigator.clipboard.writeText(preview).then(()=>toast('Datos del reporte copiados.'));else toast('No se pudo compartir desde este navegador.')}catch(e){toast('No se pudo compartir el reporte.')}}}
 function renderHomeFollowup(){
-  const reminderBox=$('menuReminderCount'),taskBox=$('menuTaskCount'),calendarBox=$('menuCalendarCount');
-  if(reminderBox){const count=loadReminders().filter(r=>r.status!=='done').length;reminderBox.textContent=count?count+' aviso'+(count===1?' pendiente':'s pendientes'):'Sin avisos pendientes'}
-  if(taskBox){const count=loadKanban().filter(t=>(t.status||'todo')!=='done').length;taskBox.textContent=count?count+' tarea'+(count===1?' abierta':'s abiertas'):'Sin tareas abiertas'}
-  if(calendarBox){const count=loadPreventiveCalendar().filter(order=>order.status!=='done').length;calendarBox.textContent=count?count+' '+(count===1?'orden pendiente':'órdenes pendientes'):'Sin órdenes pendientes'}
+  const reminderBox=$('menuReminderCount'),taskBox=$('widgetKanbanCount'),specialBox=$('specialWorkCount'),boardBox=$('widgetBoardCount');
+  const reminders=loadReminders().filter(r=>r.status!=='done').length;
+  const tasks=loadKanban(),todo=tasks.filter(t=>(t.status||'todo')==='todo').length,active=tasks.filter(t=>(t.status||'todo')!=='done').length;
+  const special=specialAll().filter(x=>x.status!=='done').length;
+  if(reminderBox)reminderBox.textContent=reminders+' '+(reminders===1?'recordatorio pendiente':'recordatorios pendientes');
+  if(taskBox)taskBox.textContent=todo+' por empezar · '+active+' activas';
+  if(specialBox)specialBox.textContent=special+' '+(special===1?'trabajo pendiente':'trabajos pendientes');
+  if(boardBox)boardBox.textContent='Ver mes actual';
 }
 function renderRecent(targetId='recent',searchId='historySearch'){
   const target=$(targetId),search=$(searchId);
