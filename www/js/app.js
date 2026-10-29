@@ -1,4 +1,3 @@
-const $=id=>document.getElementById(id);
 const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo."};
 function showHelp(){const a=document.querySelector('.screen.active');$('helpText').textContent=HELP[a&&a.id]||HELP.menu;$('helpModal').hidden=false}
 document.querySelectorAll('.screen:not(.splash):not(.login) .bar').forEach(b=>{const h=document.createElement('button');h.className='iconbtn';h.style.cssText='width:38px;height:38px;font-size:17px;margin-left:auto';h.textContent='?';h.setAttribute('aria-label','Ayuda');h.onclick=showHelp;b.appendChild(h)});
@@ -8,14 +7,6 @@ const DailyBatch={active:false,area:'',code:'',machine:'',reports:[],editIndex:-
 const dailyBatchKey=()=>'mtto_daily_batch';
 function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveDailyBatch(){store.set(dailyBatchKey(),JSON.stringify(DailyBatch.reports))}
-/* Catálogo único de máquinas: lo comparten chequeo diario y mantenimiento preventivo. */
-const MACHINE_DB={
-  E1:{area:'Extrusión 1',machines:['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','EXT-N1','EXT-N2','FUELLADORA','EXT-A3']},
-  E2:{area:'Extrusión 2',machines:['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2']},
-  CAM:{area:'CAM',machines:['BK-1','BK-2','BK-3','BK-4','BK-5','BK-6','BK-7','BK-8','BNG-1','BNG-2','BC-1','IMP-1','IMP-2','IMP-3']},
-  DIM:{area:'DIM',machines:['BM-1','BM-2','BM-3','BM-4','BM-5','BD-1','BD-2','BD-3','SELLADORA M1','SELLADORA M2','SELLADORA M3','SELLADORA M4','SELLADORA M5','HORNO M','FLEJADORA']},
-  BSL:{area:'BSL',machines:['BW-1','BN-1','BN-2','BN-3','BN-4','B-02','B-03','B-06','BSL-1','BSL-2','BSL-3','BSL-4','BSL-5','BSL-6','BD-4']}
-};
 function startWorkflow(kind){
   Runtime.workflow=kind;Runtime.checkType=kind==='daily'?'daily':'preventive';
   if(kind==='daily')beginDailyBatch();else go('preventiveArea');
@@ -108,21 +99,6 @@ function showDone(results,title){
   $('shareBtns').innerHTML=LastExports.map((f,k)=>'<button class="btn btn-s" style="flex:none;width:100%;margin-bottom:8px" onclick="shareLast('+k+')">Compartir '+esc(f.name.split('.').pop().toUpperCase())+'</button>').join('');
 }
 function shareLast(k){const f=LastExports[k];if(f&&window.ChiaplastNative)window.ChiaplastNative.shareReport(f.name,f.mime,f.b64)}
-let storageWarningShown=false;
-const store={
-  get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},
-  set(k,v){
-    try{localStorage.setItem(k,v);return true}
-    catch(e){
-      if(!storageWarningShown){
-        storageWarningShown=true;
-        setTimeout(()=>toast('El dispositivo no permitió guardar los datos. Exporta el reporte antes de salir.'),0);
-      }
-      return false;
-    }
-  },
-  del(k){try{localStorage.removeItem(k)}catch(e){}}
-};
 function currentUser(){return AppState.user||store.get('mtto_user','')}
 function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
 AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
@@ -220,12 +196,6 @@ addEventListener('popstate',e=>{
 });
 const isIn=()=>AppState.session || store.get('mtto_session','false')==='true';
 
-/* Utilidades */
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400)}
-function buzz(n){try{navigator.vibrate&&navigator.vibrate(n||15)}catch(e){}}
-const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const fmtD=v=>{if(!v)return'—';const[y,m,d]=v.split('-');return d+'/'+m+'/'+y};
-const pad=n=>String(n).padStart(2,'0');
 function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes());$('d').classList.remove('bad');$('t').classList.remove('bad')}
 
 /* Exportación local; no se solicita acceso a cuentas externas. */
@@ -1646,4 +1616,5 @@ setTimeout(()=>{
   purgeExpiredNotes().catch(()=>{});
 },1500);
 setInterval(()=>{if(!document.hidden)purgeExpiredNotes().catch(()=>{})},60*60*1000);
+
 
