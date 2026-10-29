@@ -873,7 +873,7 @@ body{background:var(--bg);color:var(--ink)}
   <div class="body">
     <div class="workspace-tabs" aria-label="Herramientas de planificación">
       <button type="button" class="selected" onclick="go('kanban')">▤ Tablero Kanban</button>
-      <button type="button" onclick="openPreventiveCalendar()">▦ Calendario Preventivo</button>
+      <button type="button" onclick="openPreventiveBoard()">▦ Calendario Preventivo</button>
       <button type="button" onclick="openReminders()">◷ Recordatorios</button>
       <span class="workspace-count" id="kanbanOpenCount">Tareas locales</span>
     </div>
@@ -2545,7 +2545,7 @@ function specialLoad(id){
  $('specialFormTitle').textContent='Editar orden '+j.id;$('specialFormStatus').textContent=j.status==='done'?'TERMINADA':'PENDIENTE';
 }
 function specialSavePending(){
- const v=specialReadForm();if(!v.area||!v.machine||!v.activitiesToDo){toast('Selecciona área, máquina y describe las actividades por hacer.');return}
+ const v=specialReadForm();if(!v.area||!v.machine||!v.activitiesToDo.length){toast('Selecciona área, máquina y agrega al menos una actividad por hacer.');return}
  const all=specialAll(),old=all.find(x=>x.id===v.id);
  if(old){v.created=old.created;v.status=old.status;v.updated=Date.now();all[all.findIndex(x=>x.id===v.id)]=v}
  else{v.status='pending';v.created=Date.now();all.unshift(v)}
