@@ -164,7 +164,7 @@ function startCheck(kind){
   go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
-const draftStorageKey=()=>((isDaily()?'mtto_draft_daily':'mtto_draft')+((Runtime.code==='DIM'&&/^(BM|BD)-/i.test(Runtime.machine))?'_'+Runtime.machine.replace(/[^a-z0-9_-]/gi,'_'):''));
+const draftStorageKey=()=>((isDaily()?'mtto_draft_daily':'mtto_draft')+'_'+String(Runtime.code||'AREA')+'_'+String(Runtime.machine||Runtime.area||'GENERAL').replace(/[^a-z0-9_-]/gi,'_'));
 function choose(g,btn){
   const box=$(g);
   box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
