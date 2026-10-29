@@ -1054,7 +1054,7 @@ async function finishDailyBatch(skipConfirm=false){
   if(!DailyBatch.reports.length){toast('Agrega al menos una máquina.');return}
   const b=$('finishBatchBtn');b.disabled=true;b.textContent='Generando…';
   try{
-    const baseName='Reportes_Diarios_'+new Date().toISOString().slice(0,10).replaceAll('-','');
+    const baseName='LOTE-EXT1Y2-'+new Date().toISOString().slice(0,10).replaceAll('-','');
     const results=await generateExports(batchExcelRows(),baseName,selectedExport('batchExportChoice'));
     showDone(results,'Reporte diario generado');
     addRecent({n:results.map(r=>r.name).join(', '),a:'Diario ('+DailyBatch.reports.length+' máquinas)',w:new Date().toLocaleDateString('es-MX'),k:'daily'});
@@ -2455,7 +2455,7 @@ setInterval(checkReminders,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkReminders()});
 
 /* Recientes */
-function addRecent(r){const key='mtto_hist';let l=getRecent();if(!r.id)r.id=r.folio||('MTTO-'+Date.now());l.unshift(r);store.set(key,JSON.stringify(l.slice(0,500)));AppState.history=l.slice(0,500)}
+function addRecent(r){const key='mtto_hist';if(Array.isArray(r.rows))r.rows=r.rows.filter(row=>row[2]!==5);let l=getRecent();if(!r.id)r.id=r.folio||('MTTO-'+Date.now());l.unshift(r);store.set(key,JSON.stringify(l.slice(0,500)));AppState.history=l.slice(0,500)}
 function getRecent(){try{const v=JSON.parse(store.get('mtto_hist','[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function filterReportHistory(){renderRecent()}
 function openHistoryReport(id){const r=getRecent().find(x=>x.id===id||x.folio===id);if(!r)return;const rows=Array.isArray(r.rows)?r.rows:[];const preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\\n');if(window.confirm((r.folio||'Reporte')+'\\n\\n'+(r.a||'')+' · '+(r.w||'')+'\\n\\n'+preview.slice(0,1800)+'\\n\\n¿Deseas compartir los datos de este reporte?')){try{if(navigator.share)navigator.share({title:r.folio||'Reporte Chiaplast',text:preview});else if(navigator.clipboard)navigator.clipboard.writeText(preview).then(()=>toast('Datos del reporte copiados.'));else toast('No se pudo compartir desde este navegador.')}catch(e){toast('No se pudo compartir el reporte.')}}}
@@ -2564,7 +2564,8 @@ function specialReportRows(j,status){
 async function specialExport(status,j){
  j=j||specialAll().find(x=>x.id===$('specialId').value)||specialReadForm();
  const rows=specialReportRows(j,status);
- const base='TRABAJO_ESPECIAL_'+j.id+'_'+(status==='done'?'TERMINO':'PENDIENTE');
+ const clean=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'').toUpperCase();
+ const base=clean(j.machine||'MAQUINA')+'-'+clean(j.areaName||j.area||'AREA')+'-'+new Date(j.created||Date.now()).toISOString().slice(0,10).replaceAll('-','')+'-'+(status==='done'?'TERMINO':'PENDIENTE');
  try{const results=await generateExports(rows,base,'both',null);toast('Formato '+(status==='done'?'de término':'de pendiente')+' generado en PDF y Excel.');return results}catch(e){toast(e?.message||'No se pudo exportar el formato.');return []}
 }
 async function specialComplete(){
