@@ -12,9 +12,9 @@ function showDone(results,title){
   $('shareBtns').innerHTML=LastExports.map((f,k)=>'<button class="btn btn-s" style="flex:none;width:100%;margin-bottom:8px" onclick="shareLast('+k+')">Compartir '+esc(f.name.split('.').pop().toUpperCase())+'</button>').join('');
 }
 function shareLast(k){const f=LastExports[k];if(f&&Bridge.available)Bridge.shareReport(f.name,f.mime,f.b64)}
-function currentUser(){return AppState.user||store.get('mtto_user','')}
-function syncAppState(){AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');AppState.history=getRecent()}
-AppState.session=store.get('mtto_session','false')==='true';AppState.user=store.get('mtto_user','');
+function currentUser(){return AppState.user||store.get(KEYS.user,'')}
+function syncAppState(){AppState.session=store.get(KEYS.session,'false')==='true';AppState.user=store.get(KEYS.user,'');AppState.history=getRecent()}
+AppState.session=store.get(KEYS.session,'false')==='true';AppState.user=store.get(KEYS.user,'');
 
 /* Navegación con soporte del botón Atrás de Android */
 function show(id){
@@ -108,7 +108,7 @@ addEventListener('popstate',e=>{
   if(s==='done'){ show('menu'); return; }
   show(s);
 });
-const isIn=()=>AppState.session || store.get('mtto_session','false')==='true';
+const isIn=()=>AppState.session || store.get(KEYS.session,'false')==='true';
 
 function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes());$('d').classList.remove('bad');$('t').classList.remove('bad')}
 
@@ -117,14 +117,14 @@ async function signIn(){
   const b=$('loginBtn');b.disabled=true;b.innerHTML='<span class="spin"></span>Abriendo…';$('loginErr').textContent='';
   try{
     AppState.session=true;AppState.user='Usuario local';
-    store.set('mtto_user',AppState.user);store.set('mtto_session','true');
+    store.set(KEYS.user,AppState.user);store.set(KEYS.session,'true');
     resetRuntime('preventive');
     root('menu');
   }catch(e){$('loginErr').textContent=e.message||'No se pudo abrir la app.'}
   finally{b.disabled=false;b.textContent='Continuar'}
 }
 function logout(){
-  AppState.session=false;AppState.user='';store.del('mtto_session');store.del('mtto_user');tok={v:'',exp:0};
+  AppState.session=false;AppState.user='';store.del(KEYS.session);store.del(KEYS.user);tok={v:'',exp:0};
   try{const p=GA();p&&p.signOut()}catch(e){}
   history.replaceState({s:'login'},'');show('login');
 }
@@ -148,7 +148,7 @@ function startCheck(kind){
   preventivePhotos={before:[],after:[]};renderPreventivePhotos();
 
   if(kind==='preventive'){loadParts();loadPartsPhotos();loadPreventivePhotos();}
-  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get('mtto_signature_names','{}'));$('ccmName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
+  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get(KEYS.signatureNames,'{}'));$('ccmName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
@@ -163,7 +163,7 @@ function startCheck(kind){
   go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
-const draftStorageKey=()=>((isDaily()?'mtto_draft_daily':'mtto_draft')+'_'+String(Runtime.code||'AREA')+'_'+String(Runtime.machine||Runtime.area||'GENERAL').replace(/[^a-z0-9_-]/gi,'_'));
+const draftStorageKey=()=>KEYS.draft(isDaily(),Runtime.code,Runtime.machine||Runtime.area);
 function choose(g,btn){
   const box=$(g);
   box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
@@ -236,11 +236,11 @@ function finish(){
 }
 
 /* Borrador: si la app se cierra no se pierde lo escrito */
-function draftIndex(){try{return JSON.parse(store.get('mtto_preventive_drafts','[]'))}catch(e){return[]}}
+function draftIndex(){try{return JSON.parse(store.get(KEYS.preventiveDrafts,'[]'))}catch(e){return[]}}
 function saveDraft(){
  const key=draftStorageKey(),state=getFormState();
  store.set(key,JSON.stringify(state));
- if(!isDaily()){const all=draftIndex().filter(x=>x.key!==key);all.unshift({key,area:Runtime.area,code:Runtime.code,machine:Runtime.machine||Runtime.area,updated:state.updated});store.set('mtto_preventive_drafts',JSON.stringify(all.slice(0,50)))}
+ if(!isDaily()){const all=draftIndex().filter(x=>x.key!==key);all.unshift({key,area:Runtime.area,code:Runtime.code,machine:Runtime.machine||Runtime.area,updated:state.updated});store.set(KEYS.preventiveDrafts,JSON.stringify(all.slice(0,50)))}
 }
 function loadDraft(){
   let raw=null;try{raw=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
@@ -271,8 +271,8 @@ function restoreSignature(who,hex){
 
 
 /* Recientes */
-function addRecent(r){const key='mtto_hist';if(Array.isArray(r.rows))r.rows=r.rows.filter(row=>row[2]!==5);let l=getRecent();if(!r.id)r.id=r.folio||('MTTO-'+Date.now());l.unshift(r);store.set(key,JSON.stringify(l.slice(0,500)));AppState.history=l.slice(0,500)}
-function getRecent(){try{const v=JSON.parse(store.get('mtto_hist','[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
+function addRecent(r){const key=KEYS.history;if(Array.isArray(r.rows))r.rows=r.rows.filter(row=>row[2]!==5);let l=getRecent();if(!r.id)r.id=r.folio||('MTTO-'+Date.now());l.unshift(r);store.set(key,JSON.stringify(l.slice(0,500)));AppState.history=l.slice(0,500)}
+function getRecent(){try{const v=JSON.parse(store.get(KEYS.history,'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function filterReportHistory(){renderRecent()}
 function openHistoryReport(id){const r=getRecent().find(x=>x.id===id||x.folio===id);if(!r)return;const rows=Array.isArray(r.rows)?r.rows:[];const preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\\n');if(window.confirm((r.folio||'Reporte')+'\\n\\n'+(r.a||'')+' · '+(r.w||'')+'\\n\\n'+preview.slice(0,1800)+'\\n\\n¿Deseas compartir los datos de este reporte?')){try{if(navigator.share)navigator.share({title:r.folio||'Reporte Chiaplast',text:preview});else if(navigator.clipboard)navigator.clipboard.writeText(preview).then(()=>toast('Datos del reporte copiados.'));else toast('No se pudo compartir desde este navegador.')}catch(e){toast('No se pudo compartir el reporte.')}}}
 function renderHomeFollowup(){
@@ -300,6 +300,7 @@ function renderRecent(targetId='recent',searchId='historySearch'){
 }
 
 /* Inicio: splash visible y restauración de sesión coherente */
+runStorageMigrations();
 syncAppState();
 setTimeout(()=>{
   syncAppState();

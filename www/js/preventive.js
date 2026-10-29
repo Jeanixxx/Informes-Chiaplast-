@@ -7,16 +7,16 @@ async function previewPreventivePhotos(input,stage){const files=Array.from(input
 async function removePreventivePhoto(stage,index){const src=preventivePhotos[stage][index];preventivePhotos[stage].splice(index,1);if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src);renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo actualizar la evidencia.')}}
 
 /* Refacciones y fotografías: almacenamiento local independiente por máquina */
-const partsStorageKey=()=> 'mtto_parts_'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
+const partsStorageKey=()=>KEYS.parts(Runtime.code,Runtime.machine||Runtime.area);
 let preventivePhotos={before:[],after:[]};
-const preventivePhotoKey=()=> 'pm-evidence-'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
-const partsPhotosKey=()=> 'parts-photos-'+[Runtime.code||'AREA',Runtime.machine||Runtime.area||'MAQUINA'].join('_').replace(/[^a-z0-9_-]/gi,'_');
+const preventivePhotoKey=()=>KEYS.pmEvidence(Runtime.code,Runtime.machine||Runtime.area);
+const partsPhotosKey=()=>KEYS.partsPhotos(Runtime.code,Runtime.machine||Runtime.area);
 let partsPhotosDraft=[];
 let partsPhotoTarget='parts';
 function openPartsPhotosDB(){
   return new Promise((resolve,reject)=>{
     if(!('indexedDB' in window)){reject(new Error('Este dispositivo no permite guardar fotografías localmente.'));return}
-    const req=indexedDB.open('chiaplast-parts-photos-v1',1);
+    const req=indexedDB.open(KEYS.idb.partsPhotos,1);
     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('photos'))db.createObjectStore('photos',{keyPath:'key'})};
     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacenamiento de fotografías.'));
   });
@@ -93,7 +93,7 @@ function loadParts(){
 }
 function saveParts(){store.set(partsStorageKey(),JSON.stringify(readParts()));}
 /* ===== Calendario local de órdenes preventivas ===== */
-const preventiveCalendarKey=()=>stateKey('mtto_preventive_calendar');
+const preventiveCalendarKey=()=>KEYS.preventiveCalendar;
 let currentPreventiveOrderId='';
 function loadPreventiveCalendar(){
   try{const orders=JSON.parse(store.get(preventiveCalendarKey(),'[]'));return Array.isArray(orders)?orders:[]}
@@ -172,7 +172,7 @@ const PM_LAYOUT=[
   {code:'EXT1',title:'EXT1',cols:7,items:pmList(['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','RF 2','EXT-N1','EXT-N2','FUELLADORA','FUELLADORA 2','EXT-A3'])},
   {code:'EXT2',title:'EXT2',cols:7,items:pmList(['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2'])}
 ];
-const PM_PREFIX='mtto_pm_board_';
+const PM_PREFIX=KEYS.pmBoardPrefix;
 const PMBoard={month:'',date:'',data:{},savedAt:0};
 const pmKey=month=>PM_PREFIX+month;
 const pmMonthNow=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)};

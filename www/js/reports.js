@@ -86,9 +86,9 @@ function splitReportRows(rows){
   return{meta,body};
 }
 function currentFolio(){
-  const key='mtto_folio_counter_v1';let n=Number(store.get(key,'0'));if(!Number.isSafeInteger(n)||n<0)n=0;
+  const key=KEYS.folioCounter;let n=Number(store.get(key,'0'));if(!Number.isSafeInteger(n)||n<0)n=0;
   const date=new Date(),year=date.getFullYear();
-  const yearKey='mtto_folio_year_v1',oldYear=Number(store.get(yearKey,'0'));
+  const yearKey=KEYS.folioYear,oldYear=Number(store.get(yearKey,'0'));
   if(oldYear!==year){n=0;store.set(yearKey,String(year))}
   n++;store.set(key,String(n));
   return 'MTTO-'+year+'-'+String(n).padStart(5,'0');

@@ -1,5 +1,5 @@
 /* ===== Recordatorios locales: comprobados solo mientras el HTML está activo ===== */
-const reminderKey=()=>'mtto_reminders';
+const reminderKey=()=>KEYS.reminders;
 function loadReminders(){try{const v=JSON.parse(store.get(reminderKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveReminders(items){store.set(reminderKey(),JSON.stringify(items))}
 function renderReminders(){

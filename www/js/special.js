@@ -1,5 +1,5 @@
 /* ===== Trabajos especiales: persistencia local y ciclo pendiente/terminado ===== */
-const SPECIAL_KEY='chiaplast_special_works_v1';
+const SPECIAL_KEY=KEYS.specialWorks;
 let specialPhotoTarget='before',specialPhotos={before:[],after:[]};
 function specialAll(){try{const a=JSON.parse(store.get(SPECIAL_KEY,'[]'));return Array.isArray(a)?a:[]}catch(e){return[]}}
 function specialPutAll(a){return store.set(SPECIAL_KEY,JSON.stringify(a))}

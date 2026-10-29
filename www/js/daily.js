@@ -1,5 +1,5 @@
 const DailyBatch={active:false,area:'',code:'',machine:'',reports:[],editIndex:-1};
-const dailyBatchKey=()=>'mtto_daily_batch';
+const dailyBatchKey=()=>KEYS.dailyBatch;
 function loadDailyBatch(){try{const v=JSON.parse(store.get(dailyBatchKey(),'[]'));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function saveDailyBatch(){store.set(dailyBatchKey(),JSON.stringify(DailyBatch.reports))}
 function startWorkflow(kind){
