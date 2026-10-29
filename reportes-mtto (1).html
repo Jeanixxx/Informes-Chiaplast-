@@ -938,13 +938,13 @@ body{background:var(--bg);color:var(--ink)}
       <div class="section-heading"><h2 id="specialFormTitle">Nueva orden especial</h2><span id="specialFormStatus">BORRADOR</span></div>
       <input id="specialId" type="hidden">
       <div class="two">
-        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="EXT1">Extrusión 1 (zona general)</option><option value="EXT2">Extrusión 2 (zona general)</option><option value="OTRA">Otra / servicios</option></select></div>
+        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option></select></div>
         <div class="f"><label for="specialMachine">Máquina / equipo</label><select id="specialMachine"><option value="">Seleccionar máquina</option></select></div>
       </div>
-      <div class="f"><label for="specialActivitiesToDo">Actividades por hacer</label><textarea id="specialActivitiesToDo" rows="3" placeholder="Describe el trabajo requerido"></textarea></div>
-      <div class="f"><label for="specialActivitiesDone">Actividades realizadas</label><textarea id="specialActivitiesDone" rows="3" placeholder="Se completa al retomar y cerrar la orden"></textarea></div>
-      <div class="f"><label for="specialUrgent">Tareas urgentes / riesgo operativo</label><textarea id="specialUrgent" rows="2" placeholder="Indica qué requiere atención prioritaria"></textarea></div>
-      <div class="f"><label for="specialParts">Refacciones usadas (nombre y cantidad)</label><textarea id="specialParts" rows="3" placeholder="Ej. balero 6204 — 2 piezas"></textarea></div>
+      <div class="f"><label>Actividades por hacer</label><div id="specialActivitiesToDoList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('activitiesToDo')">＋ Agregar actividad por hacer</button></div>
+      <div class="f"><label>Actividades realizadas</label><div id="specialActivitiesDoneList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('activitiesDone')">＋ Agregar actividad realizada</button></div>
+      <div class="f"><label>Tareas urgentes / riesgo operativo</label><div id="specialUrgentList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('urgent')">＋ Agregar tarea urgente</button></div>
+      <div class="f"><label>Refacciones usadas</label><div id="specialPartsList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('parts')">＋ Agregar refacción</button></div>
       <div class="f"><label for="specialNotes">Observaciones</label><textarea id="specialNotes" rows="2" placeholder="Datos adicionales, seguridad, pruebas..."></textarea></div>
       <div class="card" style="padding:12px">
         <h3>Fotografías del trabajo</h3>
@@ -2492,7 +2492,7 @@ function specialFormatDate(v){return v?new Date(v).toLocaleString('es-MX',{dateS
 function openSpecialWorks(){specialReset();go('specialWorks');specialRender()}
 function specialAreaChanged(){
  const code=$('specialArea').value,db=MACHINE_DB[code],sel=$('specialMachine');
- const machines=db?db.machines:(code==='EXT1'||code==='EXT2'?['Zona general']:code==='OTRA'?['Servicios generales','Infraestructura','Otra máquina']:[]);
+ const machines=db?db.machines:[];
  sel.innerHTML='<option value="">Seleccionar máquina</option>'+machines.map(m=>'<option value="'+esc(m)+'">'+esc(m)+'</option>').join('');
 }
 function specialCapture(stage){
@@ -2522,21 +2522,25 @@ function specialRenderPhotos(){
  });
 }
 function specialRemovePhoto(stage,i){specialPhotos[stage].splice(i,1);specialRenderPhotos();specialSaveDraftOnly()}
+function specialValues(key){return [...document.querySelectorAll('[data-special-key="'+key+'"]')].map(el=>el.value.trim()).filter(Boolean)}
+function specialRenderItems(key,values){const box=$('special'+key.charAt(0).toUpperCase()+key.slice(1)+'List');if(!box)return;const list=Array.isArray(values)&&values.length?values:[''];box.innerHTML=list.map((value,i)=>'<div class="special-repeat-row"><textarea data-special-key="'+key+'" rows="2" placeholder="'+({activitiesToDo:'Actividad por hacer',activitiesDone:'Actividad realizada',urgent:'Tarea urgente',parts:'Refacción y cantidad'}[key]||'Detalle')+'">'+esc(value||'')+'</textarea><button class="btn btn-s" type="button" aria-label="Quitar elemento" onclick="specialRemoveItem(\''+key+'\','+i+')">−</button></div>').join('')}
+function specialAddItem(key){const values=specialValues(key);values.push('');specialRenderItems(key,values)}
+function specialRemoveItem(key,index){const values=specialValues(key);values.splice(index,1);specialRenderItems(key,values.length?values:[''])}
 function specialReadForm(){
- return {id:$('specialId').value||'TE-'+Date.now().toString(36).toUpperCase(),area:$('specialArea').value,areaName:$('specialArea').selectedOptions[0]?.textContent||'',machine:$('specialMachine').value,activitiesToDo:$('specialActivitiesToDo').value.trim(),activitiesDone:$('specialActivitiesDone').value.trim(),urgent:$('specialUrgent').value.trim(),parts:$('specialParts').value.trim(),notes:$('specialNotes').value.trim(),priority:$('specialPriority').value,start:$('specialStart').value,stop:$('specialStop').value,photos:{before:specialPhotos.before.slice(),after:specialPhotos.after.slice()},status:'pending',created:Date.now(),updated:Date.now(),createdBy:currentUser()||'—'} 
+ return {id:$('specialId').value||'TE-'+Date.now().toString(36).toUpperCase(),area:$('specialArea').value,areaName:$('specialArea').selectedOptions[0]?.textContent||'',machine:$('specialMachine').value,activitiesToDo:specialValues('activitiesToDo'),activitiesDone:specialValues('activitiesDone'),urgent:specialValues('urgent'),parts:specialValues('parts'),notes:$('specialNotes').value.trim(),priority:$('specialPriority').value,start:$('specialStart').value,stop:$('specialStop').value,photos:{before:specialPhotos.before.slice(),after:specialPhotos.after.slice()},status:'pending',created:Date.now(),updated:Date.now(),createdBy:currentUser()||'—'} 
 }
 function specialSaveDraftOnly(){const id=$('specialId').value;if(!id)return;const old=specialAll().find(x=>x.id===id);if(!old)return;const v=specialReadForm();v.id=id;v.created=old.created;v.status=old.status;const all=specialAll(),i=all.findIndex(x=>x.id===id);all[i]=v;specialPutAll(all)}
 function specialReset(){
  $('specialId').value='';['specialArea','specialMachine','specialPriority'].forEach(id=>$(id).value='');specialAreaChanged();
- ['specialActivitiesToDo','specialActivitiesDone','specialUrgent','specialParts','specialNotes','specialStart','specialStop'].forEach(id=>$(id).value='');
+ ['specialNotes','specialStart','specialStop'].forEach(id=>$(id).value='');
+ ['activitiesToDo','activitiesDone','urgent','parts'].forEach(key=>specialRenderItems(key,['']));
  $('specialPriority').value='normal';specialPhotos={before:[],after:[]};specialRenderPhotos();
  $('specialFormTitle').textContent='Nueva orden especial';$('specialFormStatus').textContent='BORRADOR';
 }
 function specialLoad(id){
  const j=specialAll().find(x=>x.id===id);if(!j)return;
  $('specialId').value=j.id;$('specialArea').value=j.area;specialAreaChanged();$('specialMachine').value=j.machine||'';
- $('specialActivitiesToDo').value=j.activitiesToDo||'';$('specialActivitiesDone').value=j.activitiesDone||'';$('specialUrgent').value=j.urgent||'';
- $('specialParts').value=j.parts||'';$('specialNotes').value=j.notes||'';$('specialPriority').value=j.priority||'normal';$('specialStart').value=j.start||'';$('specialStop').value=j.stop||'';
+ specialRenderItems('activitiesToDo',Array.isArray(j.activitiesToDo)?j.activitiesToDo:[j.activitiesToDo||'']);specialRenderItems('activitiesDone',Array.isArray(j.activitiesDone)?j.activitiesDone:[j.activitiesDone||'']);specialRenderItems('urgent',Array.isArray(j.urgent)?j.urgent:[j.urgent||'']);specialRenderItems('parts',Array.isArray(j.parts)?j.parts:[j.parts||'']);$('specialNotes').value=j.notes||'';$('specialPriority').value=j.priority||'normal';$('specialStart').value=j.start||'';$('specialStop').value=j.stop||'';
  specialPhotos={before:Array.isArray(j.photos?.before)?j.photos.before.slice():[],after:Array.isArray(j.photos?.after)?j.photos.after.slice():[]};specialRenderPhotos();
  $('specialFormTitle').textContent='Editar orden '+j.id;$('specialFormStatus').textContent=j.status==='done'?'TERMINADA':'PENDIENTE';
 }
@@ -2551,7 +2555,8 @@ function specialSavePending(){
 function specialReportRows(j,status){
  const rows=[['FORMATO DE TRABAJO ESPECIAL · '+(status==='done'?'TÉRMINO':'PENDIENTE'),'',3],['Folio',j.id,2],['Estado',status==='done'?'TERMINADO':'PENDIENTE',2],['Prioridad',String(j.priority||'normal').toUpperCase(),2],['Área',j.areaName||j.area,2],['Máquina',j.machine,2],['Fecha de creación',specialFormatDate(j.created),2],['Responsable',j.createdBy||'—',2],['Inicio de trabajo',specialFormatDate(j.start),2]];
  if(status==='done')rows.push(['Término de trabajo',specialFormatDate(j.stop),2]);
- rows.push(['Actividades por hacer','',1],['Detalle',j.activitiesToDo||'—'],['Actividades realizadas','',1],['Detalle',j.activitiesDone||'—'],['Tareas urgentes','',1],['Detalle',j.urgent||'Sin tareas urgentes registradas'],['Refacciones usadas','',1],['Detalle',j.parts||'Sin refacciones registradas'],['Observaciones','',1],['Detalle',j.notes||'—'],['Evidencia fotográfica','',1],['Fotos antes',String((j.photos?.before||[]).length)+' fotografía(s). Evidencia almacenada en el dispositivo.'],['Fotos después',String((j.photos?.after||[]).length)+' fotografía(s). Evidencia almacenada en el dispositivo.']);
+ const listText=v=>(Array.isArray(v)?v:v?[v]:[]).filter(Boolean);
+ rows.push(['Actividades por hacer','',1],...listText(j.activitiesToDo).map((v,i)=>['Actividad '+(i+1),v]),['Actividades realizadas','',1],...listText(j.activitiesDone).map((v,i)=>['Actividad '+(i+1),v]),['Tareas urgentes','',1],...listText(j.urgent).map((v,i)=>['Tarea urgente '+(i+1),v]),['Refacciones usadas','',1],...listText(j.parts).map((v,i)=>['Refacción '+(i+1),v]),['Observaciones','',1],['Detalle',j.notes||'—'],['Evidencia fotográfica','',1],['Fotos antes',String((j.photos?.before||[]).length)+' fotografía(s). Evidencia almacenada en el dispositivo.'],['Fotos después',String((j.photos?.after||[]).length)+' fotografía(s). Evidencia almacenada en el dispositivo.']);
  (j.photos?.before||[]).forEach((p,i)=>rows.push(['Referencia foto antes '+(i+1),String(p).slice(0,180)]));
  (j.photos?.after||[]).forEach((p,i)=>rows.push(['Referencia foto después '+(i+1),String(p).slice(0,180)]));
  return rows;
@@ -2565,8 +2570,8 @@ async function specialExport(status,j){
 async function specialComplete(){
  const id=$('specialId').value,all=specialAll(),i=all.findIndex(x=>x.id===id);
  if(i<0){toast('Primero guarda el trabajo como pendiente.');return}
- const j=all[i];j.activitiesDone=$('specialActivitiesDone').value.trim();j.urgent=$('specialUrgent').value.trim();j.parts=$('specialParts').value.trim();j.notes=$('specialNotes').value.trim();j.start=$('specialStart').value||j.start;j.stop=$('specialStop').value||new Date().toISOString().slice(0,16);j.photos={before:specialPhotos.before.slice(),after:specialPhotos.after.slice()};j.status='done';j.updated=Date.now();
- if(!j.activitiesDone&&!window.confirm('No registraste actividades realizadas. ¿Cerrar de todos modos?'))return;
+ const j=all[i];j.activitiesDone=specialValues('activitiesDone');j.urgent=specialValues('urgent');j.parts=specialValues('parts');j.notes=$('specialNotes').value.trim();j.start=$('specialStart').value||j.start;j.stop=$('specialStop').value||new Date().toISOString().slice(0,16);j.photos={before:specialPhotos.before.slice(),after:specialPhotos.after.slice()};j.status='done';j.updated=Date.now();
+ if(!j.activitiesDone.length&&!window.confirm('No registraste actividades realizadas. ¿Cerrar de todos modos?'))return;
  all[i]=j;if(!specialPutAll(all)){toast('No se pudo guardar el cierre.');return}
  specialRender();$('specialFormStatus').textContent='TERMINADA';await specialExport('done',j);toast('Trabajo cerrado y guardado en el historial.');
 }
