@@ -471,6 +471,8 @@ body{background:var(--bg);color:var(--ink)}
   .pm-actions .btn{flex:1}
   .pm-summary small{display:none}
 }
+
+.dashboard-tools{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}.dashboard-tools .dashboard-area{min-height:155px}.dashboard-tools .dashboard-area em{font-size:11px;font-style:normal;color:var(--accent);text-align:right}.special-repeat-list{display:grid;gap:8px}.special-repeat-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}.special-repeat-row textarea,.special-repeat-row input{width:100%;min-width:0}.special-repeat-row .btn{min-height:40px;padding:0 12px}
 </style>
 </head>
 <body>
@@ -2524,8 +2526,9 @@ function specialRenderPhotos(){
 function specialRemovePhoto(stage,i){specialPhotos[stage].splice(i,1);specialRenderPhotos();specialSaveDraftOnly()}
 function specialValues(key){return [...document.querySelectorAll('[data-special-key="'+key+'"]')].map(el=>el.value.trim()).filter(Boolean)}
 function specialRenderItems(key,values){const box=$('special'+key.charAt(0).toUpperCase()+key.slice(1)+'List');if(!box)return;const list=Array.isArray(values)&&values.length?values:[''];box.innerHTML=list.map((value,i)=>'<div class="special-repeat-row"><textarea data-special-key="'+key+'" rows="2" placeholder="'+({activitiesToDo:'Actividad por hacer',activitiesDone:'Actividad realizada',urgent:'Tarea urgente',parts:'Refacción y cantidad'}[key]||'Detalle')+'">'+esc(value||'')+'</textarea><button class="btn btn-s" type="button" aria-label="Quitar elemento" onclick="specialRemoveItem(\''+key+'\','+i+')">−</button></div>').join('')}
-function specialAddItem(key){const values=specialValues(key);values.push('');specialRenderItems(key,values)}
-function specialRemoveItem(key,index){const values=specialValues(key);values.splice(index,1);specialRenderItems(key,values.length?values:[''])}
+function specialValues(key,keepEmpty=false){const values=[...document.querySelectorAll('[data-special-key="'+key+'"]')].map(el=>el.value.trim());return keepEmpty?values:values.filter(Boolean)}
+function specialAddItem(key){const values=specialValues(key,true);values.push('');specialRenderItems(key,values)}
+function specialRemoveItem(key,index){const values=specialValues(key,true);values.splice(index,1);specialRenderItems(key,values.length?values:[''])}
 function specialReadForm(){
  return {id:$('specialId').value||'TE-'+Date.now().toString(36).toUpperCase(),area:$('specialArea').value,areaName:$('specialArea').selectedOptions[0]?.textContent||'',machine:$('specialMachine').value,activitiesToDo:specialValues('activitiesToDo'),activitiesDone:specialValues('activitiesDone'),urgent:specialValues('urgent'),parts:specialValues('parts'),notes:$('specialNotes').value.trim(),priority:$('specialPriority').value,start:$('specialStart').value,stop:$('specialStop').value,photos:{before:specialPhotos.before.slice(),after:specialPhotos.after.slice()},status:'pending',created:Date.now(),updated:Date.now(),createdBy:currentUser()||'—'} 
 }
