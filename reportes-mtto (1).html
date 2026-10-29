@@ -1459,6 +1459,14 @@ function buildXlsx(rows,photoRows=[]){
     else add(a,b,7,VS[statusKind(b)]||8);
   });
   add('','',0,0,10,true);
+  add('FIRMAS DE CONFORMIDAD','',3,3,22,true);
+  const ccmNameRow=rows.find(q=>/nombre.*ccm|ccm.*nombre/i.test(String(q[0]||'')));
+  const responsableRow=rows.find(q=>/^responsable$/i.test(String(q[0]||'')));
+  add('CCM · Nombre',ccmNameRow?ccmNameRow[1]:'',5,6,24);
+  add('Firma CCM','____________________________________________','7',7,30);
+  add('Responsable · Nombre',responsableRow?responsableRow[1]:'',5,6,24);
+  add('Firma Responsable','____________________________________________',7,7,30);
+  add('','',0,0,8,true);
   add('Documento generado por la aplicación de Mantenimiento Chiaplast · '+new Date().toLocaleString('es-MX'),'',14,14,18,true);
   const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',R='http://schemas.openxmlformats.org/officeDocument/2006/relationships',M='http://schemas.openxmlformats.org/spreadsheetml/2006/main',P='http://schemas.openxmlformats.org/package/2006/relationships';
   const bd='<border><left style="thin"><color rgb="FFD0D9E0"/></left><right style="thin"><color rgb="FFD0D9E0"/></right><top style="thin"><color rgb="FFD0D9E0"/></top><bottom style="thin"><color rgb="FFD0D9E0"/></bottom><diagonal/></border>';
@@ -1577,20 +1585,25 @@ function buildPdf(rows,sig){
     row(a,b,300,{zebra:zebra++%2});prevMeta=false;
   });
   photoRows.forEach((r,index)=>{newPage();pagePhotoRefs[pages.length-1]=index;const dim=photoDimensions(r[1]),scale=Math.min(CW/dim.w,650/dim.h),iw=dim.w*scale,ih=dim.h*scale,x=(W-iw)/2,top=110;T(M,72,'EVIDENCIA FOTOGRÁFICA · '+String(r[0]).replace('__PHOTO__',''),13,true,STEEL);ops.push('q '+iw.toFixed(2)+' 0 0 '+ih.toFixed(2)+' '+x.toFixed(2)+' '+(H-top-ih).toFixed(2)+' cm /Img1 Do Q')});
-  if(sig){
+  {
     ensure(150);y+=20;
-    R(M,y,CW,20,STEEL);T(M+8,y+14,'Firma de conformidad',10,true,'1 1 1');y+=20;
-    R(M,y,CW,112,'1 1 1',LINE);
-    sigPage=pages.length-1;
-    ops.push('q 190 0 0 63.33 '+(M+20)+' '+(H-y-15-63.33).toFixed(2)+' cm /Sig Do Q');
-    ops.push(COL['']+' RG 0.8 w '+(M+14)+' '+(H-y-84).toFixed(2)+' m '+(M+226)+' '+(H-y-84).toFixed(2)+' l S');
-    const nm=pdfWrap(sig.name||'',206,10.5,true)[0]||'';
-    T(M+14+(212-pdfWidth(nm,10.5,true))/2,y+97,nm,10.5,true,COL['']);
-    T(M+14+(212-pdfWidth('Nombre y firma del responsable',8,false))/2,y+108,'Nombre y firma del responsable',8,false,COL.na);
-    const fr=rows.find(q=>q[0]==='Fecha');
-    T(M+300,y+30,'Fecha del reporte',8.5,false,COL.na);T(M+300,y+46,fr?fr[1]:generated.split(',')[0],11,true,COL['']);
-    T(M+300,y+76,'Generado',8.5,false,COL.na);T(M+300,y+92,generated,9.5,false,COL['']);
-    y+=112;
+    R(M,y,CW,20,STEEL);T(M+8,y+14,'Firmas de conformidad',10,true,'1 1 1');y+=20;
+    const gap=12,boxW=(CW-gap)/2,boxH=112,leftX=M,rightX=M+boxW+gap;
+    R(leftX,y,boxW,boxH,'1 1 1',LINE);R(rightX,y,boxW,boxH,'1 1 1',LINE);
+    const ccmRow=rows.find(q=>/nombre.*ccm|ccm.*nombre/i.test(String(q[0]||'')));
+    const respRow=rows.find(q=>/^responsable$/i.test(String(q[0]||'')));
+    T(leftX+10,y+18,'CCM',10,true,STEEL);
+    const ccmNm=pdfWrap(ccmRow?ccmRow[1]:'',boxW-20,9.5,true)[0]||'';
+    T(leftX+10,y+36,ccmNm,9.5,true,COL['']);
+    R(leftX+12,y+76,boxW-24,0,null,LINE);
+    T(leftX+10,y+94,'Nombre y firma de CCM',8,false,COL.na);
+    T(rightX+10,y+18,'Responsable',10,true,STEEL);
+    const respNm=pdfWrap((respRow&&respRow[1])||(sig&&sig.name)||'',boxW-20,9.5,true)[0]||'';
+    T(rightX+10,y+36,respNm,9.5,true,COL['']);
+    if(sig&&sig.hex){ops.push('q 100 0 0 33 '+(rightX+10)+' '+(H-y-70-33).toFixed(2)+' cm /Sig Do Q')}
+    R(rightX+12,y+76,boxW-24,0,null,LINE);
+    T(rightX+10,y+94,'Nombre y firma del responsable',8,false,COL.na);
+    y+=boxH;
   }
   const total=pages.length;
   pages.forEach((p,i)=>{
