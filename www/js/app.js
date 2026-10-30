@@ -21,7 +21,7 @@ function show(id){
   const app=document.querySelector('.app');
   const showChrome=id!=='splash'&&id!=='login';
   app.classList.toggle('has-chrome',showChrome);
-  const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard','preventiveDrafts'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
+  const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard','preventiveDrafts','releaseFinal'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
   document.querySelectorAll('.app-sidebar [data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===id||(preventiveScreen&&button.dataset.nav==='preventive')));
   $('topbarUser').textContent=currentUser()||'Técnico';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
