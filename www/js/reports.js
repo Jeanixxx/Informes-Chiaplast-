@@ -343,13 +343,14 @@ async function generateExports(rows,baseName,choice,sig){
   return results;
 }
 async function send(){
-  const b=$('sendBtn');b.disabled=true;offerFailureFollowup();currentReportFolio=currentFolio();const baseName=fileName();
+  const b=$('sendBtn');b.disabled=true;offerFailureFollowup();currentReportFolio='';
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
     if(!isDaily()){
       if(!$('releaseMachineStatus').value){$('releaseMachineStatus').focus();throw new Error('Indica cómo funciona la máquina en la línea antes de liberar.')}
-      updateReleaseField();appendFinalReleaseRows();Runtime.release.status='released';saveDraft();
+      updateReleaseField();appendFinalReleaseRows();saveDraft();
     }
+    currentReportFolio=currentFolio();const baseName=fileName();
     const resolvedRows=await resolveReportEvidence(Runtime.rows.slice(1));
     const exportRows=singleReportDoc(resolvedRows,[]);
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()?null:{ccm:Signatures.ccm,responsable:Signatures.responsable,production:Signatures.production});
@@ -357,5 +358,5 @@ async function send(){
     addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),files:results.map(r=>({name:r.name,format:r.format,mime:r.format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});
     store.del(draftStorageKey());store.set(KEYS.preventiveDrafts,JSON.stringify(draftIndex().filter(x=>x.key!==draftStorageKey())));renderSavedPreventiveDraftCount();buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
-  finally{b.disabled=false;b.textContent='Generar reporte'}
+  finally{b.disabled=false;b.textContent=isDaily()?'Generar reporte':'Liberar y generar reporte'}
 }
