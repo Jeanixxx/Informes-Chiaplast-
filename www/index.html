@@ -183,65 +183,71 @@
 </section>
 
 <!-- Formulario -->
-<section id="form" class="screen">
-  <header class="bar">
+<section id="form" class="screen form-screen">
+  <header class="bar form-bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <h1 id="fTitle">Área</h1><button class="btn btn-s" type="button" style="flex:none;padding:9px 12px" onclick="closeFormToTools()">Guardar y cerrar</button>
+    <div class="form-bar-title"><span class="form-kicker">CAPTURA DE MANTENIMIENTO</span><h1 id="fTitle">Área</h1></div>
+    <button class="btn btn-s form-save" type="button" onclick="closeFormToTools()">Guardar y cerrar</button>
   </header>
-  <div class="steps"><div class="on"></div><div></div></div>
-  <div class="body">
-    <div class="card">
-      <div class="two">
-        <div class="f"><label for="d">Fecha</label><input type="date" id="d" onchange="this.classList.remove('bad');saveDraft()"></div>
-        <div class="f"><label for="t">Hora</label><input type="time" id="t" onchange="this.classList.remove('bad');saveDraft()"></div>
+  <div class="form-progress" aria-label="Progreso del reporte">
+    <div class="steps"><div class="on"></div><div></div></div>
+    <div class="steps-l"><span>01 · Captura</span><span>02 · Revisión</span></div>
+  </div>
+  <div class="body form-body">
+    <section class="form-section">
+      <div class="form-section-heading"><span>01</span><div><h2>Datos del reporte</h2><p>Fecha y hora del recorrido o intervención</p></div></div>
+      <div class="card form-card">
+        <div class="two">
+          <div class="f"><label for="d">Fecha</label><input type="date" id="d" onchange="this.classList.remove('bad');saveDraft()"></div>
+          <div class="f"><label for="t">Hora</label><input type="time" id="t" onchange="this.classList.remove('bad');saveDraft()"></div>
+        </div>
+        <button class="link" type="button" onclick="setNow();saveDraft()">Usar fecha y hora actuales</button>
       </div>
-      <button class="link" onclick="setNow();saveDraft()">Ahora</button>
-    </div>
+    </section>
 
-    <div class="card" id="preventiveTimesCard" hidden>
-      <h3>Tiempo de intervención</h3>
-      <div class="two">
-        <div class="f"><label for="pmStartDate">Fecha de inicio</label><input id="pmStartDate" type="date" onchange="saveDraft()"></div>
-        <div class="f"><label for="pmStartTime">Hora de inicio</label><input id="pmStartTime" type="time" onchange="saveDraft()"></div>
+    <section class="form-section form-preventive-section">
+      <div class="form-section-heading"><span>02</span><div><h2>Intervención preventiva</h2><p>Tiempo, frecuencia y autorización</p></div></div>
+      <div class="card form-card" id="preventiveTimesCard" hidden>
+        <h3>Tiempo de intervención</h3>
+        <div class="two">
+          <div class="f"><label for="pmStartDate">Fecha de inicio</label><input id="pmStartDate" type="date" onchange="saveDraft()"></div>
+          <div class="f"><label for="pmStartTime">Hora de inicio</label><input id="pmStartTime" type="time" onchange="saveDraft()"></div>
+        </div>
+        <div class="two">
+          <div class="f"><label for="pmStopDate">Fecha de parada / término</label><input id="pmStopDate" type="date" onchange="saveDraft()"></div>
+          <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft()"></div>
+        </div>
+        <small>Si el mantenimiento sigue en curso, puede dejar vacíos los campos de parada.</small>
       </div>
-      <div class="two">
-        <div class="f"><label for="pmStopDate">Fecha de parada / término</label><input id="pmStopDate" type="date" onchange="saveDraft()"></div>
-        <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft()"></div>
+      <div class="card form-card" id="motorHzCard" hidden>
+        <h3>Motor principal</h3>
+        <div class="f"><label for="motorHz">Frecuencia del motor (Hz)</label><input id="motorHz" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="Ej. 60" onchange="saveDraft()"></div>
       </div>
-      <small>Si el mantenimiento sigue en curso, puede dejar vacíos los campos de parada.</small>
-    </div>
-    <div class="card" id="preventiveEvidenceCard" hidden>
-      <h3>Evidencia del mantenimiento preventivo</h3>
-      <div class="f"><label>Fotografías antes (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('before')">Adjuntar foto antes</button></div><input id="pmBeforeInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'before')"><div id="pmBeforePreview" class="parts-photo-preview"></div></div>
-      <div class="f"><label>Fotografías después (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('after')">Adjuntar foto después</button></div><input id="pmAfterInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'after')"><div id="pmAfterPreview" class="parts-photo-preview"></div></div>
-      <div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div>
-      <div class="f"><label for="pmObservations">Observaciones del mantenimiento</label><textarea id="pmObservations" rows="3" placeholder="Observaciones, pendientes y condiciones al entregar" oninput="saveDraft()"></textarea></div>
-      <small>Las fotografías se conservarán en este dispositivo y se incorporarán al PDF; el Excel incluirá el registro de evidencia y su cantidad.</small>
-    </div>
-    <div class="card" id="motorHzCard" hidden>
-      <h3>Motor principal</h3>
-      <div class="f"><label for="motorHz">Frecuencia del motor (Hz)</label><input id="motorHz" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="Ej. 60" onchange="saveDraft()"></div>
-    </div>
-    <div id="ext" hidden></div>
-    <div class="context-actions" aria-label="Acciones de seguimiento para esta máquina">
-      <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
-      <button class="btn btn-s" type="button" onclick="openReminderForCurrentContext()">＋ Programar recordatorio</button>
-      <button class="btn btn-s" type="button" onclick="openNoteForCurrentContext()">＋ Agregar nota técnica</button>
-    </div>
-    <div class="card">
-      <!-- ZONA RESERVADA: aquí irán los campos reales de cada área (E1, E2, CAM, DIM, BSL).
-           Reemplaza el bloque .ph y los campos temporales; el flujo no cambia. -->
-      <div class="ph" id="ph"><b>Campos del área pendientes.</b> Los campos reales se agregarán aquí.</div>
+      <div class="card form-card" id="preventiveEvidenceCard" hidden>
+        <h3>Evidencia del mantenimiento preventivo</h3>
+        <div class="form-photo-grid">
+          <div class="f"><label>Fotografías antes (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('before')">Adjuntar foto antes</button></div><input id="pmBeforeInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'before')"><div id="pmBeforePreview" class="parts-photo-preview"></div></div>
+          <div class="f"><label>Fotografías después (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('after')">Adjuntar foto después</button></div><input id="pmAfterInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'after')"><div id="pmAfterPreview" class="parts-photo-preview"></div></div>
+        </div>
+        <div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div>
+        <div class="f"><label for="pmObservations">Observaciones del mantenimiento</label><textarea id="pmObservations" rows="3" placeholder="Observaciones, pendientes y condiciones al entregar" oninput="saveDraft()"></textarea></div>
+        <small>Las fotografías se conservarán en este dispositivo y se incorporarán al PDF; el Excel incluirá el registro de evidencia y su cantidad.</small>
+      </div>
+    </section>
 
-      <div id="maintenanceFields">
-        <div class="f"><span class="lbl">Tipo<em>*</em></span>
+    <section class="form-section">
+      <div class="form-section-heading"><span>03</span><div><h2>Inspección del equipo</h2><p>Responda cada punto para completar el chequeo</p></div></div>
+      <div class="ph" id="ph" hidden><b>Campos del área.</b></div>
+      <div id="ext" class="form-checklist" hidden></div>
+      <div class="card form-card" id="maintenanceFields">
+        <div class="f"><span class="lbl">Tipo de mantenimiento<em>*</em></span>
           <div class="seg" id="gType" data-v="">
             <button type="button" aria-pressed="false" onclick="choose('gType',this)">PREVENTIVO</button>
             <button type="button" aria-pressed="false" onclick="choose('gType',this)">CORRECTIVO</button>
           </div>
           <div class="err">Elige el tipo de mantenimiento.</div>
         </div>
-        <div class="f"><span class="lbl">Estado<em>*</em></span>
+        <div class="f"><span class="lbl">Estado del equipo<em>*</em></span>
           <div class="seg" id="gStatus" data-v="">
             <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">ENTREGADO</button>
             <button type="button" aria-pressed="false" onclick="choose('gStatus',this)">EN PROCESO</button>
@@ -250,13 +256,17 @@
           <div class="err">Elige el estado del equipo.</div>
         </div>
       </div>
-      <details class="parts-card" id="partsCard" hidden>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-heading"><span>04</span><div><h2>Refacciones y observaciones</h2><p>Material utilizado y notas de la intervención</p></div></div>
+      <details class="parts-card form-parts" id="partsCard" hidden>
         <summary><span><b>Refacciones usadas</b><small>Registra cada refacción y la cantidad utilizada</small></span><span class="parts-chevron" aria-hidden="true">⌄</span></summary>
         <div class="parts-content">
           <div class="parts-head"><span>Refacción</span><span>Cantidad</span><span></span></div>
           <div id="partsList"></div>
           <button class="btn btn-s parts-add" type="button" onclick="addPartRow()">＋ Agregar refacción</button>
-          <div class="f" style="margin-top:16px;margin-bottom:0">
+          <div class="f form-parts-photos">
             <label>Fotografías de las refacciones (máximo 5)</label>
             <div class="parts-photo-tools">
               <button class="btn btn-s" type="button" onclick="capturePartsPhoto()">Tomar fotografía</button>
@@ -268,32 +278,60 @@
           </div>
         </div>
       </details>
-      <div class="f"><label for="obs">Observaciones</label>
-        <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
-    </div>
-    <div class="card" id="sigCard" hidden>
-      <h3>Firmas de conformidad</h3><p class="muted" style="margin:0 0 14px">Las firmas son opcionales. Puede completar una, ambas o dejar los espacios en blanco.</p>
-      <div class="two">
-        <div class="f"><span class="lbl">CCM (opcional)</span><input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
-        <div class="f"><span class="lbl">Responsable (opcional)</span><input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas><button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button></div>
+      <div class="card form-card">
+        <div class="f"><label for="obs">Observaciones</label><textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
       </div>
-    </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-heading"><span>05</span><div><h2>Seguimiento</h2><p>Acciones posteriores para esta máquina</p></div></div>
+      <div class="context-actions form-followup" aria-label="Acciones de seguimiento para esta máquina">
+        <button class="btn btn-s" type="button" onclick="openKanbanForCurrentContext()">＋ Crear tarea de seguimiento</button>
+        <button class="btn btn-s" type="button" onclick="openReminderForCurrentContext()">＋ Programar recordatorio</button>
+        <button class="btn btn-s" type="button" onclick="openNoteForCurrentContext()">＋ Agregar nota técnica</button>
+      </div>
+    </section>
+
+    <section class="form-section form-signature-section">
+      <div class="form-section-heading"><span>06</span><div><h2>Firmas de conformidad</h2><p>Opcionales; puede completar una, ambas o ninguna</p></div></div>
+      <div class="card form-card form-signatures" id="sigCard" hidden>
+        <div class="form-signature-grid">
+          <div class="f">
+            <span class="lbl">CCM (opcional)</span>
+            <input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()">
+            <canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas>
+            <button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button>
+          </div>
+          <div class="f">
+            <span class="lbl">Responsable (opcional)</span>
+            <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()">
+            <canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas>
+            <button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
-  <div class="dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
+  <div class="dock form-dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
 </section>
 
 <!-- Confirmación -->
-<section id="confirm" class="screen">
-  <header class="bar">
+<section id="confirm" class="screen confirm-screen">
+  <header class="bar confirm-bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <h1>Revisar</h1>
+    <div class="confirm-bar-title"><span class="form-kicker">VALIDACIÓN FINAL</span><h1>Revisar reporte</h1></div>
   </header>
-  <div class="steps"><div class="on"></div><div class="on"></div></div>
-  <div class="body">
-    <div class="card"><div id="sum"></div>
-      <div class="fname"><span style="color:var(--muted)">Archivo</span><br><b id="fn"></b></div>
-      <div class="f" style="margin-top:16px;margin-bottom:0">
-        <span class="lbl">Formato</span>
+  <div class="form-progress" aria-label="Progreso del reporte">
+    <div class="steps"><div class="on"></div><div class="on"></div></div>
+    <div class="steps-l"><span>01 · Captura</span><span class="current">02 · Revisión</span></div>
+  </div>
+  <div class="body confirm-body">
+    <div class="confirm-intro"><span class="eyebrow">ANTES DE GENERAR</span><h2>Verifique la información</h2><p>Los puntos marcados como NO o Falla se resaltan para facilitar su identificación.</p></div>
+    <div class="card confirm-card">
+      <div id="sum" class="confirm-summary"></div>
+      <div class="fname"><span>Archivo</span><b id="fn"></b></div>
+      <div class="f confirm-format">
+        <span class="lbl">Formato de exportación</span>
         <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
           <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
           <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
@@ -302,21 +340,26 @@
       </div>
     </div>
   </div>
-  <div class="dock">
+  <div class="dock confirm-dock">
     <button class="btn btn-s" onclick="history.back()">Editar</button>
     <button class="btn btn-p" id="sendBtn" onclick="send()">Generar reporte</button>
   </div>
 </section>
 
 <!-- Resultado -->
-<section id="done" class="screen done">
-  <div class="tick">✓</div>
-  <h2 id="rTitle">Listo</h2>
-  <p id="rMsg"></p>
-  <div class="card"><span style="color:var(--muted);font-size:13px">Archivo</span><div id="rFile" style="font-weight:700;word-break:break-all;margin-top:4px"></div></div>
-  <div id="shareBtns"></div>
-  <button class="btn btn-s" style="flex:none;width:100%;margin-bottom:8px" onclick="editGeneratedReport()">Volver a editar reporte</button>
-  <button class="btn btn-p" style="flex:none;width:100%" onclick="finish()">Nuevo reporte</button>
+<section id="done" class="screen done done-screen">
+  <div class="done-content">
+    <div class="tick" aria-hidden="true">✓</div>
+    <span class="done-kicker">CHIAPLAST · MANTENIMIENTO</span>
+    <h2 id="rTitle">Reporte generado</h2>
+    <p id="rMsg"></p>
+    <div class="card done-file-card"><span>ARCHIVO GENERADO</span><div id="rFile"></div></div>
+    <div id="shareBtns" class="done-share-actions"></div>
+    <div class="done-primary-actions">
+      <button class="btn btn-s" type="button" onclick="editGeneratedReport()">Volver a editar reporte</button>
+      <button class="btn btn-p" type="button" onclick="finish()">Volver al menú</button>
+    </div>
+  </div>
 </section>
 
 <!-- Tablero Kanban -->
