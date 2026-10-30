@@ -2,7 +2,7 @@ const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; lueg
 function showHelp(){const a=document.querySelector('.screen.active');$('helpText').textContent=HELP[a&&a.id]||HELP.menu;$('helpModal').hidden=false}
 document.querySelectorAll('.screen:not(.splash):not(.login) .bar').forEach(b=>{const h=document.createElement('button');h.className='iconbtn';h.style.cssText='width:38px;height:38px;font-size:17px;margin-left:auto';h.textContent='?';h.setAttribute('aria-label','Ayuda');h.onclick=showHelp;b.appendChild(h)});
 const AppState={session:false,user:'',settings:{},history:[]};
-const Runtime={area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false};
+const Runtime={area:'',code:'',checkType:'preventive',workflow:'preventive',rows:[],machine:'',batchMode:false,release:{status:'in_progress',machineStatus:'',comments:''}};
 const LastExports=[];
 function showDone(results,title){
   $('rFile').textContent=results.map(r=>r.name).join(' · ');
@@ -241,7 +241,7 @@ function review(){
     if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
     const downtime=downtimeMinutes();if(downtime!=null)rows.push(['Tiempo muerto total',formatDowntime(downtime)]);
     if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
-    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Responsable',Signatures.responsable.name||'—'],['Firma Responsable','Firma manuscrita capturada'],['Encargado de producción',Signatures.production.name||'—'],['Firma Encargado de producción','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
+    rows.push(['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
     rows.push(['Evidencia fotográfica','',1],['Fotografías antes',preventivePhotos.before.length+' de 5'],['Fotografías después',preventivePhotos.after.length+' de 5']);
     preventivePhotos.before.forEach((photo,i)=>rows.push(['__PHOTO__ANTES '+(i+1),photo,5]));
     preventivePhotos.after.forEach((photo,i)=>rows.push(['__PHOTO__DESPUÉS '+(i+1),photo,5]));
@@ -267,7 +267,32 @@ function review(){
   }
   $('sum').innerHTML=rows.map(r=>{if(r[2])return '<div class="h2">'+esc(r[0])+'</div>';const failure=/^(NO|FALLA)$/i.test(String(r[1]||'').trim());return '<div class="row'+(failure?' row-failure':'')+'"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>'}).join('');
   $('fn').textContent=fileName();
+  $('confirmActionBtn').textContent=isDaily()?'Generar reporte':'Marcar listo para liberación';
   go('confirm');
+}
+function confirmReportAction(){if(isDaily())send();else markReadyForRelease()}
+function renderReleaseSummary(){
+ const box=$('releaseSummary');if(!box)return;
+ const rows=(Runtime.rows||[]).slice(1).filter(r=>r[2]!==5);
+ box.innerHTML='<div class="release-summary-head"><b>'+esc(Runtime.machine||Runtime.area)+'</b><span>'+esc(Runtime.area)+' · '+esc(Runtime.code)+'</span></div>'+rows.slice(0,12).map(r=>'<div class="row"><span>'+esc(r[0])+'</span><b>'+esc(r[1]||'—')+'</b></div>').join('')+'<p class="muted">'+Math.max(0,rows.length-12)+' datos adicionales incluidos en el reporte final.</p>';
+}
+function syncReleaseFields(){const r=Runtime.release||{};$('releaseMachineStatus').value=r.machineStatus||'';$('releaseComments').value=r.comments||''}
+function updateReleaseField(){Runtime.release=Runtime.release||{status:'awaiting_release',machineStatus:'',comments:''};Runtime.release.machineStatus=$('releaseMachineStatus').value;Runtime.release.comments=$('releaseComments').value;saveDraft()}
+function markReadyForRelease(){
+ if(isDaily())return send();
+ Runtime.release=Runtime.release||{};Runtime.release.status='awaiting_release';Runtime.release.machineStatus=Runtime.release.machineStatus||'';Runtime.release.comments=Runtime.release.comments||'';
+ saveDraft();renderReleaseSummary();syncReleaseFields();renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
+ go('releaseFinal');toast('Preventivo listo. Quedó en espera de liberación final.');
+}
+function editPreventiveStageOne(){
+ Runtime.release=Runtime.release||{};Runtime.release.status='in_progress';saveDraft();go('form');toast('Puede continuar editando la etapa preventiva.');
+}
+function appendFinalReleaseRows(){
+ const labels=['Visto bueno de CCM','Estado de máquina en línea','Comentarios de liberación final','Responsable de CCM','Firmante CCM','Firma CCM','Responsable','Firma Responsable','Encargado de producción','Firma Encargado de producción'];
+ const base=(Runtime.rows||[]).filter((r,i)=>i===0||!labels.includes(String(r[0]||'')));
+ const reporter=base[base.length-1]&&base[base.length-1][0]==='Reportó'?base.pop():null;
+ const finalRows=[['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Estado de máquina en línea',$('releaseMachineStatus').value||'No especificado'],['Comentarios de liberación final',$('releaseComments').value.trim()||'—'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name||'—'],['Firma CCM',Signatures.ccm.hex?'Firma manuscrita capturada':'Sin firma'],['Responsable',Signatures.responsable.name||'—'],['Firma Responsable',Signatures.responsable.hex?'Firma manuscrita capturada':'Sin firma'],['Encargado de producción',Signatures.production.name||'—'],['Firma Encargado de producción',Signatures.production.hex?'Firma manuscrita capturada':'Sin firma']];
+ Runtime.rows=[...base,...finalRows,...(reporter?[reporter]:[])];
 }
 function finish(){
   setFormState(null);resetRuntime('preventive');DailyBatch.active=false;
@@ -279,7 +304,11 @@ function draftIndex(){try{return JSON.parse(store.get(KEYS.preventiveDrafts,'[]'
 function saveDraft(){
  const key=draftStorageKey(),state=getFormState();
  store.set(key,JSON.stringify(state));
- if(!isDaily()){const all=draftIndex().filter(x=>x.key!==key);all.unshift({key,area:Runtime.area,code:Runtime.code,machine:Runtime.machine||Runtime.area,updated:state.updated});store.set(KEYS.preventiveDrafts,JSON.stringify(all.slice(0,50)))}
+ if(!isDaily()){
+  const all=draftIndex().filter(x=>x.key!==key);
+  all.unshift({key,area:Runtime.area,code:Runtime.code,machine:Runtime.machine||Runtime.area,updated:state.updated,status:(Runtime.release&&Runtime.release.status)||'in_progress'});
+  store.set(KEYS.preventiveDrafts,JSON.stringify(all.slice(0,50)));
+ }
 }
 function loadDraft(){
   let raw=null;try{raw=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
@@ -291,13 +320,13 @@ function loadDraft(){
   if(!$('productionName').value){$('productionName').value=keep.production;Signatures.production.name=keep.production.trim()}
   $('d').classList.remove('bad');$('t').classList.remove('bad');
 }
-function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('preventiveDrafts');toast('Borrador guardado. Puede retomarlo desde Preventivos en curso en la pantalla principal.')}
+function closeFormToTools(){Runtime.release=Runtime.release||{};Runtime.release.status='in_progress';saveDraft();renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();go('preventiveDrafts');toast('Borrador guardado. Puede retomarlo desde Preventivos en curso.')}
 function openPreventiveDrafts(){go('preventiveDrafts')}
-function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const n=draftIndex().filter(x=>store.get(x.key,'')).length;el.textContent=n+' en curso'}}
+function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const items=draftIndex().filter(x=>store.get(x.key,'')),waiting=items.filter(x=>x.status==='awaiting_release').length;el.textContent=items.length+' formatos · '+waiting+' por liberar'}}
 function renderSavedPreventiveDrafts(){
  const box=$('savedPreventiveDrafts');if(!box)return;
  const items=draftIndex().filter(x=>store.get(x.key,''));
- box.innerHTML=items.length?items.map(x=>'<article class="card" style="margin:0"><b>'+esc(x.machine||x.area)+'</b><small style="display:block;color:var(--muted);margin:5px 0 12px">'+esc(x.area)+' · '+esc(x.code)+' · '+esc(new Date(x.updated).toLocaleString('es-MX'))+'</small><div class="context-actions"><button class="btn btn-p" type="button" onclick="resumePreventiveDraft(&quot;'+esc(x.key)+'&quot;)">Continuar llenando</button><button class="btn btn-s" type="button" onclick="deletePreventiveDraft(&quot;'+esc(x.key)+'&quot;)" style="color:#9c1c14">Eliminar formato</button></div></article>').join(''):'<div class="empty">No hay mantenimientos preventivos guardados como borrador.</div>';
+ box.innerHTML=items.length?items.map(x=>{const waiting=x.status==='awaiting_release';return '<article class="card preventive-status-card" style="margin:0"><div class="preventive-status-top"><b>'+esc(x.machine||x.area)+'</b><span class="status-pill '+(waiting?'waiting':'progress')+'">'+(waiting?'En espera de liberación':'En curso')+'</span></div><small style="display:block;color:var(--muted);margin:5px 0 12px">'+esc(x.area)+' · '+esc(x.code)+' · '+esc(new Date(x.updated).toLocaleString('es-MX'))+'</small><div class="context-actions"><button class="btn btn-p" type="button" onclick="resumePreventiveDraft(&quot;'+esc(x.key)+'&quot;)">'+(waiting?'Continuar liberación':'Continuar llenando')+'</button>'+(waiting?'<button class="btn btn-s" type="button" onclick="editDraftPreventive(&quot;'+esc(x.key)+'&quot;)">Editar preventivo</button>':'')+'<button class="btn btn-s" type="button" onclick="deletePreventiveDraft(&quot;'+esc(x.key)+'&quot;)" style="color:#9c1c14">Eliminar formato</button></div></article>'}).join(''):'<div class="empty">No hay formatos preventivos guardados.</div>';
 }
 async function deletePreventiveDraft(key){
  const item=draftIndex().find(x=>x.key===key);
@@ -309,10 +338,16 @@ async function deletePreventiveDraft(key){
  renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
  toast('Formato preventivo eliminado.');
 }
+function editDraftPreventive(key){
+ let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
+ if(!dr||!dr.code)return;
+ resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');Runtime.release.status='in_progress';saveDraft();go('form');
+}
 function resumePreventiveDraft(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
  if(!dr||!dr.code){toast('No se encontró el borrador.');renderSavedPreventiveDrafts();return}
  resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');
+ if(dr.release&&dr.release.status==='awaiting_release'){renderReleaseSummary();syncReleaseFields();go('releaseFinal')}
 }
 function restoreSignature(who,hex){
  const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':who==='responsable'?'respSigPad':'productionSigPad');signatureClear(who);
