@@ -305,7 +305,7 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
 
 /* 6. Splash, acceso, herramientas y feedback */
 .splash{
-  position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  position:relative;align-items:center;justify-content:center;overflow:hidden;
   padding:24px;background:linear-gradient(135deg,#0e1a24 0%,#121f2d 45%,#172a36 100%);
   color:#fff;text-align:center;
 }
@@ -842,4 +842,10 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
   .area{padding:13px;min-height:92px}
   .export-choice{gap:6px}
   .export-choice label{padding:7px 4px;font-size:13px}
+}
+
+/* Teléfonos angostos: fecha y hora completas dentro de su campo */
+@media(max-width:430px){
+  .app.has-chrome .screen:not(#menu) input[type=date],
+  .app.has-chrome .screen:not(#menu) input[type=time]{font-size:16px;padding-left:10px;padding-right:8px;min-width:0}
 }
