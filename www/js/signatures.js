@@ -1,4 +1,4 @@
-/* Dos firmas independientes requeridas en mantenimiento preventivo */
+/* Firmas opcionales de conformidad para mantenimiento preventivo */
 const Signatures={ccm:{hex:'',w:0,h:0,drawing:false,name:''},responsable:{hex:'',w:0,h:0,drawing:false,name:''},production:{hex:'',w:0,h:0,drawing:false,name:''}};
 function saveSignatureNames(){store.set(KEYS.signatureNames,JSON.stringify({ccm:$('ccmName').value.trim(),responsable:$('respSigName').value.trim(),production:$('productionName').value.trim()}))}
 function signatureClear(who){const item=Signatures[who],c=$(who==='ccm'?'ccmSigPad':who==='responsable'?'respSigPad':'productionSigPad');const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);item.hex='';c.classList.remove('bad')}
