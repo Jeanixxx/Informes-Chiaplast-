@@ -579,3 +579,6 @@ body{background:var(--bg);color:var(--ink)}
 @media(prefers-reduced-motion:reduce){
  .form-checklist .seg button,.done-screen .tick{transition:none;animation:none}
 }
+
+/* Ocultar grupos exclusivos del preventivo durante el recorrido diario */
+#form[data-mode="daily"] .form-preventive-section,#form[data-mode="daily"] .form-signature-section{display:none}
