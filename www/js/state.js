@@ -19,7 +19,7 @@ const FORM_FIELDS={
 
 function getFormState(){
   const daily=isDaily(),s={v:2,flow:Runtime.checkType,code:Runtime.code,area:Runtime.area,machine:Runtime.machine||'',
-    updated:Date.now(),fields:{},choices:{},ext:extState(),signatures:{},photos:{},rows:Runtime.rows||[],release:Runtime.release||{status:'in_progress',machineStatus:'',comments:''}};
+    updated:Date.now(),fields:{},choices:{},ext:extState(),signatures:{},photos:{},release:Runtime.release||{status:'in_progress',machineStatus:'',comments:''}};
   FORM_FIELDS.text.forEach(id=>{const el=$(id);if(el&&!(daily&&FORM_FIELDS.pmOnly.includes(id)))s.fields[id]=el.value});
   FORM_FIELDS.choice.forEach(id=>{s.choices[id]=$(id).dataset.v||''});
   if(!daily)s.signatures={ccm:Signatures.ccm.hex,responsable:Signatures.responsable.hex,production:Signatures.production.hex};
