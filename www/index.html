@@ -352,7 +352,7 @@
           </div>
           <div class="f">
             <span class="lbl">Responsable (opcional)</span>
-            <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()">
+            <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames();saveDraft()">
             <canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas>
             <button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button>
           </div>
