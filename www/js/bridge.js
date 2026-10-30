@@ -6,7 +6,7 @@ const Bridge=(()=>{
     get available(){return !!native()},
     has(method){const n=native();return !!(n&&typeof n[method]==='function')}
   };
-  ['scheduleReminder','cancelReminder','saveReport','shareReport','printHtmlReport','deleteEvidence','takePhoto','pickPhoto']
+  ['scheduleReminder','cancelReminder','saveReport','shareReport','openSavedReport','printHtmlReport','deleteEvidence','takePhoto','pickPhoto']
     .forEach(m=>{api[m]=(...args)=>native()[m](...args)});
   return api;
 })();
