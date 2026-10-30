@@ -6,6 +6,28 @@ function pickPreventivePhoto(stage){if(preventivePhotos[stage].length>=5){toast(
 async function previewPreventivePhotos(input,stage){const files=Array.from(input.files||[]);input.value='';for(const file of files){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');break}if(file.type.startsWith('image/')){try{preventivePhotos[stage].push(await resizeNoteImage(file))}catch(e){toast('No se pudo preparar una foto.')}}}renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo guardar la evidencia.')}}
 async function removePreventivePhoto(stage,index){const src=preventivePhotos[stage][index];preventivePhotos[stage].splice(index,1);if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src);renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo actualizar la evidencia.')}}
 
+/* Recepción de cámara/selector nativo Android. MainActivity devuelve un JSON con la URI local. */
+window.onEvidenceCaptured=async function(raw){
+  try{
+    const item=typeof raw==='string'?JSON.parse(raw):raw;
+    if(!item||!item.uri)throw new Error('Android no devolvió la ubicación de la fotografía.');
+    if(partsPhotoTarget==='pmBefore'||partsPhotoTarget==='pmAfter'){
+      const stage=partsPhotoTarget==='pmBefore'?'before':'after';
+      if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
+      preventivePhotos[stage].push(item.uri);
+      renderPreventivePhotos();
+      await savePreventivePhotos();
+      toast('Fotografía agregada al preventivo.');
+      return;
+    }
+    if(partsPhotoTarget==='parts'){
+      if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
+      partsPhotosDraft.push(item.uri);renderPartsPhotos();await savePartsPhotos();
+      toast('Fotografía de refacción agregada.');
+    }
+  }catch(e){toast(e&&e.message?e.message:'No se pudo agregar la fotografía.')}
+};
+
 /* Refacciones y fotografías: almacenamiento local independiente por máquina */
 const partsStorageKey=()=>KEYS.parts(Runtime.code,Runtime.machine||Runtime.area);
 let preventivePhotos={before:[],after:[]};
