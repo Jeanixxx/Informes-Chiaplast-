@@ -12,9 +12,9 @@ function resetRuntime(flow,ctx={}){
 }
 
 const FORM_FIELDS={
-  text:['d','t','obs','pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz','ccmApproval','ccmName','pmObservations','respSigName'],
+  text:['d','t','obs','pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz','ccmApproval','ccmName','pmObservations','respSigName','productionName'],
   choice:['gType','gStatus'],
-  pmOnly:['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz','ccmApproval','ccmName','pmObservations','respSigName']
+  pmOnly:['pmStartDate','pmStartTime','pmStopDate','pmStopTime','motorHz','ccmApproval','ccmName','pmObservations','respSigName','productionName']
 };
 
 function getFormState(){
@@ -22,7 +22,7 @@ function getFormState(){
     updated:Date.now(),fields:{},choices:{},ext:extState(),signatures:{},photos:{}};
   FORM_FIELDS.text.forEach(id=>{const el=$(id);if(el&&!(daily&&FORM_FIELDS.pmOnly.includes(id)))s.fields[id]=el.value});
   FORM_FIELDS.choice.forEach(id=>{s.choices[id]=$(id).dataset.v||''});
-  if(!daily)s.signatures={ccm:Signatures.ccm.hex,responsable:Signatures.responsable.hex};
+  if(!daily)s.signatures={ccm:Signatures.ccm.hex,responsable:Signatures.responsable.hex,production:Signatures.production.hex};
   return s;
 }
 
@@ -32,8 +32,8 @@ function setFormState(s){
   FORM_FIELDS.choice.forEach(id=>{const x=$(id),v=c[id]||'';x.dataset.v=v;x.classList.remove('bad');
     x.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===v))});
   extLoad(s.ext||{});
-  restoreSignature('ccm',sg.ccm||'');restoreSignature('responsable',sg.responsable||'');
-  Signatures.ccm.name=($('ccmName').value||'').trim();Signatures.responsable.name=($('respSigName').value||'').trim();
+  restoreSignature('ccm',sg.ccm||'');restoreSignature('responsable',sg.responsable||'');restoreSignature('production',sg.production||'');
+  Signatures.ccm.name=($('ccmName').value||'').trim();Signatures.responsable.name=($('respSigName').value||'').trim();Signatures.production.name=($('productionName').value||'').trim();
 }
 
 /* Acepta el formato v2 y los formatos anteriores (borrador corto y lote diario viejo). */

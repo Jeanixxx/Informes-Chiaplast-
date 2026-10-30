@@ -87,7 +87,10 @@ async function specialExport(status,j){
 async function specialComplete(){
  const id=$('specialId').value,all=specialAll(),i=all.findIndex(x=>x.id===id);
  if(i<0){toast('Primero guarda el trabajo como pendiente.');return}
- const j=all[i];j.activitiesDone=specialValues('activitiesDone');j.urgent=specialValues('urgent');j.parts=specialValues('parts');j.notes=$('specialNotes').value.trim();j.start=$('specialStart').value||j.start;j.stop=$('specialStop').value||new Date().toISOString().slice(0,16);j.photos={before:specialPhotos.before.slice(),after:specialPhotos.after.slice()};j.status='done';j.updated=Date.now();
+ const j=all[i],start=$('specialStart').value||j.start,stop=$('specialStop').value;
+ if(!stop){toast('Indica la fecha y hora de término antes de liberar el formato.');$('specialStop').focus();return}
+ if(start&&stop<start){toast('La fecha de término no puede ser anterior al inicio.');$('specialStop').focus();return}
+ j.activitiesDone=specialValues('activitiesDone');j.urgent=specialValues('urgent');j.parts=specialValues('parts');j.notes=$('specialNotes').value.trim();j.start=start;j.stop=stop;j.photos={before:specialPhotos.before.slice(),after:specialPhotos.after.slice()};j.status='done';j.updated=Date.now();
  if(!j.activitiesDone.length&&!window.confirm('No registraste actividades realizadas. ¿Cerrar de todos modos?'))return;
  all[i]=j;if(!specialPutAll(all)){toast('No se pudo guardar el cierre.');return}
  specialRender();$('specialFormStatus').textContent='TERMINADA';await specialExport('done',j);toast('Trabajo cerrado y guardado en el historial.');

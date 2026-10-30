@@ -71,6 +71,7 @@
         <button class="dashboard-area" onclick="openReminders()"><b><i>03</i><em id="menuReminderCount">0 pendientes</em></b><strong>Recordatorios</strong><small>Próximos avisos y tareas programadas</small><span>Ver recordatorios →</span></button>
         <button class="dashboard-area" onclick="openNotes()"><b><i>04</i><em>Bitácora local</em></b><strong>Notas técnicas y evidencias</strong><small>Notas de intervención y fotografías</small><span>Abrir notas →</span></button>
         <button class="dashboard-area" onclick="openSpecialWorks()"><b><i>05</i><em id="specialWorkCount">0 pendientes</em></b><strong>Trabajos especiales</strong><small>Órdenes pendientes y formatos de término</small><span>Ver trabajos →</span></button>
+        <button class="dashboard-area" onclick="openPreventiveDrafts()"><b><i>06</i><em id="preventiveDraftCount">0 en curso</em></b><strong>Preventivos en curso</strong><small>Retomar, continuar o eliminar formatos guardados</small><span>Ver preventivos →</span></button>
       </div>
     </section>
     <section class="dashboard-panel" style="margin-top:18px">
@@ -210,13 +211,14 @@
       <div class="card form-card" id="preventiveTimesCard" hidden>
         <h3>Tiempo de intervención</h3>
         <div class="two">
-          <div class="f"><label for="pmStartDate">Fecha de inicio</label><input id="pmStartDate" type="date" onchange="saveDraft()"></div>
-          <div class="f"><label for="pmStartTime">Hora de inicio</label><input id="pmStartTime" type="time" onchange="saveDraft()"></div>
+          <div class="f"><label for="pmStartDate">Fecha de inicio</label><input id="pmStartDate" type="date" onchange="saveDraft();updateDowntimeTotal()"></div>
+          <div class="f"><label for="pmStartTime">Hora de inicio</label><input id="pmStartTime" type="time" onchange="saveDraft();updateDowntimeTotal()"></div>
         </div>
         <div class="two">
-          <div class="f"><label for="pmStopDate">Fecha de parada / término</label><input id="pmStopDate" type="date" onchange="saveDraft()"></div>
-          <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft()"></div>
+          <div class="f"><label for="pmStopDate">Fecha de parada / término</label><input id="pmStopDate" type="date" onchange="saveDraft();updateDowntimeTotal()"></div>
+          <div class="f"><label for="pmStopTime">Hora de parada / término</label><input id="pmStopTime" type="time" onchange="saveDraft();updateDowntimeTotal()"></div>
         </div>
+        <div id="downtimeTotal" class="downtime-total" aria-live="polite">Tiempo muerto total: completa inicio y término.</div>
         <small>Si el mantenimiento sigue en curso, puede dejar vacíos los campos de parada.</small>
       </div>
       <div class="card form-card" id="motorHzCard" hidden>
@@ -307,6 +309,12 @@
             <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()">
             <canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas>
             <button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button>
+          </div>
+          <div class="f">
+            <span class="lbl">Encargado de producción (opcional)</span>
+            <input id="productionName" maxlength="60" placeholder="Nombre del encargado de producción" oninput="this.classList.remove('bad');Signatures.production.name=this.value.trim();saveSignatureNames();saveDraft()">
+            <canvas id="productionSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del encargado de producción"></canvas>
+            <button class="link" type="button" onclick="signatureClear('production')">Borrar firma de producción</button>
           </div>
         </div>
       </div>
@@ -499,9 +507,13 @@
     <h1>Herramientas de MTTO</h1>
   </header>
   <div class="body">
-    <div class="card"><h2 style="margin-top:0">Preventivos en curso</h2><p class="muted">Continúe un reporte que guardó para terminarlo más tarde.</p><div id="savedPreventiveDrafts" class="dashboard-tools"></div></div>
-    <button class="btn" style="width:100%;flex:none;background:#fbe4e1;color:#9c1c14" onclick="logout()">Cerrar uso local</button>
+    <div class="card"><h2 style="margin-top:0">Sesión local</h2><p class="muted">Los datos de mantenimiento permanecen guardados en este dispositivo.</p><button class="btn" style="width:100%;flex:none;background:#e0f3e8;color:#176b45" onclick="logout()">Cerrar uso local</button></div>
   </div>
+</section>
+
+<section id="preventiveDrafts" class="screen">
+  <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Preventivos en curso</h1></header>
+  <div class="body"><div class="card"><p class="muted">Continúe un reporte que guardó para terminarlo más tarde.</p><div id="savedPreventiveDrafts" class="dashboard-tools"></div></div></div>
 </section>
 
 <div id="helpModal" class="helpm" hidden onclick="this.hidden=true"><div class="helpbox"><p id="helpText"></p><button class="btn btn-p">Entendido</button></div></div>
