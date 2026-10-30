@@ -312,7 +312,8 @@ function buildPdf(rows,sig){
   return new Blob([pdf],{type:PDF_MIME});
 }
 function selectedExport(name){
-  const input=document.querySelector('input[name="'+name+'"]:checked');
+  const active=document.querySelector('.screen.active');
+  const input=(active&&active.querySelector('input[name="'+name+'"]:checked'))||document.querySelector('input[name="'+name+'"]:checked');
   return input?input.value:'excel';
 }
 async function resolveReportEvidence(rows){
@@ -343,7 +344,7 @@ async function generateExports(rows,baseName,choice,sig){
   return results;
 }
 async function send(){
-  const b=$('sendBtn');b.disabled=true;offerFailureFollowup();currentReportFolio='';
+  const b=$('sendBtn')||$('confirmActionBtn');b.disabled=true;offerFailureFollowup();currentReportFolio='';
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
     if(!isDaily()){
