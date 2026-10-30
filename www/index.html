@@ -313,6 +313,14 @@
     <div class="card confirm-card">
       <div id="sum" class="confirm-summary"></div>
       <div class="fname"><span>Archivo</span><b id="fn"></b></div>
+      <div class="f confirm-format" id="dailyExportChoice" hidden>
+        <span class="lbl">Formato de exportación del chequeo diario</span>
+        <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
+          <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
+          <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
+          <label><input type="radio" name="exportChoice" value="both"> Ambos</label>
+        </div>
+      </div>
     </div>
   </div>
   <div class="dock confirm-dock">
