@@ -177,6 +177,7 @@ function startCheck(kind){
     ['gType','gStatus'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===$(id).dataset.v)));
     extLoad({});
   }else loadDraft();
+  updateDowntimeTotal();
   go('form');buzz(10);
 }
 const isDaily=()=>Runtime.checkType==='daily';
@@ -283,10 +284,11 @@ function saveDraft(){
 function loadDraft(){
   let raw=null;try{raw=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
   const s=normalizeDraft(raw),ok=!!s&&s.code===Runtime.code&&(s.flow||'preventive')===Runtime.checkType;
-  const keep={d:$('d').value,t:$('t').value,resp:$('respSigName').value};
+  const keep={d:$('d').value,t:$('t').value,resp:$('respSigName').value,production:$('productionName').value};
   setFormState(ok?s:null);
   $('d').value=$('d').value||keep.d;$('t').value=$('t').value||keep.t;
   if(!$('respSigName').value){$('respSigName').value=keep.resp;Signatures.responsable.name=keep.resp.trim()}
+  if(!$('productionName').value){$('productionName').value=keep.production;Signatures.production.name=keep.production.trim()}
   $('d').classList.remove('bad');$('t').classList.remove('bad');
 }
 function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('preventiveDrafts');toast('Borrador guardado. Puede continuar después desde Herramientas de MTTO.')}
