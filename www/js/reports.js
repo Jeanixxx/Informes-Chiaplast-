@@ -255,6 +255,7 @@ function buildPdf(rows,sig){
   photoRows.forEach((r,index)=>{newPage();pagePhotoRefs[pages.length-1]=index;const dim=photoDimensions(r[1]),scale=Math.min(CW/dim.w,650/dim.h),iw=dim.w*scale,ih=dim.h*scale,x=(W-iw)/2,top=110;T(M,72,'EVIDENCIA FOTOGRÁFICA · '+String(r[0]).replace('__PHOTO__',''),13,true,STEEL);ops.push('q '+iw.toFixed(2)+' 0 0 '+ih.toFixed(2)+' '+x.toFixed(2)+' '+(H-top-ih).toFixed(2)+' cm /Img1 Do Q')});
   const hasPreventiveSignatures=rows.some(q=>/visto bueno de ccm/i.test(String(q[0]||'')));
   if(sig||hasPreventiveSignatures){
+    if(photoRows.length)newPage();
     ensure(150);y+=20;
     R(M,y,CW,20,STEEL);T(M+8,y+14,'Firmas de conformidad',10,true,'1 1 1');y+=20;
     const gap=12,boxW=(CW-gap)/2,boxH=112,leftX=M,rightX=M+boxW+gap;

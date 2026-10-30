@@ -10,21 +10,28 @@ async function removePreventivePhoto(stage,index){const src=preventivePhotos[sta
 window.onEvidenceCaptured=async function(raw){
   try{
     const item=typeof raw==='string'?JSON.parse(raw):raw;
-    if(!item||!item.uri)throw new Error('Android no devolvió la ubicación de la fotografía.');
+    if(!item||(!item.uri&&!item.dataUrl))throw new Error('Android no devolvió la fotografía.');
+    const response=await fetch(item.dataUrl||item.uri);
+    if(!response.ok)throw new Error('No se pudo leer la fotografía seleccionada.');
+    const photo=await resizeNoteImage(await response.blob());
     if(partsPhotoTarget==='pmBefore'||partsPhotoTarget==='pmAfter'){
       const stage=partsPhotoTarget==='pmBefore'?'before':'after';
       if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
-      preventivePhotos[stage].push(item.uri);
+      preventivePhotos[stage].push(photo);
       renderPreventivePhotos();
       await savePreventivePhotos();
+      if(item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri);
       toast('Fotografía agregada al preventivo.');
       return;
     }
     if(partsPhotoTarget==='parts'){
       if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
-      partsPhotosDraft.push(item.uri);renderPartsPhotos();await savePartsPhotos();
+      partsPhotosDraft.push(photo);renderPartsPhotos();await savePartsPhotos();
+      if(item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri);
       toast('Fotografía de refacción agregada.');
+      return;
     }
+    if(item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri);
   }catch(e){toast(e&&e.message?e.message:'No se pudo agregar la fotografía.')}
 };
 
@@ -49,6 +56,25 @@ async function loadPartsPhotos(){
     const photos=await new Promise((resolve,reject)=>{const tx=db.transaction('photos','readonly'),req=tx.objectStore('photos').get(key);req.onsuccess=()=>resolve(req.result&&Array.isArray(req.result.photos)?req.result.photos:[]);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close()});
     partsPhotosDraft=photos.slice(0,5);renderPartsPhotos();
   }catch(e){partsPhotosDraft=[];renderPartsPhotos();toast('No se pudieron cargar las fotografías guardadas.')}
+}
+async function deletePreventiveEvidenceForMachine(code,machine){
+  const keys=[KEYS.pmEvidence(code,machine),KEYS.partsPhotos(code,machine)];
+  const db=await openPartsPhotosDB();
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction('photos','readwrite'),os=tx.objectStore('photos');
+    keys.forEach(key=>{
+      const req=os.get(key);
+      req.onsuccess=()=>{
+        const record=req.result;
+        if(record&&Array.isArray(record.photos))record.photos.forEach(src=>{if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src)});
+        if(record&&record.photos&&record.photos.before)Object.values(record.photos).flat().forEach(src=>{if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src)});
+        os.delete(key);
+      };
+      req.onerror=()=>reject(req.error);
+    });
+    tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+  db.close();
 }
 async function savePartsPhotos(){
   const db=await openPartsPhotosDB(),record={key:partsPhotosKey(),photos:partsPhotosDraft.slice(0,5),updated:Date.now()};

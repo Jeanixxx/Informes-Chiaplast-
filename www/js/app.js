@@ -190,12 +190,6 @@ function review(){
     document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||!Number.isFinite(Number(x))){i.classList.add('bad');bad=bad||i}});
     if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
   }
-  if(!isDaily()){
-    if(!Signatures.ccm.name){$('ccmName').classList.add('bad');bad=bad||$('ccmName')}
-    if(!Signatures.ccm.hex){$('ccmSigPad').classList.add('bad');bad=bad||$('ccmSigPad')}
-    if(!Signatures.responsable.name){$('respSigName').classList.add('bad');bad=bad||$('respSigName')}
-    if(!Signatures.responsable.hex){$('respSigPad').classList.add('bad');bad=bad||$('respSigPad')}
-  }
   if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
   const dailyMeasurements=isDaily()&&isExt();
   const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
@@ -203,7 +197,7 @@ function review(){
     if($('pmStartDate').value||$('pmStartTime').value)rows.push(['Inicio de mantenimiento',($('pmStartDate').value?fmtD($('pmStartDate').value):'')+' '+$('pmStartTime').value]);
     if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
     if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
-    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Firmante Responsable',Signatures.responsable.name],['Firma Responsable','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
+    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Responsable',Signatures.responsable.name||'—'],['Firma Responsable','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
     rows.push(['Evidencia fotográfica','',1],['Fotografías antes',preventivePhotos.before.length+' de 5'],['Fotografías después',preventivePhotos.after.length+' de 5']);
     preventivePhotos.before.forEach((photo,i)=>rows.push(['__PHOTO__ANTES '+(i+1),photo,5]));
     preventivePhotos.after.forEach((photo,i)=>rows.push(['__PHOTO__DESPUÉS '+(i+1),photo,5]));
@@ -216,7 +210,8 @@ function review(){
     if(parts.length)parts.forEach(p=>rows.push([p.name,p.quantity,0]));
     else rows.push(['Sin refacciones registradas','—',0]);
     saveParts();
-    rows.push(['Evidencia fotográfica','',1],['Fotografías anexas',String(partsPhotosDraft.length)+' fotografía(s) guardadas en el dispositivo',0]);
+    rows.push(['Evidencia fotográfica','',1],['Fotografías de refacciones',String(partsPhotosDraft.length)+' fotografía(s)',0]);
+    partsPhotosDraft.forEach((photo,i)=>rows.push(['__PHOTO__REFACCIÓN '+(i+1),photo,5]));
   }
   rows.push(['Observaciones',$('obs').value.trim()||'—']);
   Runtime.rows=[['Campo','Valor']].concat(rows,[['Reportó',currentUser()||'—']]);
@@ -255,7 +250,17 @@ function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('tools'
 function renderSavedPreventiveDrafts(){
  const box=$('savedPreventiveDrafts');if(!box)return;
  const items=draftIndex().filter(x=>store.get(x.key,''));
- box.innerHTML=items.length?items.map(x=>'<button class="dashboard-area" type="button" onclick="resumePreventiveDraft(&quot;'+esc(x.key)+'&quot;)"><b><i>↻</i><em>'+esc(new Date(x.updated).toLocaleString('es-MX'))+'</em></b><strong>'+esc(x.machine||x.area)+'</strong><small>'+esc(x.area)+' · '+esc(x.code)+'</small><span>Continuar llenando →</span></button>').join(''):'<div class="empty">No hay mantenimientos preventivos guardados como borrador.</div>';
+ box.innerHTML=items.length?items.map(x=>'<article class="card" style="margin:0"><b>'+esc(x.machine||x.area)+'</b><small style="display:block;color:var(--muted);margin:5px 0 12px">'+esc(x.area)+' · '+esc(x.code)+' · '+esc(new Date(x.updated).toLocaleString('es-MX'))+'</small><div class="context-actions"><button class="btn btn-p" type="button" onclick="resumePreventiveDraft(&quot;'+esc(x.key)+'&quot;)">Continuar llenando</button><button class="btn btn-s" type="button" onclick="deletePreventiveDraft(&quot;'+esc(x.key)+'&quot;)" style="color:#9c1c14">Eliminar formato</button></div></article>').join(''):'<div class="empty">No hay mantenimientos preventivos guardados como borrador.</div>';
+}
+async function deletePreventiveDraft(key){
+ const item=draftIndex().find(x=>x.key===key);
+ if(!item){renderSavedPreventiveDrafts();return}
+ if(!window.confirm('¿Eliminar definitivamente el preventivo en curso de '+(item.machine||item.area)+'? Esta acción no se puede deshacer.'))return;
+ store.del(key);
+ store.set(KEYS.preventiveDrafts,JSON.stringify(draftIndex().filter(x=>x.key!==key)));
+ try{if(typeof deletePreventiveEvidenceForMachine==='function')await deletePreventiveEvidenceForMachine(item.code,item.machine||item.area)}catch(e){}
+ renderSavedPreventiveDrafts();
+ toast('Formato preventivo eliminado.');
 }
 function resumePreventiveDraft(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
