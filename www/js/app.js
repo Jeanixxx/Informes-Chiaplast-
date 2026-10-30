@@ -27,7 +27,7 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics();renderSavedPreventiveDraftCount()}
+  if(id==='menu'){renderRecent();renderHomeFollowup();renderSavedPreventiveDraftCount()}
   if(id==='preventiveDrafts')renderSavedPreventiveDrafts();
   if(id==='specialWorks')specialRender();
   if(id==='preventiveBoard')renderPmBoard();
