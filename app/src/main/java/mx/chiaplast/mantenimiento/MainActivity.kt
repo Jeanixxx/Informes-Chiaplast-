@@ -162,6 +162,29 @@ class MainActivity : AppCompatActivity() {
             } catch (_: Exception) { "error" }
         }
 
+        @JavascriptInterface fun openSavedReport(fileName: String, mime: String): String {
+            return try {
+                val projection = arrayOf(MediaStore.Downloads._ID)
+                val selection = MediaStore.Downloads.DISPLAY_NAME + "=? AND " + MediaStore.Downloads.RELATIVE_PATH + "=?"
+                val args = arrayOf(fileName, Environment.DIRECTORY_DOWNLOADS + "/Chiaplast/")
+                val uri = contentResolver.query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    projection, selection, args, MediaStore.Downloads.DATE_ADDED + " DESC"
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID))
+                        Uri.withAppendedPath(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id.toString())
+                    } else null
+                } ?: return "not_found"
+                val view = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, mime.ifBlank { "application/pdf" })
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread { startActivity(Intent.createChooser(view, "Abrir reporte PDF")) }
+                "ok"
+            } catch (_: Exception) { "error" }
+        }
+
         @JavascriptInterface fun shareReport(fileName: String, mime: String, base64: String): String {
             return try {
                 val dir = File(cacheDir, "share_reports")

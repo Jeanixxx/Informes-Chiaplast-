@@ -344,7 +344,7 @@ async function send(){
     const exportRows=singleReportDoc(resolvedRows,[]);
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()?null:{ccm:Signatures.ccm,responsable:Signatures.responsable});
     showDone(results,'Reporte generado');
-    addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});
+    addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),files:results.map(r=>({name:r.name,format:r.format,mime:r.format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});
     store.del(draftStorageKey());buzz([20,50,20]);history.replaceState({s:'done'},'');show('done');
   }catch(e){toast(e.message||'No se pudo generar el archivo.');buzz([30,40,30])}
   finally{b.disabled=false;b.textContent='Generar reporte'}
