@@ -346,12 +346,12 @@ async function send(){
   const b=$('sendBtn');b.disabled=true;offerFailureFollowup();currentReportFolio=currentFolio();const baseName=fileName();
   try{
     b.innerHTML='<span class="spin"></span>Generando…';
-    const resolvedRows=await resolveReportEvidence(Runtime.rows.slice(1));
-    const exportRows=singleReportDoc(resolvedRows,[]);
     if(!isDaily()){
-      if(!$('releaseMachineStatus').value){toast('Indica cómo funciona la máquina en la línea antes de liberar.');$('releaseMachineStatus').focus();throw new Error('Falta registrar la verificación de funcionamiento en producción.')}
+      if(!$('releaseMachineStatus').value){$('releaseMachineStatus').focus();throw new Error('Indica cómo funciona la máquina en la línea antes de liberar.')}
       updateReleaseField();appendFinalReleaseRows();Runtime.release.status='released';saveDraft();
     }
+    const resolvedRows=await resolveReportEvidence(Runtime.rows.slice(1));
+    const exportRows=singleReportDoc(resolvedRows,[]);
     const results=await generateExports(exportRows,baseName,selectedExport('exportChoice'),isDaily()?null:{ccm:Signatures.ccm,responsable:Signatures.responsable,production:Signatures.production});
     showDone(results,'Reporte generado');
     addRecent({id:currentReportFolio,folio:currentReportFolio,n:results.map(r=>r.name).join(', '),files:results.map(r=>({name:r.name,format:r.format,mime:r.format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a:Runtime.area,m:Runtime.machine||'',w:fmtD($('d').value)+' '+$('t').value,k:Runtime.checkType,rows:exportRows});
