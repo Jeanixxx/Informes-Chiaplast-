@@ -27,8 +27,8 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
-  if(id==='menu'){renderRecent();renderHomeFollowup()}
-  if(id==='tools')renderSavedPreventiveDrafts();
+  if(id==='menu'){renderRecent();renderHomeFollowup();renderDashboardMetrics();renderSavedPreventiveDraftCount()}
+  if(id==='preventiveDrafts')renderSavedPreventiveDrafts();
   if(id==='specialWorks')specialRender();
   if(id==='preventiveBoard')renderPmBoard();
   if(id==='preventiveCalendar')renderPreventiveCalendar();
@@ -110,6 +110,22 @@ addEventListener('popstate',e=>{
 });
 const isIn=()=>AppState.session || store.get(KEYS.session,'false')==='true';
 
+function downtimeMinutes(){
+  const sd=$('pmStartDate')?.value,st=$('pmStartTime')?.value,ed=$('pmStopDate')?.value,et=$('pmStopTime')?.value;
+  if(!sd||!st||!ed||!et)return null;
+  const start=new Date(sd+'T'+st),stop=new Date(ed+'T'+et),minutes=Math.round((stop-start)/60000);
+  return Number.isFinite(minutes)&&minutes>=0?minutes:null;
+}
+function formatDowntime(minutes){
+  if(minutes==null)return 'Sin calcular';
+  const days=Math.floor(minutes/1440),hours=Math.floor((minutes%1440)/60),mins=minutes%60;
+  return [days?days+' día(s)':'',hours?hours+' h':'',mins?mins+' min':''].filter(Boolean).join(' ')||'0 min';
+}
+function updateDowntimeTotal(){
+  const el=$('downtimeTotal');if(!el)return;
+  const minutes=downtimeMinutes();
+  el.textContent=minutes==null?'Tiempo muerto total: completa inicio y término.':'Tiempo muerto total: '+formatDowntime(minutes);
+}
 function setNow(){const n=new Date();$('d').value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());$('t').value=pad(n.getHours())+':'+pad(n.getMinutes());$('d').classList.remove('bad');$('t').classList.remove('bad')}
 
 /* Sesión */
@@ -149,7 +165,7 @@ function startCheck(kind){
   preventivePhotos={before:[],after:[]};renderPreventivePhotos();
 
   if(kind==='preventive'){loadParts();loadPartsPhotos();loadPreventivePhotos();}
-  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get(KEYS.signatureNames,'{}'));$('ccmName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||''}catch(e){}
+  $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get(KEYS.signatureNames,'{}'));$('ccmName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';$('productionName').value=saved.production||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||'';Signatures.production.name=saved.production||''}catch(e){}
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
   setNow();$('ph').hidden=true;
@@ -192,6 +208,7 @@ function review(){
     if((sd&&!stt)||(!sd&&stt)){toast('Completa fecha y hora de inicio, o deja ambos vacíos.');bad=$(!sd?'pmStartDate':'pmStartTime')}
     if((ed&&!ett)||(!ed&&ett)){toast('Completa fecha y hora de parada, o deja ambos vacíos.');bad=bad||$(!ed?'pmStopDate':'pmStopTime')}
     if(sd&&ed&&(ed+'T'+ett)<(sd+'T'+stt)){toast('La parada no puede ser anterior al inicio.');bad=bad||$('pmStopDate')}
+    updateDowntimeTotal();
     if(isExt()&&$('motorHz').value.trim()!==''&&(!Number.isFinite(Number($('motorHz').value))||Number($('motorHz').value)<0)){toast('Indica una frecuencia válida en Hz.');bad=bad||$('motorHz')}
   }
   if(!d||!t){toast('Indica la fecha y la hora.');bad=$(!d?'d':'t')}
@@ -221,8 +238,9 @@ function review(){
   if(!isDaily()){
     if($('pmStartDate').value||$('pmStartTime').value)rows.push(['Inicio de mantenimiento',($('pmStartDate').value?fmtD($('pmStartDate').value):'')+' '+$('pmStartTime').value]);
     if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
+    const downtime=downtimeMinutes();if(downtime!=null)rows.push(['Tiempo muerto total',formatDowntime(downtime)]);
     if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
-    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Responsable',Signatures.responsable.name||'—'],['Firma Responsable','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
+    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Responsable',Signatures.responsable.name||'—'],['Firma Responsable','Firma manuscrita capturada'],['Encargado de producción',Signatures.production.name||'—'],['Firma Encargado de producción','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
     rows.push(['Evidencia fotográfica','',1],['Fotografías antes',preventivePhotos.before.length+' de 5'],['Fotografías después',preventivePhotos.after.length+' de 5']);
     preventivePhotos.before.forEach((photo,i)=>rows.push(['__PHOTO__ANTES '+(i+1),photo,5]));
     preventivePhotos.after.forEach((photo,i)=>rows.push(['__PHOTO__DESPUÉS '+(i+1),photo,5]));
@@ -271,7 +289,9 @@ function loadDraft(){
   if(!$('respSigName').value){$('respSigName').value=keep.resp;Signatures.responsable.name=keep.resp.trim()}
   $('d').classList.remove('bad');$('t').classList.remove('bad');
 }
-function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('tools');toast('Borrador guardado. Puede continuar después desde Herramientas de MTTO.')}
+function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('preventiveDrafts');toast('Borrador guardado. Puede continuar después desde Herramientas de MTTO.')}
+function openPreventiveDrafts(){go('preventiveDrafts')}
+function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const n=draftIndex().filter(x=>store.get(x.key,'')).length;el.textContent=n+' en curso'}}
 function renderSavedPreventiveDrafts(){
  const box=$('savedPreventiveDrafts');if(!box)return;
  const items=draftIndex().filter(x=>store.get(x.key,''));
@@ -284,7 +304,7 @@ async function deletePreventiveDraft(key){
  store.del(key);
  store.set(KEYS.preventiveDrafts,JSON.stringify(draftIndex().filter(x=>x.key!==key)));
  try{if(typeof deletePreventiveEvidenceForMachine==='function')await deletePreventiveEvidenceForMachine(item.code,item.machine||item.area)}catch(e){}
- renderSavedPreventiveDrafts();
+ renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
  toast('Formato preventivo eliminado.');
 }
 function resumePreventiveDraft(key){
@@ -293,7 +313,7 @@ function resumePreventiveDraft(key){
  resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');
 }
 function restoreSignature(who,hex){
- const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':'respSigPad');signatureClear(who);
+ const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':who==='responsable'?'respSigPad':'productionSigPad');signatureClear(who);
  if(!hex)return;const ctx=canvas.getContext('2d'),img=ctx.createImageData(300,100);
  for(let i=0;i<300*100;i++){const v=parseInt(hex.slice(i*2,i*2+2),16)||255,j=i*4;img.data[j]=img.data[j+1]=img.data[j+2]=v;img.data[j+3]=255}
  const tmp=document.createElement('canvas');tmp.width=300;tmp.height=100;tmp.getContext('2d').putImageData(img,0,0);ctx.drawImage(tmp,0,0,canvas.width,canvas.height);item.hex=hex;item.w=300;item.h=100;
