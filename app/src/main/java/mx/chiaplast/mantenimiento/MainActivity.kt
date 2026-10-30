@@ -1,5 +1,8 @@
 package mx.chiaplast.mantenimiento
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import java.io.ByteArrayOutputStream
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
@@ -275,9 +278,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun returnEvidence(file: File, fallbackName: String) {
-        val webUri = "https://appassets.androidplatform.net/evidence/${Uri.encode(file.name)}"
-        val data = JSONObject().put("uri", webUri).put("name", fallbackName).put("createdAt", System.currentTimeMillis())
-        val js = "window.onEvidenceCaptured && window.onEvidenceCaptured(${JSONObject.quote(data.toString())})"
-        runOnUiThread { webView.evaluateJavascript(js, null) }
+        try {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(file.absolutePath, bounds)
+            var sample = 1
+            while (bounds.outWidth / sample > 2560 || bounds.outHeight / sample > 2560) sample *= 2
+            val decoded = BitmapFactory.decodeFile(file.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
+                ?: throw IllegalStateException("No se pudo decodificar la fotografía")
+            val scale = minOf(1f, 1280f / maxOf(decoded.width, decoded.height))
+            val resized = if (scale < 1f) Bitmap.createScaledBitmap(decoded, (decoded.width * scale).toInt().coerceAtLeast(1), (decoded.height * scale).toInt().coerceAtLeast(1), true) else decoded
+            val output = ByteArrayOutputStream()
+            resized.compress(Bitmap.CompressFormat.JPEG, 68, output)
+            if (resized !== decoded) resized.recycle()
+            decoded.recycle()
+            val base64 = android.util.Base64.encodeToString(output.toByteArray(), android.util.Base64.NO_WRAP)
+            val webUri = "https://appassets.androidplatform.net/evidence/${Uri.encode(file.name)}"
+            val data = JSONObject()
+                .put("uri", webUri)
+                .put("dataUrl", "data:image/jpeg;base64," + base64)
+                .put("name", fallbackName)
+                .put("createdAt", System.currentTimeMillis())
+            val js = "window.onEvidenceCaptured && window.onEvidenceCaptured(${JSONObject.quote(data.toString())})"
+            runOnUiThread { webView.evaluateJavascript(js, null) }
+        } catch (_: Exception) {
+            runOnUiThread { webView.evaluateJavascript("window.toast && window.toast('No se pudo preparar la fotografía seleccionada')", null) }
+        }
     }
 }
