@@ -342,10 +342,10 @@ async function deletePreventiveDraft(key){
  renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
  toast('Formato preventivo eliminado.');
 }
-function editDraftPreventive(key){
+async function editDraftPreventive(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
  if(!dr||!dr.code)return;
- resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');Runtime.release.status='in_progress';saveDraft();go('form');
+ resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});await startCheck('preventive');Runtime.release.status='in_progress';saveDraft();go('form');
 }
 async function resumePreventiveDraft(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
