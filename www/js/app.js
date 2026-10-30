@@ -314,9 +314,10 @@ function saveDraft(){
 function loadDraft(){
   let raw=null;try{raw=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
   const s=normalizeDraft(raw),ok=!!s&&s.code===Runtime.code&&(s.flow||'preventive')===Runtime.checkType;
-  const keep={d:$('d').value,t:$('t').value,resp:$('respSigName').value,production:$('productionName').value};
+  const keep={d:$('d').value,t:$('t').value,ccm:$('ccmName').value,resp:$('respSigName').value,production:$('productionName').value};
   setFormState(ok?s:null);
   $('d').value=$('d').value||keep.d;$('t').value=$('t').value||keep.t;
+  if(!$('ccmName').value){$('ccmName').value=keep.ccm;Signatures.ccm.name=keep.ccm.trim()}
   if(!$('respSigName').value){$('respSigName').value=keep.resp;Signatures.responsable.name=keep.resp.trim()}
   if(!$('productionName').value){$('productionName').value=keep.production;Signatures.production.name=keep.production.trim()}
   $('d').classList.remove('bad');$('t').classList.remove('bad');
@@ -348,7 +349,11 @@ function resumePreventiveDraft(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
  if(!dr||!dr.code){toast('No se encontró el borrador.');renderSavedPreventiveDrafts();return}
  resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');
- if(dr.release&&dr.release.status==='awaiting_release'){renderReleaseSummary();syncReleaseFields();go('releaseFinal')}
+ if(dr.release&&dr.release.status==='awaiting_release'){
+  review();
+  if($('confirm').classList.contains('active')){renderReleaseSummary();syncReleaseFields();go('releaseFinal')}
+  else toast('El preventivo necesita revisión antes de continuar con la liberación.');
+ }
 }
 function restoreSignature(who,hex){
  const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':who==='responsable'?'respSigPad':'productionSigPad');signatureClear(who);
