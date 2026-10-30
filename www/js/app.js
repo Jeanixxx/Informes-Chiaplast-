@@ -221,7 +221,7 @@ function review(){
     DailyBatch.editIndex=-1;saveDailyBatch();renderDailyBatch();$('obs').value='';extLoad({});
     go('dailyBatch');toast('Máquina agregada.');return;
   }
-  $('sum').innerHTML=rows.map(r=>r[2]?'<div class="h2" style="margin:16px 0 2px">'+esc(r[0])+'</div>':'<div class="row"><span>'+esc(r[0])+'</span><b'+(/^(NO|Falla)$/.test(r[1])?' style="color:var(--err)"':'')+'>'+esc(r[1])+'</b></div>').join('');
+  $('sum').innerHTML=rows.map(r=>{if(r[2])return '<div class="h2">'+esc(r[0])+'</div>';const failure=/^(NO|FALLA)$/i.test(String(r[1]||'').trim());return '<div class="row'+(failure?' row-failure':'')+'"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>'}).join('');
   $('fn').textContent=fileName();
   go('confirm');
 }
