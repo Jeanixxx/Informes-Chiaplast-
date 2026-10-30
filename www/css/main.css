@@ -529,7 +529,7 @@ body{background:var(--bg);color:var(--ink)}
 .confirm-summary .row{gap:12px;padding:11px 8px;border-bottom:1px solid var(--line);border-radius:7px}
 .confirm-summary .row span{font-size:13px}
 .confirm-summary .row b{font-size:13px}
-.confirm-summary .row.row-failure{margin:3px 0;padding:11px 10px;background:var(--err-soft,#fbe8e7);border:1px solid color-mix(in srgb,var(--err) 35%,transparent);border-left:4px solid var(--err)}
+.confirm-summary .row.row-failure{margin:3px 0;padding:11px 10px;background:var(--err-soft,#fbe8e7);border:1px solid var(--err);border-left:4px solid var(--err)}
 .confirm-summary .row.row-failure span,.confirm-summary .row.row-failure b{color:var(--err);font-weight:850}
 .confirm-card .fname{margin-top:16px;border:1px solid var(--line);background:var(--bg)}
 .confirm-card .fname span{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em}
@@ -582,3 +582,5 @@ body{background:var(--bg);color:var(--ink)}
 
 /* Ocultar grupos exclusivos del preventivo durante el recorrido diario */
 #form[data-mode="daily"] .form-preventive-section,#form[data-mode="daily"] .form-signature-section{display:none}
+
+#form #ext[hidden]{display:none!important}
