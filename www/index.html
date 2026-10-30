@@ -302,14 +302,14 @@
 <section id="confirm" class="screen confirm-screen">
   <header class="bar confirm-bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <div class="confirm-bar-title"><span class="form-kicker">VALIDACIÓN FINAL</span><h1>Revisar reporte</h1></div>
+    <div class="confirm-bar-title"><span class="form-kicker">ETAPA 1 · REVISIÓN</span><h1>Revisar preventivo</h1></div>
   </header>
   <div class="form-progress" aria-label="Progreso del reporte">
     <div class="steps"><div class="on"></div><div class="on"></div></div>
     <div class="steps-l"><span>01 · Captura</span><span class="current">02 · Revisión</span></div>
   </div>
   <div class="body confirm-body">
-    <div class="confirm-intro"><span class="eyebrow">ANTES DE GENERAR</span><h2>Verifique la información</h2><p>Los puntos marcados como NO o Falla se resaltan para facilitar su identificación.</p></div>
+    <div class="confirm-intro"><span class="eyebrow">ANTES DE ENVIAR A LIBERACIÓN</span><h2>Verifique la captura preventiva</h2><p>Al marcarlo como listo, el formato pasará a la segunda etapa. Todavía no se generará ningún archivo.</p></div>
     <div class="card confirm-card">
       <div id="sum" class="confirm-summary"></div>
       <div class="fname"><span>Archivo</span><b id="fn"></b></div>
@@ -348,19 +348,19 @@
             <span class="lbl">CCM (opcional)</span>
             <input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()">
             <canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas>
-            <button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button>
+            <button class="link" type="button" onclick="signatureClear('ccm');saveDraft()">Borrar firma CCM</button>
           </div>
           <div class="f">
             <span class="lbl">Responsable (opcional)</span>
             <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames();saveDraft()">
             <canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas>
-            <button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button>
+            <button class="link" type="button" onclick="signatureClear('responsable');saveDraft()">Borrar firma Responsable</button>
           </div>
           <div class="f">
             <span class="lbl">Encargado de producción (opcional)</span>
             <input id="productionName" maxlength="60" placeholder="Nombre del encargado de producción" oninput="this.classList.remove('bad');Signatures.production.name=this.value.trim();saveSignatureNames();saveDraft()">
             <canvas id="productionSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del encargado de producción"></canvas>
-            <button class="link" type="button" onclick="signatureClear('production')">Borrar firma de producción</button>
+            <button class="link" type="button" onclick="signatureClear('production');saveDraft()">Borrar firma de producción</button>
           </div>
         </div>
       </div>
