@@ -140,6 +140,7 @@ function pick(name,code){
 }
 function startCheck(kind){
   Runtime.checkType=kind;
+  $('form').dataset.mode=kind;
   $('partsCard').hidden=kind==='daily';
   $('preventiveTimesCard').hidden=kind==='daily';
   $('motorHzCard').hidden=kind==='daily'||!isExt();
