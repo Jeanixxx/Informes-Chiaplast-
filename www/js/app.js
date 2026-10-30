@@ -1,4 +1,4 @@
-const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo."};
+const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo.", "preventiveDrafts": "Retoma los formatos preventivos que guardaste en este dispositivo. Puedes continuar o eliminar cada borrador."};
 function showHelp(){const a=document.querySelector('.screen.active');$('helpText').textContent=HELP[a&&a.id]||HELP.menu;$('helpModal').hidden=false}
 document.querySelectorAll('.screen:not(.splash):not(.login) .bar').forEach(b=>{const h=document.createElement('button');h.className='iconbtn';h.style.cssText='width:38px;height:38px;font-size:17px;margin-left:auto';h.textContent='?';h.setAttribute('aria-label','Ayuda');h.onclick=showHelp;b.appendChild(h)});
 const AppState={session:false,user:'',settings:{},history:[]};
@@ -21,7 +21,7 @@ function show(id){
   const app=document.querySelector('.app');
   const showChrome=id!=='splash'&&id!=='login';
   app.classList.toggle('has-chrome',showChrome);
-  const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
+  const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard','preventiveDrafts'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
   document.querySelectorAll('.app-sidebar [data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===id||(preventiveScreen&&button.dataset.nav==='preventive')));
   $('topbarUser').textContent=currentUser()||'Técnico';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -291,7 +291,7 @@ function loadDraft(){
   if(!$('productionName').value){$('productionName').value=keep.production;Signatures.production.name=keep.production.trim()}
   $('d').classList.remove('bad');$('t').classList.remove('bad');
 }
-function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('preventiveDrafts');toast('Borrador guardado. Puede continuar después desde Herramientas de MTTO.')}
+function closeFormToTools(){saveDraft();renderSavedPreventiveDrafts();go('preventiveDrafts');toast('Borrador guardado. Puede retomarlo desde Preventivos en curso en la pantalla principal.')}
 function openPreventiveDrafts(){go('preventiveDrafts')}
 function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const n=draftIndex().filter(x=>store.get(x.key,'')).length;el.textContent=n+' en curso'}}
 function renderSavedPreventiveDrafts(){
