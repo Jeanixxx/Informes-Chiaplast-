@@ -854,3 +854,17 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .form-signature-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .downtime-total{margin:12px 0;padding:12px 14px;border:1px solid var(--ok);border-radius:10px;background:var(--ok-soft);color:var(--ok);font-weight:850;font-size:14px}
 @media(max-width:700px){.form-signature-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Flujo preventivo en dos etapas */
+.release-body{padding-bottom:110px}
+.release-card{display:grid;gap:16px}
+.release-summary-head{display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.release-summary-head b{font-size:18px}
+.release-summary-head span{font-size:12px;color:var(--muted)}
+.preventive-status-card{display:grid;gap:8px}
+.preventive-status-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.status-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800}
+.status-pill.progress{background:var(--ok-soft);color:var(--ok)}
+.status-pill.waiting{background:#e6f3eb;color:#176b45}
+.release-format-card{margin-bottom:16px}
+@media(max-width:700px){.preventive-status-top{align-items:flex-start;flex-direction:column}}

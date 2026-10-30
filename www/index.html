@@ -207,7 +207,7 @@
     </section>
 
     <section class="form-section form-preventive-section">
-      <div class="form-section-heading"><span>02</span><div><h2>Intervención preventiva</h2><p>Tiempo, frecuencia y autorización</p></div></div>
+      <div class="form-section-heading"><span>02</span><div><h2>Intervención preventiva</h2><p>Tiempo, frecuencia y observaciones</p></div></div>
       <div class="card form-card" id="preventiveTimesCard" hidden>
         <h3>Tiempo de intervención</h3>
         <div class="two">
@@ -231,7 +231,6 @@
           <div class="f"><label>Fotografías antes (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('before')">Tomar foto antes</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('before')">Adjuntar foto antes</button></div><input id="pmBeforeInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'before')"><div id="pmBeforePreview" class="parts-photo-preview"></div></div>
           <div class="f"><label>Fotografías después (máximo 5)</label><div class="parts-photo-tools"><button class="btn btn-s" type="button" onclick="capturePreventivePhoto('after')">Tomar foto después</button><button class="btn btn-s" type="button" onclick="pickPreventivePhoto('after')">Adjuntar foto después</button></div><input id="pmAfterInput" type="file" accept="image/*" multiple hidden onchange="previewPreventivePhotos(this,'after')"><div id="pmAfterPreview" class="parts-photo-preview"></div></div>
         </div>
-        <div class="f"><label for="ccmApproval">Visto bueno de CCM</label><select id="ccmApproval" onchange="saveDraft()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div>
         <div class="f"><label for="pmObservations">Observaciones del mantenimiento</label><textarea id="pmObservations" rows="3" placeholder="Observaciones, pendientes y condiciones al entregar" oninput="saveDraft()"></textarea></div>
         <small>Las fotografías se conservarán en este dispositivo y se incorporarán al PDF; el Excel incluirá el registro de evidencia y su cantidad.</small>
       </div>
@@ -294,31 +293,7 @@
       </div>
     </section>
 
-    <section class="form-section form-signature-section">
-      <div class="form-section-heading"><span>06</span><div><h2>Firmas de conformidad</h2><p>Opcionales; puede completar una, ambas o ninguna</p></div></div>
-      <div class="card form-card form-signatures" id="sigCard" hidden>
-        <div class="form-signature-grid">
-          <div class="f">
-            <span class="lbl">CCM (opcional)</span>
-            <input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()">
-            <canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas>
-            <button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button>
-          </div>
-          <div class="f">
-            <span class="lbl">Responsable (opcional)</span>
-            <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()">
-            <canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas>
-            <button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button>
-          </div>
-          <div class="f">
-            <span class="lbl">Encargado de producción (opcional)</span>
-            <input id="productionName" maxlength="60" placeholder="Nombre del encargado de producción" oninput="this.classList.remove('bad');Signatures.production.name=this.value.trim();saveSignatureNames();saveDraft()">
-            <canvas id="productionSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del encargado de producción"></canvas>
-            <button class="link" type="button" onclick="signatureClear('production')">Borrar firma de producción</button>
-          </div>
-        </div>
-      </div>
-    </section>
+
   </div>
   <div class="dock form-dock"><button class="btn btn-p" onclick="review()">Revisar reporte</button></div>
 </section>
@@ -327,19 +302,19 @@
 <section id="confirm" class="screen confirm-screen">
   <header class="bar confirm-bar">
     <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
-    <div class="confirm-bar-title"><span class="form-kicker">VALIDACIÓN FINAL</span><h1>Revisar reporte</h1></div>
+    <div class="confirm-bar-title"><span class="form-kicker">ETAPA 1 · REVISIÓN</span><h1>Revisar preventivo</h1></div>
   </header>
   <div class="form-progress" aria-label="Progreso del reporte">
     <div class="steps"><div class="on"></div><div class="on"></div></div>
     <div class="steps-l"><span>01 · Captura</span><span class="current">02 · Revisión</span></div>
   </div>
   <div class="body confirm-body">
-    <div class="confirm-intro"><span class="eyebrow">ANTES DE GENERAR</span><h2>Verifique la información</h2><p>Los puntos marcados como NO o Falla se resaltan para facilitar su identificación.</p></div>
+    <div class="confirm-intro"><span class="eyebrow">ANTES DE ENVIAR A LIBERACIÓN</span><h2>Verifique la captura preventiva</h2><p>Al marcarlo como listo, el formato pasará a la segunda etapa. Todavía no se generará ningún archivo.</p></div>
     <div class="card confirm-card">
       <div id="sum" class="confirm-summary"></div>
       <div class="fname"><span>Archivo</span><b id="fn"></b></div>
-      <div class="f confirm-format">
-        <span class="lbl">Formato de exportación</span>
+      <div class="f confirm-format" id="dailyExportChoice" hidden>
+        <span class="lbl">Formato de exportación del chequeo diario</span>
         <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
           <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
           <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
@@ -349,8 +324,68 @@
     </div>
   </div>
   <div class="dock confirm-dock">
-    <button class="btn btn-s" onclick="history.back()">Editar</button>
-    <button class="btn btn-p" id="sendBtn" onclick="send()">Generar reporte</button>
+    <button class="btn btn-s" onclick="history.back()">Editar etapa 1</button>
+    <button class="btn btn-p" id="confirmActionBtn" onclick="confirmReportAction()">Marcar listo para liberación</button>
+  </div>
+</section>
+
+<section id="releaseFinal" class="screen release-screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="editPreventiveStageOne()" aria-label="Editar etapa preventiva">‹</button>
+    <div><span class="form-kicker">ETAPA 2 · LIBERACIÓN FINAL</span><h1>Liberación de mantenimiento</h1></div>
+  </header>
+  <div class="form-progress" aria-label="Progreso del reporte">
+    <div class="steps"><div class="on"></div><div class="on"></div></div>
+    <div class="steps-l"><span>01 · Preventivo listo</span><span class="current">02 · Liberación final</span></div>
+  </div>
+  <div class="body release-body">
+    <div class="confirm-intro"><span class="eyebrow">VERIFICACIÓN EN PRODUCCIÓN</span><h2>Comprobar funcionamiento de la máquina</h2><p>Revise el equipo trabajando en la línea de producción. Registre el resultado y los comentarios; las firmas son opcionales.</p></div>
+    <div class="card confirm-card"><div id="releaseSummary" class="confirm-summary"></div></div>
+    <div class="card form-card release-card">
+      <div class="f"><label for="releaseMachineStatus">Estado de la máquina en línea</label>
+        <select id="releaseMachineStatus" onchange="updateReleaseField()"><option value="">Seleccionar resultado de verificación</option><option value="Funcionando correctamente en línea">Funcionando correctamente en línea</option><option value="Funciona con observaciones">Funciona con observaciones</option><option value="No funciona / requiere ajuste">No funciona / requiere ajuste</option><option value="No fue posible comprobar">No fue posible comprobar</option></select>
+      </div>
+      <div class="f"><label for="releaseComments">Comentarios de liberación final</label><textarea id="releaseComments" rows="4" placeholder="Describa cómo se encontró la máquina trabajando en producción, pruebas realizadas y observaciones..." oninput="updateReleaseField()"></textarea></div>
+      <div class="f"><label for="ccmApproval">Visto bueno de CCM (opcional)</label><select id="ccmApproval" onchange="updateReleaseField()"><option value="">Pendiente de visto bueno</option><option value="Aprobado">Aprobado</option><option value="No aprobado">No aprobado</option></select></div>
+    </div>
+        <section class="form-section form-signature-section">
+      <div class="form-section-heading"><span>02</span><div><h2>Firmas de liberación</h2><p>Opcionales; puede completar una, varias o ninguna</p></div></div>
+      <div class="card form-card form-signatures" id="sigCard" hidden>
+        <div class="form-signature-grid">
+          <div class="f">
+            <span class="lbl">CCM (opcional)</span>
+            <input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()">
+            <canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas>
+            <button class="link" type="button" onclick="signatureClear('ccm');saveDraft()">Borrar firma CCM</button>
+          </div>
+          <div class="f">
+            <span class="lbl">Responsable (opcional)</span>
+            <input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames();saveDraft()">
+            <canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas>
+            <button class="link" type="button" onclick="signatureClear('responsable');saveDraft()">Borrar firma Responsable</button>
+          </div>
+          <div class="f">
+            <span class="lbl">Encargado de producción (opcional)</span>
+            <input id="productionName" maxlength="60" placeholder="Nombre del encargado de producción" oninput="this.classList.remove('bad');Signatures.production.name=this.value.trim();saveSignatureNames();saveDraft()">
+            <canvas id="productionSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del encargado de producción"></canvas>
+            <button class="link" type="button" onclick="signatureClear('production');saveDraft()">Borrar firma de producción</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="card confirm-card release-format-card">
+      <div class="f confirm-format"><span class="lbl">Formato de exportación</span>
+        <div class="export-choice" role="radiogroup" aria-label="Formato de exportación">
+          <label><input type="radio" name="exportChoice" value="pdf"> PDF</label>
+          <label><input type="radio" name="exportChoice" value="excel" checked> Excel</label>
+          <label><input type="radio" name="exportChoice" value="both"> Ambos</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dock confirm-dock">
+    <button class="btn btn-s" type="button" onclick="editPreventiveStageOne()">Editar preventivo</button>
+    <button class="btn btn-p" id="sendBtn" type="button" onclick="send()">Liberar y generar reporte</button>
   </div>
 </section>
 
@@ -513,7 +548,7 @@
 
 <section id="preventiveDrafts" class="screen">
   <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Preventivos en curso</h1></header>
-  <div class="body"><div class="card"><p class="muted">Continúe un reporte que guardó para terminarlo más tarde.</p><div id="savedPreventiveDrafts" class="dashboard-tools"></div></div></div>
+  <div class="body"><div class="card"><p class="muted">Consulte el avance de cada formato y retome la captura o la liberación final.</p><div id="savedPreventiveDrafts" class="dashboard-tools"></div></div></div>
 </section>
 
 <div id="helpModal" class="helpm" hidden onclick="this.hidden=true"><div class="helpbox"><p id="helpText"></p><button class="btn btn-p">Entendido</button></div></div>
