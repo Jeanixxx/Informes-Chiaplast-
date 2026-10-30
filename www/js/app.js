@@ -197,7 +197,7 @@ function review(){
     if($('pmStartDate').value||$('pmStartTime').value)rows.push(['Inicio de mantenimiento',($('pmStartDate').value?fmtD($('pmStartDate').value):'')+' '+$('pmStartTime').value]);
     if($('pmStopDate').value||$('pmStopTime').value)rows.push(['Parada / término de mantenimiento',($('pmStopDate').value?fmtD($('pmStopDate').value):'')+' '+$('pmStopTime').value]);
     if(isExt()&&$('motorHz').value.trim()!=='')rows.push(['Frecuencia del motor principal',String($('motorHz').value).replace(',','.')+' Hz']);
-    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Firmante Responsable',Signatures.responsable.name],['Firma Responsable','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
+    rows.push(['Visto bueno de CCM',$('ccmApproval').value||'Pendiente'],['Responsable de CCM',$('ccmName').value.trim()||'—'],['Firmante CCM',Signatures.ccm.name],['Firma CCM','Firma manuscrita capturada'],['Responsable',Signatures.responsable.name||'—'],['Firma Responsable','Firma manuscrita capturada'],['Observaciones del mantenimiento',$('pmObservations').value.trim()||'—']);
     rows.push(['Evidencia fotográfica','',1],['Fotografías antes',preventivePhotos.before.length+' de 5'],['Fotografías después',preventivePhotos.after.length+' de 5']);
     preventivePhotos.before.forEach((photo,i)=>rows.push(['__PHOTO__ANTES '+(i+1),photo,5]));
     preventivePhotos.after.forEach((photo,i)=>rows.push(['__PHOTO__DESPUÉS '+(i+1),photo,5]));
