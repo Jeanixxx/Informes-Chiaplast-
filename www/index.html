@@ -272,10 +272,10 @@
         <textarea id="obs" placeholder="Qué se hizo, piezas cambiadas, pendientes…" oninput="saveDraft()"></textarea></div>
     </div>
     <div class="card" id="sigCard" hidden>
-      <h3>Firmas de conformidad</h3><p class="muted" style="margin:0 0 14px">Registre ambas firmas antes de generar el reporte.</p>
+      <h3>Firmas de conformidad</h3><p class="muted" style="margin:0 0 14px">Las firmas son opcionales. Puede completar una, ambas o dejar los espacios en blanco.</p>
       <div class="two">
-        <div class="f"><span class="lbl">CCM<em>*</em></span><input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
-        <div class="f"><span class="lbl">Responsable<em>*</em></span><input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas><button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button></div>
+        <div class="f"><span class="lbl">CCM (opcional)</span><input id="ccmName" maxlength="60" placeholder="Nombre de CCM" oninput="this.classList.remove('bad');Signatures.ccm.name=this.value.trim();saveSignatureNames();saveDraft()" style="width:100%;margin-bottom:10px"><canvas id="ccmSigPad" class="signature-pad" width="600" height="200" aria-label="Firma de CCM"></canvas><button class="link" type="button" onclick="signatureClear('ccm')">Borrar firma CCM</button></div>
+        <div class="f"><span class="lbl">Responsable (opcional)</span><input id="respSigName" maxlength="60" placeholder="Nombre del responsable" oninput="this.classList.remove('bad');Signatures.responsable.name=this.value.trim();saveSignatureNames()" style="width:100%;margin-bottom:10px"><canvas id="respSigPad" class="signature-pad" width="600" height="200" aria-label="Firma del responsable"></canvas><button class="link" type="button" onclick="signatureClear('responsable')">Borrar firma Responsable</button></div>
       </div>
     </div>
   </div>
