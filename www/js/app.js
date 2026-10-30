@@ -164,7 +164,8 @@ function startCheck(kind){
   setFormState(null);
   preventivePhotos={before:[],after:[]};renderPreventivePhotos();
 
-  if(kind==='preventive'){loadParts();loadPartsPhotos();loadPreventivePhotos();}
+  let evidenceReady=Promise.resolve();
+  if(kind==='preventive'){loadParts();evidenceReady=Promise.all([loadPartsPhotos(),loadPreventivePhotos()]);}
   $('sigCard').hidden=kind==='daily';sigClear();try{const saved=JSON.parse(store.get(KEYS.signatureNames,'{}'));$('ccmName').value=saved.ccm||'';$('respSigName').value=saved.responsable||'';$('productionName').value=saved.production||'';Signatures.ccm.name=saved.ccm||'';Signatures.responsable.name=saved.responsable||'';Signatures.production.name=saved.production||''}catch(e){}
   const dailyMeasurements=isDaily()&&isExt();
   $('fTitle').textContent=Runtime.area+(Runtime.batchMode?' · '+Runtime.machine:'')+(isDaily()?' · Diario':'');
@@ -179,6 +180,7 @@ function startCheck(kind){
   }else loadDraft();
   updateDowntimeTotal();
   go('form');buzz(10);
+  return evidenceReady;
 }
 const isDaily=()=>Runtime.checkType==='daily';
 const draftStorageKey=()=>KEYS.draft(isDaily(),Runtime.code,Runtime.machine||Runtime.area);
@@ -340,15 +342,16 @@ async function deletePreventiveDraft(key){
  renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
  toast('Formato preventivo eliminado.');
 }
-function editDraftPreventive(key){
+async function editDraftPreventive(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
  if(!dr||!dr.code)return;
- resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');Runtime.release.status='in_progress';saveDraft();go('form');
+ resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});await startCheck('preventive');Runtime.release.status='in_progress';saveDraft();go('form');
 }
-function resumePreventiveDraft(key){
+async function resumePreventiveDraft(key){
  let dr=null;try{dr=normalizeDraft(JSON.parse(store.get(key,'null')))}catch(e){}
  if(!dr||!dr.code){toast('No se encontró el borrador.');renderSavedPreventiveDrafts();return}
- resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});startCheck('preventive');
+ resetRuntime('preventive',{area:dr.area||dr.code,code:dr.code,machine:dr.machine||''});
+ await startCheck('preventive');
  if(dr.release&&dr.release.status==='awaiting_release'){
   review();
   if($('confirm').classList.contains('active')){renderReleaseSummary();syncReleaseFields();go('releaseFinal')}
