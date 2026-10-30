@@ -168,11 +168,24 @@ const draftStorageKey=()=>KEYS.draft(isDaily(),Runtime.code,Runtime.machine||Run
 function choose(g,btn){
   const box=$(g);
   box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
-  box.dataset.v=btn.textContent; box.classList.remove('bad'); buzz(8); saveDraft();
+  box.dataset.v=btn.textContent.trim(); box.classList.remove('bad'); buzz(8); saveDraft();
+}
+function selectedSegmentValue(group){
+  if(!group)return '';
+  const pressed=group.querySelector('button[aria-pressed="true"]');
+  const visibleValue=pressed?pressed.textContent.trim():'';
+  const storedValue=String(group.dataset.v||'').trim();
+  const value=visibleValue||storedValue;
+  if(value)group.dataset.v=value;
+  return value;
+}
+function isVisibleFormControl(control){
+  return !!control&&!control.disabled&&!control.closest('[hidden]')&&control.getClientRects().length>0;
 }
 function review(){
+  document.querySelectorAll('#form .bad').forEach(el=>el.classList.remove('bad'));
   const d=$('d').value,t=$('t').value;
-  const type=$('gType').dataset.v,st=$('gStatus').dataset.v;
+  const type=selectedSegmentValue($('gType')),st=selectedSegmentValue($('gStatus'));
   let bad=null;
   if(!isDaily()){
     const sd=$('pmStartDate').value,stt=$('pmStartTime').value,ed=$('pmStopDate').value,ett=$('pmStopTime').value;
@@ -188,10 +201,21 @@ function review(){
     if(!st){$('gStatus').classList.add('bad');bad=bad||$('gStatus')}
   }
   if(!$('ext').hidden){
-    document.querySelectorAll('#ext input').forEach(i=>{const x=i.value.trim().replace(',','.');if(x===''||!Number.isFinite(Number(x))){i.classList.add('bad');bad=bad||i}});
-    if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{if(!g.dataset.v){g.classList.add('bad');bad=bad||g}});
+    document.querySelectorAll('#ext input').forEach(i=>{
+      if(!isVisibleFormControl(i))return;
+      const x=i.value.trim().replace(/\s+/g,'').replace(',','.');
+      if(x===''||!Number.isFinite(Number(x))){i.classList.add('bad');bad=bad||i}
+    });
+    if(!dailyMeasurementsForValidation)document.querySelectorAll('#ext .seg').forEach(g=>{
+      if(!isVisibleFormControl(g))return;
+      if(!selectedSegmentValue(g)){g.classList.add('bad');bad=bad||g}
+    });
   }
-  if(bad){toast('Completa los campos marcados en rojo.');bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return}
+  if(bad){
+    const label=bad.getAttribute('aria-label')||bad.closest('.f')?.querySelector('label,.lbl,b')?.textContent.trim()||bad.id||'el campo señalado';
+    toast('Revisa este campo: '+label+'.');
+    bad.scrollIntoView({behavior:'smooth',block:'center'});buzz([30,40,30]);return;
+  }
   const dailyMeasurements=isDaily()&&isExt();
   const rows=[['Área',Runtime.area+' ('+Runtime.code+')'],['Máquina',Runtime.machine||Runtime.area],['Fecha',fmtD(d)],['Hora',t]];
   if(!isDaily()){
