@@ -41,29 +41,7 @@ function pickNotePhoto(){
   if(Bridge.has('pickPhoto')){Bridge.pickPhoto('note');return}
   $('notePhotos').removeAttribute('capture');$('notePhotos').click();
 }
-window.onEvidenceCaptured=function(raw){
-  try{
-    const data=typeof raw==='string'?JSON.parse(raw):raw;
-    if(!data||!data.uri)return;
-    if(partsPhotoTarget==='specialBefore'||partsPhotoTarget==='specialAfter'){
-      const stage=partsPhotoTarget==='specialBefore'?'before':'after';
-      if(specialPhotos[stage].length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
-      specialPhotos[stage].push(data.uri);specialRenderPhotos();specialSaveDraftOnly();toast('Evidencia del trabajo especial agregada.');return;
-    }
-    if(partsPhotoTarget==='pmBefore'||partsPhotoTarget==='pmAfter'){
-      const stage=partsPhotoTarget==='pmBefore'?'before':'after';
-      if(preventivePhotos[stage].length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Máximo 5 fotos por etapa.');return}
-      preventivePhotos[stage].push(data.uri);renderPreventivePhotos();savePreventivePhotos().then(()=>toast('Fotografía preventiva guardada.')).catch(()=>toast('No se pudo guardar la fotografía.'));return;
-    }
-    if(partsPhotoTarget==='parts'){
-      if(partsPhotosDraft.length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías de refacciones.');return}
-      partsPhotosDraft.push(data.uri);renderPartsPhotos();savePartsPhotos().then(()=>toast('Fotografía de refacción guardada.')).catch(()=>toast('La fotografía no se pudo guardar localmente.'));
-      return;
-    }
-    if(notePhotosDraft.length>=5){if(Bridge.has('deleteEvidence'))Bridge.deleteEvidence(data.uri);toast('Se admiten hasta 5 fotografías por nota.');return}
-    notePhotosDraft.push(data.uri);renderPhotoPreview();toast('Evidencia agregada.');
-  }catch(e){toast('No se pudo agregar la fotografía.')}
-};
+/* La fotografía nativa se recibe en window.onEvidenceCaptured (preventive.js), que la agrega a notePhotosDraft. */
 function resizeNoteImage(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();reader.onerror=()=>reject(new Error('No se pudo leer una fotografía.'));
