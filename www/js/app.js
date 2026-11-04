@@ -375,9 +375,9 @@ function openHistoryReport(id){
  const r=getRecent().find(x=>x.id===id||x.folio===id);if(!r)return;
  const pdf=(r.files||[]).find(f=>f.format==='pdf'||String(f.name||'').toLowerCase().endsWith('.pdf'));
  if(pdf&&Bridge.has('openSavedReport')){const result=Bridge.openSavedReport(pdf.name,'application/pdf');if(result!=='ok')toast('No se pudo abrir el PDF. Compruebe que siga en Descargas/Chiaplast.');return}
- const rows=Array.isArray(r.rows)?r.rows:[],preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\\n');
+ const rows=Array.isArray(r.rows)?r.rows:[],preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\n');
  if(pdf){toast('Este folio no tiene un PDF guardado en Android.');return}
- if(window.confirm((r.folio||'Reporte')+'\\n\\n'+(r.a||'')+' · '+(r.w||'')+'\\n\\n'+preview.slice(0,1800)+'\\n\\n¿Deseas compartir los datos de este reporte?')){
+ if(window.confirm((r.folio||'Reporte')+'\n\n'+(r.a||'')+' · '+(r.w||'')+'\n\n'+preview.slice(0,1800)+'\n\n¿Deseas compartir los datos de este reporte?')){
   try{if(navigator.share)navigator.share({title:r.folio||'Reporte Chiaplast',text:preview});else if(navigator.clipboard)navigator.clipboard.writeText(preview).then(()=>toast('Datos del reporte copiados.'));else toast('No se pudo compartir el reporte.')}catch(e){toast('No se pudo compartir el reporte.')}
  }
 }
