@@ -338,7 +338,7 @@ async function deletePreventiveDraft(key){
  if(!window.confirm('¿Eliminar definitivamente el preventivo en curso de '+(item.machine||item.area)+'? Esta acción no se puede deshacer.'))return;
  store.del(key);
  store.set(KEYS.preventiveDrafts,JSON.stringify(draftIndex().filter(x=>x.key!==key)));
- try{if(typeof deletePreventiveEvidenceForMachine==='function')await deletePreventiveEvidenceForMachine(item.code,item.machine||item.area)}catch(e){}
+ try{await clearPreventiveWorkspace(item.code,item.machine||item.area)}catch(e){}
  renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
  toast('Formato preventivo eliminado.');
 }
