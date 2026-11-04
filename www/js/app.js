@@ -338,7 +338,7 @@ async function deletePreventiveDraft(key){
  if(!window.confirm('¿Eliminar definitivamente el preventivo en curso de '+(item.machine||item.area)+'? Esta acción no se puede deshacer.'))return;
  store.del(key);
  store.set(KEYS.preventiveDrafts,JSON.stringify(draftIndex().filter(x=>x.key!==key)));
- try{if(typeof deletePreventiveEvidenceForMachine==='function')await deletePreventiveEvidenceForMachine(item.code,item.machine||item.area)}catch(e){}
+ try{await clearPreventiveWorkspace(item.code,item.machine||item.area)}catch(e){}
  renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();
  toast('Formato preventivo eliminado.');
 }
@@ -361,7 +361,7 @@ async function resumePreventiveDraft(key){
 function restoreSignature(who,hex){
  const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':who==='responsable'?'respSigPad':'productionSigPad');signatureClear(who);
  if(!hex)return;const ctx=canvas.getContext('2d'),img=ctx.createImageData(300,100);
- for(let i=0;i<300*100;i++){const v=parseInt(hex.slice(i*2,i*2+2),16)||255,j=i*4;img.data[j]=img.data[j+1]=img.data[j+2]=v;img.data[j+3]=255}
+ for(let i=0;i<300*100;i++){const n=parseInt(hex.slice(i*2,i*2+2),16),v=Number.isNaN(n)?255:n,j=i*4;/* 0 es negro (tinta): no usar ||255, que lo volvería blanco */img.data[j]=img.data[j+1]=img.data[j+2]=v;img.data[j+3]=255}
  const tmp=document.createElement('canvas');tmp.width=300;tmp.height=100;tmp.getContext('2d').putImageData(img,0,0);ctx.drawImage(tmp,0,0,canvas.width,canvas.height);item.hex=hex;item.w=300;item.h=100;
 }
 
@@ -375,9 +375,9 @@ function openHistoryReport(id){
  const r=getRecent().find(x=>x.id===id||x.folio===id);if(!r)return;
  const pdf=(r.files||[]).find(f=>f.format==='pdf'||String(f.name||'').toLowerCase().endsWith('.pdf'));
  if(pdf&&Bridge.has('openSavedReport')){const result=Bridge.openSavedReport(pdf.name,'application/pdf');if(result!=='ok')toast('No se pudo abrir el PDF. Compruebe que siga en Descargas/Chiaplast.');return}
- const rows=Array.isArray(r.rows)?r.rows:[],preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\\n');
+ const rows=Array.isArray(r.rows)?r.rows:[],preview=rows.map(x=>String(x[0]||'')+': '+String(x[1]||'')).join('\n');
  if(pdf){toast('Este folio no tiene un PDF guardado en Android.');return}
- if(window.confirm((r.folio||'Reporte')+'\\n\\n'+(r.a||'')+' · '+(r.w||'')+'\\n\\n'+preview.slice(0,1800)+'\\n\\n¿Deseas compartir los datos de este reporte?')){
+ if(window.confirm((r.folio||'Reporte')+'\n\n'+(r.a||'')+' · '+(r.w||'')+'\n\n'+preview.slice(0,1800)+'\n\n¿Deseas compartir los datos de este reporte?')){
   try{if(navigator.share)navigator.share({title:r.folio||'Reporte Chiaplast',text:preview});else if(navigator.clipboard)navigator.clipboard.writeText(preview).then(()=>toast('Datos del reporte copiados.'));else toast('No se pudo compartir el reporte.')}catch(e){toast('No se pudo compartir el reporte.')}
  }
 }
