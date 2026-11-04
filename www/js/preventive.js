@@ -76,6 +76,14 @@ async function deletePreventiveEvidenceForMachine(code,machine){
   });
   db.close();
 }
+/* Borra todo lo que un preventivo deja guardado para su máquina: fotos antes/después,
+   fotos de refacciones (IndexedDB) y la lista de refacciones (localStorage).
+   Se usa al liberar el reporte y al eliminar un formato, para que el siguiente
+   preventivo de la misma máquina empiece limpio. */
+async function clearPreventiveWorkspace(code,machine){
+  store.del(KEYS.parts(code,machine));
+  await deletePreventiveEvidenceForMachine(code,machine);
+}
 async function savePartsPhotos(){
   const db=await openPartsPhotosDB(),record={key:partsPhotosKey(),photos:partsPhotosDraft.slice(0,5),updated:Date.now()};
   return new Promise((resolve,reject)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put(record);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error||new Error('No se pudieron guardar las fotografías.'))};tx.onabort=()=>{db.close();reject(tx.error||new Error('Se canceló el guardado de fotografías.'))}});
