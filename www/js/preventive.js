@@ -6,32 +6,48 @@ function pickPreventivePhoto(stage){if(preventivePhotos[stage].length>=5){toast(
 async function previewPreventivePhotos(input,stage){const files=Array.from(input.files||[]);input.value='';for(const file of files){if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');break}if(file.type.startsWith('image/')){try{preventivePhotos[stage].push(await resizeNoteImage(file))}catch(e){toast('No se pudo preparar una foto.')}}}renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo guardar la evidencia.')}}
 async function removePreventivePhoto(stage,index){const src=preventivePhotos[stage][index];preventivePhotos[stage].splice(index,1);if(typeof src==='string'&&src.includes('/evidence/')&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(src);renderPreventivePhotos();try{await savePreventivePhotos()}catch(e){toast('No se pudo actualizar la evidencia.')}}
 
-/* Recepción de cámara/selector nativo Android. MainActivity devuelve un JSON con la URI local. */
+/* Recepción ÚNICA de cámara/selector nativo Android (MainActivity.returnEvidence).
+   Recibe {uri, dataUrl, name, createdAt} y la reparte según partsPhotoTarget:
+   - pmBefore/pmAfter/parts: se incrusta el JPEG (data URL) en IndexedDB y se borra el archivo nativo.
+   - specialBefore/specialAfter y note: se conserva la URI del archivo privado, porque esos datos
+     viven en localStorage (especiales) o se limpian con deleteNoteEvidence (notas).
+   No definir otro window.onEvidenceCaptured: el último script cargado sobrescribe al anterior. */
 window.onEvidenceCaptured=async function(raw){
+  let item=null;
+  const discard=()=>{if(item&&item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri)};
   try{
-    const item=typeof raw==='string'?JSON.parse(raw):raw;
+    item=typeof raw==='string'?JSON.parse(raw):raw;
     if(!item||(!item.uri&&!item.dataUrl))throw new Error('Android no devolvió la fotografía.');
+    const target=partsPhotoTarget;
+
+    if(target==='specialBefore'||target==='specialAfter'){
+      const stage=target==='specialBefore'?'before':'after';
+      if(!item.uri)throw new Error('Android no devolvió la ubicación de la fotografía.');
+      if(specialPhotos[stage].length>=5){discard();toast('Máximo 5 fotos por etapa.');return}
+      specialPhotos[stage].push(item.uri);specialRenderPhotos();specialSaveDraftOnly();
+      toast('Evidencia del trabajo especial agregada.');return;
+    }
+    if(target==='note'){
+      if(!item.uri)throw new Error('Android no devolvió la ubicación de la fotografía.');
+      if(notePhotosDraft.length>=5){discard();toast('Se admiten hasta 5 fotografías por nota.');return}
+      notePhotosDraft.push(item.uri);renderPhotoPreview();
+      toast('Evidencia agregada a la nota.');return;
+    }
+
+    const isPm=target==='pmBefore'||target==='pmAfter',stage=target==='pmBefore'?'before':'after';
+    if(!isPm&&target!=='parts'){discard();return}
+    if(isPm&&preventivePhotos[stage].length>=5){discard();toast('Máximo 5 fotos por etapa.');return}
+    if(!isPm&&partsPhotosDraft.length>=5){discard();toast('Se admiten hasta 5 fotografías de refacciones.');return}
     const response=await fetch(item.dataUrl||item.uri);
     if(!response.ok)throw new Error('No se pudo leer la fotografía seleccionada.');
     const photo=await resizeNoteImage(await response.blob());
-    if(partsPhotoTarget==='pmBefore'||partsPhotoTarget==='pmAfter'){
-      const stage=partsPhotoTarget==='pmBefore'?'before':'after';
-      if(preventivePhotos[stage].length>=5){toast('Máximo 5 fotos por etapa.');return}
-      preventivePhotos[stage].push(photo);
-      renderPreventivePhotos();
-      await savePreventivePhotos();
-      if(item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri);
-      toast('Fotografía agregada al preventivo.');
-      return;
-    }
-    if(partsPhotoTarget==='parts'){
-      if(partsPhotosDraft.length>=5){toast('Se admiten hasta 5 fotografías de refacciones.');return}
+    if(isPm){
+      preventivePhotos[stage].push(photo);renderPreventivePhotos();await savePreventivePhotos();
+      discard();toast('Fotografía agregada al preventivo.');
+    }else{
       partsPhotosDraft.push(photo);renderPartsPhotos();await savePartsPhotos();
-      if(item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri);
-      toast('Fotografía de refacción agregada.');
-      return;
+      discard();toast('Fotografía de refacción agregada.');
     }
-    if(item.uri&&Bridge.has('deleteEvidence'))Bridge.deleteEvidence(item.uri);
   }catch(e){toast(e&&e.message?e.message:'No se pudo agregar la fotografía.')}
 };
 
