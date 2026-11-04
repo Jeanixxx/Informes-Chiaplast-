@@ -361,7 +361,7 @@ async function resumePreventiveDraft(key){
 function restoreSignature(who,hex){
  const item=Signatures[who],canvas=$(who==='ccm'?'ccmSigPad':who==='responsable'?'respSigPad':'productionSigPad');signatureClear(who);
  if(!hex)return;const ctx=canvas.getContext('2d'),img=ctx.createImageData(300,100);
- for(let i=0;i<300*100;i++){const v=parseInt(hex.slice(i*2,i*2+2),16)||255,j=i*4;img.data[j]=img.data[j+1]=img.data[j+2]=v;img.data[j+3]=255}
+ for(let i=0;i<300*100;i++){const n=parseInt(hex.slice(i*2,i*2+2),16),v=Number.isNaN(n)?255:n,j=i*4;/* 0 es negro (tinta): no usar ||255, que lo volvería blanco */img.data[j]=img.data[j+1]=img.data[j+2]=v;img.data[j+3]=255}
  const tmp=document.createElement('canvas');tmp.width=300;tmp.height=100;tmp.getContext('2d').putImageData(img,0,0);ctx.drawImage(tmp,0,0,canvas.width,canvas.height);item.hex=hex;item.w=300;item.h=100;
 }
 
