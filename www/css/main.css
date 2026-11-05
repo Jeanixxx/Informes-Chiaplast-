@@ -505,7 +505,7 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
 /* Menú lateral de arriba a abajo (248 px; 208 px entre 700 y 979 px) y barra superior clara a su
    derecha (72 px). En celular (< 700 px) el menú se oculta y la barra es verde oscuro con el logo. */
 .app{--shell-w:248px;--shell-h:72px}
-.app.has-chrome .app-topbar{position:absolute;z-index:12;top:0;right:0;left:var(--shell-w);height:var(--shell-h);padding:0 32px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px}
+.app.has-chrome .app-topbar{position:absolute;z-index:12;top:0;right:0;left:var(--shell-w);height:var(--shell-h);padding:0 32px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;transition:left 200ms var(--ease-standard)}
 .brand{display:none;align-items:center;color:#fff;text-align:left;padding:0}
 .brand-logo{flex:none;height:36px;display:flex;align-items:center;padding:3px 8px;border-radius:10px;background:#fff}
 .brand-logo img{display:block;height:30px;width:auto}
@@ -514,8 +514,9 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
 .topbar-clock{font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap}
 .topbar-user{flex:none;height:44px;display:flex;align-items:center;gap:10px;padding:0 14px 0 6px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600}
 .topbar-avatar{flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--steel);color:#fff;font-size:12px;font-weight:700}
-.app.has-chrome .app-sidebar{position:absolute;z-index:13;inset:0 auto 0 0;width:var(--shell-w);padding:20px 14px;background:var(--steel);display:flex;flex-direction:column;gap:4px;overflow-y:auto}
-.sidebar-logo{flex:none;height:56px;margin:0 2px 20px;padding:8px 12px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:#fff}
+.app.has-chrome .app-sidebar{position:absolute;z-index:13;inset:0 auto 0 0;width:var(--shell-w);padding:20px 14px;background:var(--steel);display:flex;flex-direction:column;gap:4px;overflow-x:hidden;overflow-y:auto;transition:width 200ms var(--ease-standard)}
+.sidebar-head{flex:none;display:flex;align-items:center;gap:8px;margin:0 0 20px}
+.sidebar-logo{flex:1;min-width:0;height:56px;padding:8px 12px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:#fff}
 .sidebar-logo img{display:block;height:38px;width:auto;max-width:100%}
 .app-sidebar button{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 14px;text-align:left;color:var(--shell-ink);font-size:15px;font-weight:600;line-height:1.2;border-radius:12px}
 .app-sidebar button svg{flex:none;width:20px;height:20px}
@@ -523,7 +524,7 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
 .app-sidebar button.active{background:var(--accent);color:var(--accent-ink);font-weight:700}
 .sidebar-status{margin-top:auto;display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--shell-ink-soft)}
 .sidebar-status i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent)}
-.app.has-chrome .screen{top:var(--shell-h);left:var(--shell-w);right:0;bottom:0}
+.app.has-chrome .screen{top:var(--shell-h);left:var(--shell-w);right:0;bottom:0;transition:left 200ms var(--ease-standard)}
 .app.has-chrome .screen>.body{width:100%;max-width:none;margin:0;padding:20px 24px 28px}
 .app.has-chrome .screen>.bar{min-height:60px;padding:10px 20px}
 .app.has-chrome .screen>.bar h1{font-size:20px}
@@ -591,7 +592,6 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
 @media(max-width:699px){
   .app{--shell-w:0px;--shell-h:54px}
   .app.has-chrome .app-topbar{gap:10px;padding:0 12px;background:var(--steel);color:#fff;border-bottom:0}
-  .app.has-chrome .app-sidebar{display:none}
   .brand{display:flex}
   .topbar-title{color:#fff;font-size:14px}
   .topbar-clock{color:var(--shell-ink);font-size:13px}
@@ -1066,3 +1066,31 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
   .cc-panel{padding:18px}
 }
 @media(prefers-color-scheme:dark){.cc-panel .history-search input{background:var(--surface-2)}.cc-card:hover{border-color:var(--line)}.cc-link{color:var(--flow-daily)}}
+
+/* 12. Menú lateral plegable (botón de hamburguesa) y panel deslizable en celular */
+.app-sidebar .nav-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-sidebar .nav-toggle{flex:none;width:44px;min-height:44px;height:44px;padding:0;justify-content:center;border-radius:12px;background:transparent;color:var(--shell-ink)}
+.app-sidebar .nav-toggle:hover{background:rgba(255,255,255,.08)}
+.nav-toggle svg,.topbar-menu svg{width:22px;height:22px}
+.nav-toggle .ico-close{display:none}
+.topbar-menu{display:none}
+.nav-scrim{display:none}
+@media(min-width:700px){
+  .app.sidebar-collapsed{--shell-w:76px}
+  .app.has-chrome.sidebar-collapsed .app-sidebar{padding:20px 14px}
+  .app.sidebar-collapsed .sidebar-head{flex-direction:column;justify-content:center}
+  .app.sidebar-collapsed .sidebar-logo,.app.sidebar-collapsed .app-sidebar .nav-label{display:none}
+  .app.sidebar-collapsed .app-sidebar button:not(.nav-toggle){align-self:center;width:48px;height:48px;min-height:48px;padding:0;justify-content:center}
+  .app.sidebar-collapsed .sidebar-status{justify-content:center;padding:10px 0}
+}
+@media(max-width:699px){
+  .topbar-menu{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin-left:-6px;padding:0;border-radius:12px;color:#fff}
+  .topbar-menu:hover{background:rgba(255,255,255,.08)}
+  .app.has-chrome .app-sidebar{position:fixed;z-index:31;inset:0 auto 0 0;width:min(280px,85vw);padding:16px 14px calc(16px + var(--sb));visibility:hidden;transform:translateX(-100%);transition:transform 200ms var(--ease-standard),visibility 0s linear 200ms}
+  .app.has-chrome.drawer-open .app-sidebar{visibility:visible;transform:none;transition:transform 200ms var(--ease-standard),visibility 0s}
+  .nav-toggle .ico-menu{display:none}
+  .nav-toggle .ico-close{display:block}
+  .app.has-chrome.drawer-open .nav-scrim{display:block;position:fixed;inset:0;z-index:30;background:rgba(10,30,15,.45)}
+  .app.drawer-open .screen .body{overflow:hidden}
+}
+@media(prefers-reduced-motion:reduce){.app.has-chrome .app-sidebar,.app.has-chrome .app-topbar,.app.has-chrome .screen{transition:none!important}}

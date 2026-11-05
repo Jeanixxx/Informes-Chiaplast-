@@ -4,7 +4,7 @@ const KEYS={
   session:'mtto_session',user:'mtto_user',signatureNames:'mtto_signature_names',
   history:'mtto_hist',preventiveDrafts:'mtto_preventive_drafts',dailyBatch:'mtto_daily_batch',
   kanban:'mtto_kanban',reminders:'mtto_reminders',preventiveCalendar:'mtto_preventive_calendar',
-  weeklyCalendar:'mtto_weekly_calendar_v1',backupV1:'mtto_backup_v1',
+  weeklyCalendar:'mtto_weekly_calendar_v1',backupV1:'mtto_backup_v1',sidebarCollapsed:'mtto_sidebar_collapsed',
   folioCounter:'mtto_folio_counter_v1',folioYear:'mtto_folio_year_v1',specialWorks:'chiaplast_special_works_v1',
   pmBoardPrefix:'mtto_pm_board_',schemaVersion:'mtto_schema_version',
   idb:{partsPhotos:'chiaplast-parts-photos-v1',notes:'chiaplast-notes-v1'},

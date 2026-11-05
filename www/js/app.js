@@ -103,6 +103,62 @@ function openReminderForKanbanTask(id){
   $('reminderText').value=existing?existing.text:task.title;$('reminderMachine').value=existing&&existing.machine||task.area||'';
   $('reminderDate').value=future?existing.date:dueDate;$('reminderTime').value=future?existing.time:(dueDate===when.date?when.time:'08:00');$('reminderText').focus();
 }
+/* ===== Menú lateral: plegable en >= 700 px y panel deslizable en celular =====
+   Escritorio/tablet: .sidebar-collapsed cambia --shell-w (248/208 → 76 px); la preferencia se guarda en
+   KEYS.sidebarCollapsed y, sin preferencia, arranca expandido en >= 980 px y plegado entre 700 y 979 px.
+   Celular: el mismo <nav> se abre como panel modal. Al abrirlo se agrega una entrada al historial
+   ({drawer:1}) para que Atrás de Android lo cierre sin navegar; al elegir una opción, primero se retira
+   esa entrada y después se navega como siempre. */
+const Nav=(()=>{
+  const app=document.querySelector('.app'),side=$('appSidebar'),toggle=$('navToggle'),openBtn=$('navOpen'),scrim=$('navScrim');
+  const mobile=matchMedia('(max-width:699px)'),wide=matchMedia('(min-width:980px)');
+  let drawer=false,pushed=false,pending=null;
+  const saved=()=>{let v=null;try{v=store.get(KEYS.sidebarCollapsed,null)}catch(e){}return v==='1'?true:v==='0'?false:null};
+  const focusables=()=>[...side.querySelectorAll('button')].filter(b=>b.getClientRects().length);
+  function sync(){
+    if(mobile.matches){toggle.setAttribute('aria-label','Cerrar menú');toggle.title='Cerrar menú';toggle.setAttribute('aria-expanded',String(drawer))}
+    else{const c=app.classList.contains('sidebar-collapsed'),t=c?'Expandir menú':'Plegar menú';toggle.setAttribute('aria-label',t);toggle.title=t;toggle.setAttribute('aria-expanded',String(!c))}
+    openBtn.setAttribute('aria-expanded',String(drawer));
+  }
+  function applySaved(){const v=saved();app.classList.toggle('sidebar-collapsed',v===null?!wide.matches:v);sync()}
+  function toggleCollapsed(){const c=!app.classList.contains('sidebar-collapsed');app.classList.toggle('sidebar-collapsed',c);try{store.set(KEYS.sidebarCollapsed,c?'1':'0')}catch(e){}sync()}
+  function setDrawer(open){
+    drawer=open;app.classList.toggle('drawer-open',open);
+    if(open){side.setAttribute('role','dialog');side.setAttribute('aria-modal','true');side.setAttribute('aria-label','Menú principal')}
+    else{side.removeAttribute('role');side.removeAttribute('aria-modal');side.setAttribute('aria-label','Navegación principal')}
+    sync();
+  }
+  function openDrawer(){
+    if(drawer||!mobile.matches)return;
+    setDrawer(true);history.pushState(Object.assign({},history.state||{},{drawer:1}),'');pushed=true;
+    const f=focusables()[0];if(f)f.focus();
+  }
+  function finishClose(){pushed=false;setDrawer(false);const then=pending;pending=null;if(then)then();else if(mobile.matches)openBtn.focus()}
+  function closeDrawer(then){if(!drawer){if(then)then();return}pending=then||null;if(pushed)history.back();else finishClose()}
+  toggle.addEventListener('click',()=>{if(mobile.matches)closeDrawer();else toggleCollapsed()});
+  openBtn.addEventListener('click',openDrawer);
+  scrim.addEventListener('click',()=>closeDrawer());
+  /* Elegir una opción con el panel abierto: se cierra y luego se ejecuta su onclick de siempre. */
+  side.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!drawer||!b||b===toggle||typeof b.onclick!=='function')return;
+    e.stopPropagation();e.preventDefault();const fn=b.onclick;closeDrawer(()=>fn.call(b,e));
+  },true);
+  document.addEventListener('keydown',e=>{
+    if(!drawer)return;
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeDrawer();return}
+    if(e.key!=='Tab')return;
+    const f=focusables();if(!f.length)return;const i=f.indexOf(document.activeElement);
+    if(i<0){e.preventDefault();f[0].focus()}
+    else if(e.shiftKey&&i===0){e.preventDefault();f[f.length-1].focus()}
+    else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}
+  },true);
+  /* Atrás con el panel abierto: solo lo cierra (se registra antes que el popstate de la navegación). */
+  addEventListener('popstate',e=>{if(drawer&&pushed){e.stopImmediatePropagation();finishClose()}});
+  mobile.addEventListener('change',()=>{if(!mobile.matches&&drawer)closeDrawer();sync()});
+  wide.addEventListener('change',applySaved);
+  applySaved();
+  return {open:openDrawer,close:closeDrawer,isOpen:()=>drawer,toggleCollapsed};
+})();
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
   if(!isIn()){root('login');return}
