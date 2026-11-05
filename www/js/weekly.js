@@ -89,10 +89,10 @@ function renderWeekly(){
     const key=weekKeys[i],list=data[key]||[],isToday=key===todayKey;
     const longName=WK_DIA_LARGO[d.getDay()]+' '+d.getDate()+' de '+WK_MESES[d.getMonth()].toLowerCase();
     return '<section class="wk-day'+(isToday?' is-today':'')+'" data-day="'+key+'" aria-label="'+esc(longName.charAt(0).toUpperCase()+longName.slice(1)+(isToday?' (hoy)':'')+' · '+list.length+' '+(list.length===1?'máquina':'máquinas'))+'">'
-      +'<div class="wk-dayhead"><span class="wk-dow">'+WK_DIA[d.getDay()]+'</span><span class="wk-num">'+d.getDate()+'</span><span class="wk-sub">'+(isToday?'Hoy · ':'')+WK_MES[d.getMonth()]+'</span></div>'
+      +'<div class="wk-dayhead"><span class="wk-dow">'+WK_DIA[d.getDay()]+'</span><span class="wk-num">'+d.getDate()+'</span></div>'
       +'<div class="wk-daybody">'
       +(sel?'<button type="button" class="wk-place" data-wk="place" data-day="'+key+'">+ Agregar aquí</button>':'')
-      +'<ul class="wk-items">'+(list.length?list.map(m=>'<li class="wk-item"><span class="wk-item-area">'+esc(wkLabel(m.code))+'</span><span class="wk-item-name">'+esc(m.name)+'</span><button type="button" class="wk-remove" data-wk="remove" data-day="'+key+'" data-code="'+esc(m.code)+'" data-name="'+esc(m.name)+'" aria-label="'+esc('Quitar '+m.name+' ('+wkLabel(m.code)+') del '+WK_DIA_LARGO[d.getDay()]+' '+d.getDate())+'">'+wkIcon('M18 6 6 18M6 6l12 12')+'</button></li>').join(''):'<li class="wk-empty">Sin máquinas</li>')+'</ul>'
+      +'<ul class="wk-items">'+(list.length?list.map(m=>'<li class="wk-item"><span class="wk-item-area">'+esc(wkLabel(m.code))+'</span><span class="wk-item-name">'+esc(m.name)+'</span><button type="button" class="wk-remove" data-wk="remove" data-day="'+key+'" data-code="'+esc(m.code)+'" data-name="'+esc(m.name)+'" aria-label="'+esc('Quitar '+m.name+' ('+wkLabel(m.code)+') del '+WK_DIA_LARGO[d.getDay()]+' '+d.getDate())+'">'+wkIcon('M18 6 6 18M6 6l12 12')+'</button></li>').join(''):'')+'</ul>'
       +'</div></section>';
   }).join('');
 
@@ -120,9 +120,13 @@ function renderWeekly(){
     +'</div></div>':'';
 
   root.innerHTML='<div class="wk'+(sel?' has-sel':'')+'" style="--wk-slots:'+slots+'">'
-    +'<header class="wk-strip"><div class="wk-logo"><img src="img/logo-chiaplast.png" alt="Chiaplast"></div>'
-    +'<div class="wk-titles"><h2 class="wk-title">Semana '+info.weekNum+' · '+esc(info.month)+'</h2><p class="wk-range">'+esc(info.range)+'</p></div>'
-    +'<div class="wk-nav"><button type="button" class="wk-navbtn" data-wk="prev" aria-label="Semana anterior">'+wkIcon('m15 18-6-6 6-6')+'</button><button type="button" class="wk-today" data-wk="today">Hoy</button><button type="button" class="wk-navbtn" data-wk="next" aria-label="Semana siguiente">'+wkIcon('m9 18 6-6-6-6')+'</button></div></header>'
+    /* La franja de la semana es el encabezado de la pantalla (sin logo); ‹ Volver solo se ve en celular. */
+    +'<header class="wk-strip"><button type="button" class="wk-navbtn wk-back" data-wk="back" aria-label="Volver">'+wkIcon('m15 18-6-6 6-6')+'</button>'
+    +'<div class="wk-titles"><h1 class="wk-title">Semana '+info.weekNum+' · '+esc(info.month)+'</h1><p class="wk-range">'+esc(info.range)+'</p></div>'
+    +'<div class="wk-nav"><button type="button" class="wk-navbtn" data-wk="prev" aria-label="Semana anterior">'+wkIcon('m15 18-6-6 6-6')+'</button><button type="button" class="wk-today" data-wk="today">Hoy</button><button type="button" class="wk-navbtn" data-wk="next" aria-label="Semana siguiente">'+wkIcon('m9 18 6-6-6-6')+'</button>'
+    +'<span class="wk-sep" aria-hidden="true"></span>'
+    +(Weekly.pdfReady&&Bridge.available?'<button type="button" class="wk-share" data-wk="share">Compartir</button>':'')
+    +'<button type="button" class="wk-pdfbtn" data-wk="pdf">'+wkIcon('M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3')+'Generar PDF</button></div></header>'
     +'<aside class="wk-side" aria-label="Máquinas"><div class="wk-side-inner">'
     +'<div class="wk-sidehead"><h2>Máquinas</h2><p class="wk-hint" aria-live="polite"><span class="wk-hint-area">'+esc(areaHint)+'</span>'+(sel?'<span class="wk-hint-sel">'+esc(selHint)+'</span>':'')+'</p></div>'
     +'<div class="wk-tabs" role="tablist" aria-label="Áreas">'+tabs+'</div>'
@@ -130,10 +134,6 @@ function renderWeekly(){
     +(sel?'<p class="wk-selhint">'+esc(selHint)+'</p>':'')
     +'</div></aside>'
     +'<section class="wk-week" aria-label="Días de la semana">'+dayHtml+'</section>'
-    +'<div class="wk-pdfbar"><span class="wk-pdficon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M12 18v-6"></path><path d="m9 15 3 3 3-3"></path></svg></span>'
-    +'<h3>Exportar calendario</h3>'
-    +(Weekly.pdfReady&&Bridge.available?'<button type="button" class="wk-btn-sec" data-wk="share">Compartir PDF</button>':'')
-    +'<button type="button" class="wk-btn-pri wk-pdfbtn" data-wk="pdf">'+wkIcon('M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3')+'Generar PDF</button></div>'
     +dialog+'</div>';
 
   const tilesNew=root.querySelector('.wk-tiles');if(tilesNew&&tilesScroll){tilesNew.scrollLeft=tilesScroll[0];tilesNew.scrollTop=tilesScroll[1]}
@@ -185,6 +185,7 @@ async function wkGeneratePdf(){
     else if(a==='close'){Weekly.pdfOpen=false;renderWeekly();const p=root.querySelector('.wk-pdfbtn');if(p)p.focus()}
     else if(a==='generate')wkGeneratePdf();
     else if(a==='share')shareLast(0);
+    else if(a==='back')history.back();
   });
   root.addEventListener('dragstart',e=>{
     const m=tileOf(e.target);if(!m)return;
