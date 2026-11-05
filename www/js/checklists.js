@@ -113,8 +113,10 @@ const DIM_CHECK=[
   ]]
 ];
 const MQ_BY_AREA={CAM:MQ,BSL:MQ};
+/* IMP usa el mismo checklist que CAM (IMP-1..3 estaban en CAM antes del catálogo único). */
+const usesCamChecklist=()=>Runtime.code==='CAM'||Runtime.code==='IMP';
 function buildMq(){
-  if(Runtime.code==='CAM'){
+  if(usesCamChecklist()){
     let k=0,h='<button class="link" style="margin:0 0 12px" onclick="allOk(\'cm\')">Marcar todo en OK</button>';
     CAM_CHECK.forEach((g,n)=>{
       h+='<div class="card"><h3>'+g[0]+'</h3><button class="link" style="margin:0 0 8px" onclick="allOk(\'cm'+n+'-\')">Marcar zona en OK</button>';
@@ -171,7 +173,7 @@ function greaseAll(){
   greaseProgress();saveDraft();buzz(8);
 }
 function mqRows(){
-  if(Runtime.code==='CAM'){
+  if(usesCamChecklist()){
     const r=[];let k=0;
     CAM_CHECK.forEach((g,n)=>{
       r.push([g[0],'',1]);

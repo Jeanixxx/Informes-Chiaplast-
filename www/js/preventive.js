@@ -231,19 +231,14 @@ function setPreventiveOrderStatus(status){
    Replica el plano de la planta. El check de cada mes se guarda en este dispositivo
    bajo la clave mtto_pm_board_AAAA-MM. */
 const pmM=(name,key)=>({name,short:name,key:key||name});
-const pmList=names=>names.map(n=>pmM(n));
-const pmG=(name,span,count,cols)=>({group:name,span,cols:cols||count,subs:Array.from({length:count},(_,i)=>({name:name+' '+(i+1),short:String(i+1),key:name.replace(/\s+/g,'-')+'-'+(i+1)}))});
-const PM_LAYOUT=[
-  {code:'CAM',title:'CAM',cols:4,items:[
-    ...pmList(['BK-1','BK-2','BK-3','BK-4','BK-5','BK-6','BK-7','BK-8','BNG-1','BNG-2','BC-1']),pmM('BC-1','BC-1#2'),
-    ...pmList(['IMP-1','IMP-2','IMP-3','FLEJADORA'])]},
-  {code:'DIM',title:'DIM',cols:4,items:[
-    ...pmList(['BM-1','BM-2','BM-3','BM-4','BM-5','BD-1','BD-2','BD-3']),
-    pmG('SELLADORA',4,5),pmG('HORNO M',2,4,2),pmM('FLEJADORA','FLEJADORA-1'),pmM('FLEJADORA','FLEJADORA-2')]},
-  {code:'BSL',title:'BSL',cols:4,items:pmList(['BW-1','BN-1','BN-2','BN-3','BN-4','B-02','B-03','B-06','BSL-1','BSL-2','BSL-3','BSL-4','BSL-5','BSL-6','BD-4','ELEVADOR'])},
-  {code:'EXT1',title:'EXT1',cols:7,items:pmList(['EXT-19','ECB-1','CRI-3','CRI-4','CRI-5','EXT-6','EXT-8','EXT-9','EXT-10','EXT-11','EXT-12','EXT-13','EXT-14','EXT-15','EXT-16','EXT-17','EXT-20','EXT-21','EXT-22','EXT-A1','EXT-A2','RF','RF 2','EXT-N1','EXT-N2','FUELLADORA','FUELLADORA 2','EXT-A3'])},
-  {code:'EXT2',title:'EXT2',cols:7,items:pmList(['EXT-A4','EXT-A5','EXT-A6','EXT-A7','EXT-A8','EXT-A9','EXT-A10','EXT-A11','EXT-A12','EXT-A13','EXT-N3','EXT-N4','EXT-N5','EXT-N6','EXT-N7','CRI-1','CRI-2'])}
-];
+/* Se construye desde MACHINE_DB (machines.js): cada área es una zona y los grupos (HORNOS, SELLADORAS)
+   muestran sus unidades. El id de cada celda es zona:nombre; las zonas EXT1/EXT2 se conservan como
+   metadato (board.zone) para no cambiar los ids guardados. */
+const PM_LAYOUT=Object.keys(MACHINE_DB).map(code=>{
+  const a=MACHINE_DB[code];
+  return {code:a.board.zone,title:a.label,cols:a.board.cols,items:a.entries.map(e=>typeof e==='string'?pmM(e)
+    :{group:e.group,span:e.span,cols:e.cols,subs:e.units.map(u=>({name:u,short:u.split(/[\s-]/).pop(),key:u}))})};
+});
 const PM_PREFIX=KEYS.pmBoardPrefix;
 const PMBoard={month:'',date:'',data:{},savedAt:0};
 const pmKey=month=>PM_PREFIX+month;

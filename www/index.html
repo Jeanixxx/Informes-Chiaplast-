@@ -109,8 +109,9 @@
       <button class="area" onclick="choosePreventiveArea('Extrusión 1','E1')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="choosePreventiveArea('Extrusión 2','E2')"><b>E2</b><span>Extrusión 2</span></button>
       <button class="area" onclick="choosePreventiveArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="choosePreventiveArea('IMP','IMP')"><b>IMP</b><span>IMP</span></button>
       <button class="area" onclick="choosePreventiveArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
-      <button class="area wide" onclick="choosePreventiveArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+      <button class="area" onclick="choosePreventiveArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
     </div>
   </div>
 </section>
@@ -136,8 +137,9 @@
       <button class="area" onclick="chooseDailyArea('Extrusión 1','E1AREA')"><b>E1</b><span>Extrusión 1</span></button>
       <button class="area" onclick="chooseDailyArea('Extrusión 2','E2AREA')"><b>E2</b><span>Extrusión 2</span></button>
       <button class="area" onclick="chooseDailyArea('CAM','CAM')"><b>CAM</b><span>CAM</span></button>
+      <button class="area" onclick="chooseDailyArea('IMP','IMP')"><b>IMP</b><span>IMP</span></button>
       <button class="area" onclick="chooseDailyArea('DIM','DIM')"><b>DIM</b><span>DIM</span></button>
-      <button class="area wide" onclick="chooseDailyArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
+      <button class="area" onclick="chooseDailyArea('BSL','BSL')"><b>BSL</b><span>BSL</span></button>
     </div>
   </div>
 </section>
@@ -520,7 +522,7 @@
   <div class="body">
     <div class="card"><h2 style="margin-top:0">Nueva nota</h2>
       <div class="f"><label for="noteTitle">Título</label><input id="noteTitle" maxlength="120" placeholder="Ej. Fuga de aceite en reductor"></div>
-      <div class="two"><div class="f"><label for="noteArea">Apartado</label><select id="noteArea"><option value="General">General</option><option value="Extrusión 1">Extrusión 1</option><option value="Extrusión 2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="Chequeo diario">Chequeo diario</option><option value="Recordatorios">Recordatorios</option><option value="Kanban">Kanban</option><option value="Otro">Otro</option></select></div><div class="f"><label for="noteMachine">Máquina / referencia</label><input id="noteMachine" maxlength="80" placeholder="Ej. BM-3"></div></div>
+      <div class="two"><div class="f"><label for="noteArea">Apartado</label><select id="noteArea"><option value="General">General</option><option value="Extrusión 1">Extrusión 1</option><option value="Extrusión 2">Extrusión 2</option><option value="CAM">CAM</option><option value="IMP">IMP</option><option value="DIM">DIM</option><option value="BSL">BSL</option><option value="Chequeo diario">Chequeo diario</option><option value="Recordatorios">Recordatorios</option><option value="Kanban">Kanban</option><option value="Otro">Otro</option></select></div><div class="f"><label for="noteMachine">Máquina / referencia</label><input id="noteMachine" maxlength="80" placeholder="Ej. BM-3"></div></div>
       <div class="f"><label for="noteText">Nota / observaciones</label><textarea id="noteText" rows="4" maxlength="3000" placeholder="Describe el hallazgo, trabajo realizado o pendiente…"></textarea></div>
       <div class="f"><label>Fotografías (máximo 5 por nota)</label><div class="two"><button class="btn btn-s" type="button" onclick="captureNotePhoto()">Tomar fotografía</button><button class="btn btn-s" type="button" onclick="pickNotePhoto()">Adjuntar imagen</button></div><input id="notePhotos" style="display:none" type="file" accept="image/*" capture="environment" multiple onchange="previewNotePhotos(this)"><small class="muted">En la APK se usa la cámara o el selector de Android. Las evidencias quedan en este dispositivo.</small></div>
       <div id="notePhotoPreview" class="photo-preview"></div>
@@ -563,7 +565,7 @@
       <div class="section-heading"><h2 id="specialFormTitle">Nueva orden especial</h2><span id="specialFormStatus">BORRADOR</span></div>
       <input id="specialId" type="hidden">
       <div class="two">
-        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="DIM">DIM</option><option value="BSL">BSL</option></select></div>
+        <div class="f"><label for="specialArea">Área</label><select id="specialArea" onchange="specialAreaChanged()"><option value="">Seleccionar área</option><option value="E1">Extrusión 1</option><option value="E2">Extrusión 2</option><option value="CAM">CAM</option><option value="IMP">IMP</option><option value="DIM">DIM</option><option value="BSL">BSL</option></select></div>
         <div class="f"><label for="specialMachine">Máquina / equipo</label><select id="specialMachine"><option value="">Seleccionar máquina</option></select></div>
       </div>
       <div class="f"><label>Actividades por hacer</label><div id="specialActivitiesToDoList" class="special-repeat-list"></div><button class="btn btn-s" type="button" onclick="specialAddItem('activitiesToDo')">＋ Agregar actividad por hacer</button></div>

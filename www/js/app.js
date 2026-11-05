@@ -315,7 +315,10 @@ function saveDraft(){
 }
 function loadDraft(){
   let raw=null;try{raw=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
-  const s=normalizeDraft(raw),ok=!!s&&s.code===Runtime.code&&(s.flow||'preventive')===Runtime.checkType;
+  /* Un borrador del catálogo anterior (p. ej. IMP-1 guardado con code CAM) carga con su code vigente. */
+  const s=normalizeDraft(raw),cur=s?machineCurrent(s.code,s.machine||''):null;
+  const ok=!!s&&(s.code===Runtime.code||cur.code===Runtime.code)&&(s.flow||'preventive')===Runtime.checkType;
+  if(ok&&s.code!==Runtime.code){s.code=cur.code;s.machine=cur.name;s.area=Runtime.area}
   const keep={d:$('d').value,t:$('t').value,ccm:$('ccmName').value,resp:$('respSigName').value,production:$('productionName').value};
   setFormState(ok?s:null);
   $('d').value=$('d').value||keep.d;$('t').value=$('t').value||keep.t;
@@ -406,13 +409,13 @@ function renderRecent(targetId='recent',searchId='historySearch'){
 }
 
 /* Inicio: splash visible y restauración de sesión coherente */
-runStorageMigrations();
+const storageReady=runStorageMigrations().catch(()=>{});
 syncAppState();
-setTimeout(()=>{
+Promise.all([storageReady,new Promise(r=>setTimeout(r,1500))]).then(()=>{
   syncAppState();
   root(AppState.session?'menu':'login');
   purgeExpiredNotes().catch(()=>{});
-},1500);
+});
 setInterval(()=>{if(!document.hidden)purgeExpiredNotes().catch(()=>{})},60*60*1000);
 
 

@@ -24,10 +24,10 @@ function beginDailyBatch(){
 function chooseDailyArea(area,code){
   const dbCode=code==='E1AREA'?'E1':code==='E2AREA'?'E2':code;
   DailyBatch.area=area;DailyBatch.code=code;
-  const data=MACHINE_DB[dbCode];const list=(data?data.machines:[]).map(name=>({name,code:dbCode})),done=new Set(DailyBatch.reports.map(r=>r.machine));
+  const data=MACHINE_DB[dbCode];const list=(data?data.machines:[]).map(name=>({name,code:dbCode})),done=new Set(DailyBatch.reports.map(r=>r.code+'|'+r.machine));
   $('dailyMachineSubtitle').textContent=area+' · '+list.length+' máquinas';
   $('customMachine').value='';
-  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+(done.has(m.name)?' ✓':'')+'</b></button>').join('');
+  $('dailyMachineChoices').innerHTML=list.map(m=>'<button class="area" onclick="selectDailyMachine(&quot;'+esc(m.name)+'&quot;,&quot;'+esc(m.code)+'&quot;)"><b>'+esc(m.name)+(done.has(m.code+'|'+m.name)?' ✓':'')+'</b></button>').join('');
   go('dailyMachine');
 }
 function startDailyArea(area,code){beginDailyBatch();chooseDailyArea(area,code)}
