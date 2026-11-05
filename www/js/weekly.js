@@ -7,7 +7,7 @@ const WK_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 const WK_MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const WK_DIA=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
 const WK_DIA_LARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-const Weekly={monday:null,area:'CAM',sel:null,drag:null,pdfOpen:false,pdfScope:'week',data:null,pdfReady:false};
+const Weekly={monday:null,area:'CAM',sel:null,drag:null,pdfOpen:false,pdfScope:'week',data:null,pdfReady:false,sheetOpen:false};
 
 const wkKey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const wkAddDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
@@ -68,6 +68,7 @@ function wkGoToday(){Weekly.monday=wkMondayOf(new Date());Weekly.pdfReady=false;
 
 function renderWeekly(){
   const root=$('wkRoot');if(!root)return;
+  wkUpdateMode();
   if(!Weekly.monday)Weekly.monday=wkMondayOf(new Date());
   if(!MACHINE_DB[Weekly.area])Weekly.area=Object.keys(MACHINE_DB)[0];
   const data=wkData(),mon=Weekly.monday,info=wkWeekInfo(mon),todayKey=wkKey(new Date()),sel=Weekly.sel;
@@ -122,18 +123,20 @@ function renderWeekly(){
   root.innerHTML='<div class="wk'+(sel?' has-sel':'')+'" style="--wk-slots:'+slots+'">'
     /* La franja de la semana es el encabezado de la pantalla (sin logo); ‹ Volver solo se ve en celular. */
     +'<header class="wk-strip"><button type="button" class="wk-navbtn wk-back" data-wk="back" aria-label="Volver">'+wkIcon('m15 18-6-6 6-6')+'</button>'
-    +'<div class="wk-titles"><h1 class="wk-title">Semana '+info.weekNum+' · '+esc(info.month)+'</h1><p class="wk-range">'+esc(info.range)+'</p></div>'
+    +'<div class="wk-titles"><h1 class="wk-title">Semana '+info.weekNum+' · '+esc(info.month)+'</h1><p class="wk-range">'+esc(info.range)+'</p>'+(sel?'<p class="wk-strip-hint">'+esc(selHint)+'</p>':'')+'</div>'
     +'<div class="wk-nav"><button type="button" class="wk-navbtn" data-wk="prev" aria-label="Semana anterior">'+wkIcon('m15 18-6-6 6-6')+'</button><button type="button" class="wk-today" data-wk="today">Hoy</button><button type="button" class="wk-navbtn" data-wk="next" aria-label="Semana siguiente">'+wkIcon('m9 18 6-6-6-6')+'</button>'
     +'<span class="wk-sep" aria-hidden="true"></span>'
+    +'<button type="button" class="wk-sheet-btn" data-wk="sheet" aria-controls="wkSide" aria-expanded="'+Weekly.sheetOpen+'">'+wkIcon('M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z')+'Máquinas</button>'
     +(Weekly.pdfReady&&Bridge.available?'<button type="button" class="wk-share" data-wk="share">Compartir</button>':'')
-    +'<button type="button" class="wk-pdfbtn" data-wk="pdf">'+wkIcon('M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3')+'Generar PDF</button></div></header>'
-    +'<aside class="wk-side" aria-label="Máquinas"><div class="wk-side-inner">'
-    +'<div class="wk-sidehead"><h2>Máquinas</h2><p class="wk-hint" aria-live="polite"><span class="wk-hint-area">'+esc(areaHint)+'</span>'+(sel?'<span class="wk-hint-sel">'+esc(selHint)+'</span>':'')+'</p></div>'
+    +'<button type="button" class="wk-pdfbtn" data-wk="pdf" aria-label="Generar PDF" title="Generar PDF">'+wkIcon('M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3')+'<span class="wk-pdf-label">Generar PDF</span></button></div></header>'
+    +'<aside class="wk-side" id="wkSide" aria-label="Máquinas"><div class="wk-side-inner">'
+    +'<div class="wk-sidehead"><button type="button" class="wk-sheet-close" data-wk="sheet-close" aria-label="Cerrar máquinas">'+wkIcon('M18 6 6 18M6 6l12 12')+'</button><h2>Máquinas</h2><p class="wk-hint" aria-live="polite"><span class="wk-hint-area">'+esc(areaHint)+'</span>'+(sel?'<span class="wk-hint-sel">'+esc(selHint)+'</span>':'')+'</p></div>'
     +'<div class="wk-tabs" role="tablist" aria-label="Áreas">'+tabs+'</div>'
     +'<div class="wk-tiles" role="tabpanel" aria-label="'+esc('Máquinas de '+area.area)+'">'+tiles+'</div>'
     +(sel?'<p class="wk-selhint">'+esc(selHint)+'</p>':'')
     +'</div></aside>'
     +'<section class="wk-week" aria-label="Días de la semana">'+dayHtml+'</section>'
+    +'<div class="wk-sheet-scrim" data-wk="sheet-scrim" aria-hidden="true"></div>'
     +dialog+'</div>';
 
   const tilesNew=root.querySelector('.wk-tiles');if(tilesNew&&tilesScroll){tilesNew.scrollLeft=tilesScroll[0];tilesNew.scrollTop=tilesScroll[1]}
@@ -286,6 +289,34 @@ async function wkGeneratePdf(){
   }catch(e){toast(e&&e.message?e.message:'No se pudo generar el PDF.')}
 }
 
+/* ===== Modos según el ancho disponible (no según la pantalla) =====
+   W = ancho de contenido del cuerpo de la pantalla (sin relleno), medido con ResizeObserver: así cambia
+   igual al plegar el menú o al girar la tablet. >= 1100 amplio (panel de 300 px), 860–1099 compacto
+   (panel de 220 px), < 860 lateral (panel oculto que se abre como hoja desde la derecha). En celular
+   (< 700 px de pantalla) no hay modo: rige la distribución vertical. .wk-dense = días de menos de 110 px. */
+const WK_MODES=['amplio','compacto','lateral'];
+function wkUpdateMode(){
+  const sec=$('weeklyCalendar'),body=sec&&sec.querySelector('.body');if(!body)return;
+  let mode='';
+  if(innerWidth>=700){
+    const cs=getComputedStyle(body),W=body.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+    if(W<=0)return;
+    mode=W>=1100?'amplio':W>=860?'compacto':'lateral';
+    const side=mode==='amplio'?320:mode==='compacto'?236:0;
+    sec.classList.toggle('wk-dense',(W-side-28-48)/7<110);
+  }else sec.classList.remove('wk-dense');
+  WK_MODES.forEach(m=>{const c='wk-'+m;if(sec.classList.contains(c)!==(m===mode))sec.classList.toggle(c,m===mode)});
+  if(mode!=='lateral'&&Weekly.sheetOpen)wkSheet(false);
+}
+const wkIsLateral=()=>{const s=$('weeklyCalendar');return !!s&&s.classList.contains('wk-lateral')};
+/* Hoja de Máquinas del modo lateral (se abre desde la derecha). */
+function wkSheet(open,opts){
+  const sec=$('weeklyCalendar');if(!sec)return;
+  Weekly.sheetOpen=!!open;sec.classList.toggle('wk-sheet-open',Weekly.sheetOpen);sec.classList.remove('wk-sheet-dragging');
+  const btn=sec.querySelector('.wk-sheet-btn');if(btn)btn.setAttribute('aria-expanded',String(Weekly.sheetOpen));
+  if(opts&&opts.focus){const t=Weekly.sheetOpen?sec.querySelector('.wk-tab[aria-selected="true"]'):btn;if(t)t.focus({preventScroll:true})}
+}
+
 (function wkBindEvents(){
   const root=$('wkRoot');if(!root)return;
   const tileOf=el=>{const t=el&&el.closest('.wk-tile');return t?{code:t.dataset.code,name:t.dataset.name}:null};
@@ -298,7 +329,9 @@ async function wkGeneratePdf(){
     else if(a==='next')wkShift(1);
     else if(a==='today')wkGoToday();
     else if(a==='area'){Weekly.area=b.dataset.code;renderWeekly()}
-    else if(a==='tile'){const m=tileOf(b);Weekly.sel=wkSame(Weekly.sel,m)?null:m;renderWeekly()}
+    else if(a==='tile'){const m=tileOf(b);Weekly.sel=wkSame(Weekly.sel,m)?null:m;if(Weekly.sel&&wkIsLateral()&&Weekly.sheetOpen)wkSheet(false);renderWeekly()}
+    else if(a==='sheet')wkSheet(!Weekly.sheetOpen,{focus:true});
+    else if(a==='sheet-close'||a==='sheet-scrim')wkSheet(false,{focus:true});
     else if(a==='place'){if(Weekly.sel)wkAdd(b.dataset.day,Weekly.sel)}
     else if(a==='remove')wkRemove(b.dataset.day,{code:b.dataset.code,name:b.dataset.name});
     else if(a==='pdf'){Weekly.pdfOpen=true;Weekly.pdfScope='week';renderWeekly()}
@@ -313,8 +346,11 @@ async function wkGeneratePdf(){
     Weekly.drag=m;
     try{e.dataTransfer.setData('text/plain',m.code+'|'+m.name);e.dataTransfer.effectAllowed='copy'}catch(_){}
     const w=root.querySelector('.wk');if(w)w.classList.add('is-dragging');
+    /* Arrastre desde la hoja lateral: se oculta (sin quitarla del DOM) para dejar libres los días. */
+    if(wkIsLateral()&&Weekly.sheetOpen)setTimeout(()=>{const s=$('weeklyCalendar');if(s&&Weekly.drag)s.classList.add('wk-sheet-dragging')},0);
   });
-  root.addEventListener('dragend',()=>{Weekly.drag=null;clearOver();const w=root.querySelector('.wk');if(w)w.classList.remove('is-dragging')});
+  const endSheetDrag=()=>{const s=$('weeklyCalendar');if(s&&s.classList.contains('wk-sheet-dragging'))wkSheet(false)};
+  root.addEventListener('dragend',()=>{Weekly.drag=null;clearOver();const w=root.querySelector('.wk');if(w)w.classList.remove('is-dragging');endSheetDrag()});
   root.addEventListener('dragover',e=>{
     const day=e.target.closest('.wk-day');if(!day||!Weekly.drag)return;
     e.preventDefault();try{e.dataTransfer.dropEffect='copy'}catch(_){}
@@ -326,8 +362,15 @@ async function wkGeneratePdf(){
     e.preventDefault();
     let m=Weekly.drag;
     if(!m){try{const [code,...rest]=e.dataTransfer.getData('text/plain').split('|');if(MACHINE_DB[code]&&rest.length)m={code,name:rest.join('|')}}catch(_){}}
-    Weekly.drag=null;clearOver();
+    Weekly.drag=null;clearOver();endSheetDrag();
     if(m)wkAdd(day.dataset.day,m);
   });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&Weekly.pdfOpen){Weekly.pdfOpen=false;renderWeekly()}});
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape')return;
+    if(Weekly.pdfOpen){Weekly.pdfOpen=false;renderWeekly()}
+    else if(Weekly.sheetOpen&&wkIsLateral())wkSheet(false,{focus:true});
+  });
+  const body=$('weeklyCalendar')&&$('weeklyCalendar').querySelector('.body');
+  if(body&&'ResizeObserver' in window)new ResizeObserver(()=>wkUpdateMode()).observe(body);
+  addEventListener('resize',wkUpdateMode);
 })();

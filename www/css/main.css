@@ -900,8 +900,8 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .app.has-chrome #weeklyCalendar>.body.wk-body{padding:24px 32px 28px}
 .wk{--wk-item-h:84px;display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-areas:"strip strip" "week side";gap:20px;align-items:start;color:#10301A}
 .wk button:focus-visible{outline:3px solid #0080D0;outline-offset:2px}
-.wk-strip{grid-area:strip;min-height:96px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;padding:12px 20px 12px 28px;border-radius:22px;background:var(--accent);color:var(--accent-ink)}
-.wk-titles{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.wk-strip{grid-area:strip;min-height:96px;display:flex;align-items:center;gap:12px 14px;padding:12px 20px 12px 28px;border-radius:22px;background:var(--accent);color:var(--accent-ink)}
+.wk-titles{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px}
 .wk-title{margin:0;font-size:32px;font-weight:800;line-height:1.05;letter-spacing:-.4px;color:var(--accent-ink)}
 .wk-range{margin:0;font-size:15px;font-weight:700;color:#1E3D0A}
 .wk-nav{flex:none;display:flex;align-items:center;gap:14px}
@@ -912,7 +912,7 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .wk-share{min-height:48px;padding:0 16px;border-radius:14px;background:#fff;color:#0F2A08;font-size:15px;font-weight:700}
 .wk-pdfbtn{min-height:48px;display:inline-flex;align-items:center;gap:8px;padding:0 18px;border-radius:14px;background:var(--steel);color:#fff;font-size:15px;font-weight:700;white-space:nowrap}
 .wk-pdfbtn svg{width:20px;height:20px}
-.wk-week{grid-area:week;min-width:0;display:grid;grid-template-columns:repeat(7,minmax(92px,1fr));gap:8px;padding:14px;overflow-x:auto;border-radius:22px;background:#fff;border:1px solid #E1EADA}
+.wk-week{grid-area:week;min-width:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding:14px;border-radius:22px;background:#fff;border:1px solid #E1EADA}
 .wk-day{min-width:0;display:flex;flex-direction:column;border-radius:16px;background:#F7FAF2;border:1.5px solid #E3EDD6}
 .wk-day.is-today{background:#E3F1FB;border-color:#0080D0}
 .wk.has-sel .wk-day:not(.is-today),.wk.is-dragging .wk-day:not(.is-today){border-style:dashed;border-color:#BFDD8E}
@@ -965,21 +965,66 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .wk-option b{display:block;font-size:18px}
 .wk-option small{display:block;margin-top:3px;font-size:14px;font-weight:600;color:#4A6450}
 .wk-dlg-actions{display:flex;justify-content:flex-end;gap:10px}
-@media(min-width:980px) and (max-width:1199px){.wk-title{font-size:26px}.wk-range{font-size:14px}.wk-nav{gap:10px}}
-@media(min-width:700px) and (max-width:979px){
-  .wk{grid-template-columns:minmax(0,1fr);grid-template-areas:"strip" "week" "side"}
-  .wk-strip{padding:14px 16px 14px 22px}
-  .wk-title{font-size:26px}
-  .wk-nav{gap:10px}
-  .wk-side{position:static;min-height:0}
-  .wk-side-inner{position:static}
-  .wk-tabs{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .wk-tiles{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));max-height:360px}
+/* Controles de la hoja lateral: solo existen en el modo .wk-lateral (nunca en celular) */
+.wk-sheet-btn,.wk-sheet-close,.wk-sheet-scrim,.wk-strip-hint{display:none}
+@media(min-width:700px){
+  .wk-week{overflow:visible}
+  .wk-strip{flex-wrap:nowrap}
+  .wk-titles{flex:1 1 0}
+  .wk-title,.wk-range,.wk-strip-hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Compacto (860–1099 px): panel angosto de 220 px */
+  #weeklyCalendar.wk-compacto .wk{grid-template-columns:minmax(0,1fr) 220px;gap:16px}
+  #weeklyCalendar.wk-compacto .wk-sidehead{padding:14px}
+  #weeklyCalendar.wk-compacto .wk-sidehead h2{font-size:20px}
+  #weeklyCalendar.wk-compacto .wk-hint{font-size:13px}
+  #weeklyCalendar.wk-compacto .wk-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* Pestañas de 38 px a la vista y 44 px de zona táctil: la caja visible se dibuja con ::after */
+  #weeklyCalendar.wk-compacto .wk-tabs{row-gap:0}
+  #weeklyCalendar.wk-compacto .wk-tab{position:relative;z-index:0;min-height:44px;height:44px;font-size:13px;background:none;border:0}
+  #weeklyCalendar.wk-compacto .wk-tab::after{content:"";position:absolute;z-index:-1;inset:3px 0;border-radius:11px;border:1px solid #DCE6D3;background:#fff}
+  #weeklyCalendar.wk-compacto .wk-tab[aria-selected="true"]{background:none}
+  #weeklyCalendar.wk-compacto .wk-tab[aria-selected="true"]::after{background:#0073BC;border-color:#0073BC}
+  #weeklyCalendar.wk-compacto .wk-tiles{grid-template-columns:minmax(0,1fr);grid-auto-rows:60px}
+  #weeklyCalendar.wk-compacto .wk-tile{padding:8px 12px}
+  #weeklyCalendar.wk-compacto .wk-tile-name{font-size:17px}
+  #weeklyCalendar:is(.wk-compacto,.wk-lateral) .wk-title{font-size:26px}
+  #weeklyCalendar:is(.wk-compacto,.wk-lateral) .wk-range{font-size:13px}
+  #weeklyCalendar:is(.wk-compacto,.wk-lateral) .wk-nav{gap:10px}
+  #weeklyCalendar:is(.wk-compacto,.wk-lateral) .wk-strip{padding:12px 16px 12px 22px}
+  /* Lateral (< 860 px): la semana usa todo el ancho y Máquinas se abre como hoja desde la derecha */
+  #weeklyCalendar.wk-lateral .wk{grid-template-columns:minmax(0,1fr);grid-template-areas:"strip" "week"}
+  #weeklyCalendar.wk-lateral .wk-sheet-btn{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border-radius:14px;background:#fff;color:#2F5A00;font-size:15px;font-weight:700;white-space:nowrap}
+  #weeklyCalendar.wk-lateral .wk-sheet-btn svg{width:20px;height:20px}
+  #weeklyCalendar.wk-lateral .wk-pdf-label{display:none}
+  #weeklyCalendar.wk-lateral .wk-pdfbtn{width:48px;padding:0;justify-content:center}
+  #weeklyCalendar.wk-lateral .wk-strip-hint{display:block;margin:2px 0 0;font-size:13px;font-weight:700;color:#0F2A08}
+  #weeklyCalendar.wk-lateral .wk-side{position:fixed;z-index:25;top:var(--shell-h);right:0;bottom:0;width:300px;min-height:0;visibility:hidden;transform:translateX(100%);transition:transform 200ms var(--ease-standard),visibility 0s linear 200ms}
+  #weeklyCalendar.wk-lateral.wk-sheet-open .wk-side{visibility:visible;transform:none;transition:transform 200ms var(--ease-standard),visibility 0s}
+  #weeklyCalendar.wk-lateral .wk-side-inner{border-right:0;border-radius:22px 0 0 22px;box-shadow:0 14px 32px rgba(16,48,26,.18)}
+  #weeklyCalendar.wk-lateral .wk-sidehead{position:relative;padding-right:64px}
+  #weeklyCalendar.wk-lateral .wk-sheet-close{position:absolute;top:50%;right:12px;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border-radius:12px;color:#fff}
+  #weeklyCalendar.wk-lateral .wk-sheet-close:hover{background:rgba(255,255,255,.14)}
+  #weeklyCalendar.wk-lateral.wk-sheet-open .wk-sheet-scrim{display:block;grid-area:week;align-self:stretch;position:relative;z-index:3;border-radius:22px;background:rgba(10,30,15,.25)}
+  #weeklyCalendar.wk-lateral.wk-sheet-dragging .wk-side,#weeklyCalendar.wk-lateral.wk-sheet-dragging .wk-sheet-scrim{visibility:hidden}
+  /* Días de menos de 110 px */
+  #weeklyCalendar.wk-dense .wk{--wk-item-h:50px}
+  #weeklyCalendar.wk-dense .wk-week{gap:6px;padding:6px}
+  #weeklyCalendar.wk-dense .wk-daybody{padding:0 4px 6px}
+  #weeklyCalendar.wk-dense .wk-dayhead{padding:8px 4px 6px}
+  #weeklyCalendar.wk-dense .wk-dow{font-size:11px}
+  #weeklyCalendar.wk-dense .wk-num{width:34px;height:34px;font-size:18px}
+  #weeklyCalendar.wk-dense .wk-item{grid-template-columns:minmax(0,1fr) 26px;grid-template-rows:auto auto;align-content:center;column-gap:2px;padding:4px 3px 4px 7px}
+  #weeklyCalendar.wk-dense .wk-item-area{grid-row:1;font-size:10px}
+  #weeklyCalendar.wk-dense .wk-item-name{grid-column:1;grid-row:2;padding-right:0;font-size:13px}
+  #weeklyCalendar.wk-dense .wk-remove{position:relative;grid-column:2;grid-row:1/3;align-self:center;width:26px;height:26px;min-height:26px}
+  #weeklyCalendar.wk-dense .wk-remove::before{content:"";position:absolute;inset:-9px -3px -9px -15px}
+  #weeklyCalendar.wk-dense .wk-place{font-size:12px}
 }
+@media(min-width:700px) and (prefers-reduced-motion:reduce){#weeklyCalendar.wk-lateral .wk-side{transition:none!important}}
 @media(max-width:699px){
   .app.has-chrome #weeklyCalendar>.body.wk-body{padding:12px 12px 24px}
   .wk{display:flex;flex-direction:column;align-items:stretch;gap:12px}
-  .wk-strip{min-height:0;gap:10px;padding:12px;border-radius:20px}
+  .wk-strip{flex-wrap:wrap;min-height:0;gap:10px;padding:12px;border-radius:20px}
   .wk-back{display:flex;width:44px;margin-left:-8px;border:0;background:none}
   .wk-navbtn{width:44px;height:44px;border-radius:12px}
   .wk-titles{flex:1 1 0}
