@@ -142,22 +142,143 @@ function renderWeekly(){
   if(focusEl)focusEl.focus({preventScroll:true});
 }
 
-function wkPdfRows(scope){
-  const data=wkData(),weeks=scope==='month'?wkMonthMondays(Weekly.monday):[Weekly.monday],first=Weekly.monday;
-  const rows=[[scope==='month'?'CALENDARIO DE MANTENIMIENTO · '+WK_MESES[first.getMonth()].toUpperCase()+' '+first.getFullYear():'CALENDARIO SEMANAL DE MANTENIMIENTO','',3]];
-  weeks.forEach(mon=>{
-    const info=wkWeekInfo(mon),days=[];
-    for(let i=0;i<7;i++){const d=wkAddDays(mon,i);days.push({title:WK_DIA[d.getDay()]+' '+d.getDate()+' '+WK_MES[d.getMonth()],items:(data[wkKey(d)]||[]).map(m=>wkLabel(m.code)+' · '+m.name)})}
-    rows.push(['Semana '+info.weekNum+' · '+info.month+'  —  '+info.range,days,6]);
+/* ===== PDF del calendario: "semana por área" (A4 horizontal, colores originales de los PDF) =====
+   Una hoja por semana: filas = áreas (CAM, IMP, DIM, BSL, EXT1, EXT2), columnas = lunes a domingo, y
+   cada máquina en un chip con casilla para marcar al terminar. Medidas en pt desde arriba a la izquierda. */
+const WK_PDF={W:842,H:595,X0:33,X1:809,navy:'#172B3A',green:'#23875A',greenText:'#176B45',gray:'#526574',light:'#D1DBE3',
+  chipLine:'#CCD9E3',inner:'#E3EAF0',head:'#EBF0F5',areaBg:'#F4F7FA',rowBg:['#FFFFFF','#FAFBFD'],
+  tableTop:136.5,headH:30,tableBottom:515.5,areaW:93,minRow:40,gap:3.75,pad:4.5};
+const wkPlural=(n,one,many)=>n+' '+(n===1?one:many);
+/* Una fila por área con las máquinas de cada día, en el orden del catálogo. */
+function wkWeekRows(mon){
+  const data=wkData();
+  return Object.keys(MACHINE_DB).map(code=>{
+    const order=MACHINE_DB[code].entries.map(machineEntryName);
+    const cells=[];
+    for(let i=0;i<7;i++){
+      const names=(data[wkKey(wkAddDays(mon,i))]||[]).filter(m=>m.code===code).map(m=>m.name);
+      names.sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?1e9:ia)-(ib<0?1e9:ib)||a.localeCompare(b)});
+      cells.push(names);
+    }
+    return {code,label:MACHINE_DB[code].label,cells,count:cells.reduce((n,c)=>n+c.length,0),most:Math.max(...cells.map(c=>c.length))};
   });
-  return rows;
+}
+const wkRowNeed=(n,ch)=>Math.max(WK_PDF.minRow,9+n*ch+Math.max(0,n-1)*WK_PDF.gap);
+/* Reparte las filas en hojas: chip de 21 pt; si no cabe, de 18 pt; si aún no cabe, hojas de continuación
+   (nunca parte una fila). En una sola hoja el sobrante se reparte por igual entre las 6 filas; si la tabla
+   se parte, cada fila conserva su alto natural (una fila vacía no ocupa la hoja entera). */
+function wkLayoutWeek(rows){
+  const avail=WK_PDF.tableBottom-WK_PDF.tableTop-WK_PDF.headH;
+  for(const [ch,fs] of [[21,10.5],[18,9.75]]){
+    const need=rows.map(r=>wkRowNeed(r.most,ch));
+    if(need.reduce((a,b)=>a+b,0)<=avail)return {ch,fs,spread:true,pages:[rows.map((r,i)=>({row:r,index:i,h:need[i]}))]};
+  }
+  const ch=18,fs=9.75,pages=[];let cur=[],used=0;
+  rows.forEach((r,i)=>{
+    const h=Math.min(avail,wkRowNeed(r.most,ch));
+    if(cur.length&&used+h>avail){pages.push(cur);cur=[];used=0}
+    cur.push({row:r,index:i,h});used+=h;
+  });
+  if(cur.length)pages.push(cur);
+  return {ch,fs,spread:false,pages};
+}
+function wkPdfHeader(c,title){
+  const P=WK_PDF;
+  c.rect(0,0,P.W,72,{fill:P.navy});c.rect(0,72,P.W,3,{fill:P.green});
+  c.text(P.X0,36,'CHIAPLAST',22.5,true,'#FFFFFF');
+  c.text(P.X0,54,'Departamento de Mantenimiento',9.75,false,P.light);
+  c.text(P.X1,42,title,11,true,'#FFFFFF','right');
+}
+function wkPdfBar(c,title,range,summary){
+  const P=WK_PDF;
+  c.rect(P.X0,91.5,P.X1-P.X0,34.5,{fill:P.navy});
+  c.text(45,113,title,12,true,'#FFFFFF');
+  if(range)c.text(45+pdfMeasure(title,12,true)+10.5,113,range,10.5,false,P.light);
+  if(summary)c.text(797,113,summary,10.5,true,'#FFFFFF','right');
+}
+function wkPdfTable(c,mon,slice,ch,fs,spread){
+  const P=WK_PDF,top=P.tableTop,width=P.X1-P.X0,dayW=(width-P.areaW)/7;
+  const avail=P.tableBottom-top-P.headH,spare=spread?Math.max(0,(avail-slice.reduce((n,s)=>n+s.h,0))/slice.length):0;
+  const colX=i=>P.X0+P.areaW+i*dayW;
+  /* Encabezado */
+  c.rect(P.X0,top,width,P.headH,{fill:P.head});
+  c.text(P.X0+9,top+18.5,'ÁREA',9.75,true,P.navy);
+  for(let i=0;i<7;i++){
+    const d=wkAddDays(mon,i),lead=WK_DIA[d.getDay()]+' '+d.getDate();
+    c.text(colX(i)+7.5,top+18.5,lead,9.75,true,P.navy);
+    c.text(colX(i)+7.5+pdfMeasure(lead,9.75,true),top+18.5,' '+WK_MES[d.getMonth()],9.75,false,P.gray);
+    c.line(colX(i),top,colX(i),top+P.headH,P.light);
+  }
+  c.line(P.X0,top+P.headH,P.X1,top+P.headH,P.light);
+  /* Filas de área */
+  let y=top+P.headH;
+  slice.forEach((s,k)=>{
+    const r=s.row,h=s.h+spare,mid=y+h/2;
+    c.rect(P.X0,y,width,h,{fill:P.rowBg[s.index%2]});
+    c.rect(P.X0,y,P.areaW,h,{fill:P.areaBg});
+    c.text(P.X0+9,mid-1.5,r.label,12.75,true,P.navy);
+    c.text(P.X0+9,mid+11.5,r.count?wkPlural(r.count,'máquina','máquinas'):'Sin programar',9,false,P.greenText);
+    const fits=Math.max(1,Math.floor((h-2*P.pad+P.gap)/(ch+P.gap)));
+    r.cells.forEach((names,i)=>{
+      const x=colX(i);c.line(x,y,x,y+h,P.inner);
+      let list=names;
+      if(names.length>fits)list=names.slice(0,fits-1).concat(['+ '+(names.length-fits+1)+' más']);
+      const stack=list.length*ch+Math.max(0,list.length-1)*P.gap;let cy=y+(h-stack)/2;
+      const cx=x+P.pad,cw=dayW-2*P.pad,box=9.75;
+      list.forEach((name,j)=>{
+        const more=j===list.length-1&&list!==names;
+        if(more){c.text(cx+7,cy+ch/2+fs*0.35,name,fs,true,P.gray);cy+=ch+P.gap;return}
+        c.rect(cx,cy,cw,ch,{fill:'#FFFFFF',stroke:P.chipLine,lw:0.75,r:3});
+        c.text(cx+7,cy+ch/2+fs*0.35,pdfFit(name,cw-7-5-box-4,fs,true),fs,true,P.navy);
+        c.rect(cx+cw-5-box,cy+(ch-box)/2,box,box,{stroke:P.navy,lw:1.1});
+        cy+=ch+P.gap;
+      });
+    });
+    if(k)c.line(P.X0,y,P.X1,y,P.light);
+    y+=h;
+  });
+  c.rect(P.X0,top,width,y-top,{stroke:P.light,lw:0.75});
+}
+function wkPdfFooter(c,page,total,generated){
+  const P=WK_PDF;
+  c.rect(P.X0,527,9,9,{stroke:P.navy,lw:1.1});
+  c.text(P.X0+14,535,'= marcar al terminar el mantenimiento',9,false,P.gray);
+  c.line(432,528,597,528,P.navy);c.line(621,528,786,528,P.navy);
+  c.text(514.5,540,'Elaboró',9,false,P.gray,'center');c.text(703.5,540,'Revisó',9,false,P.gray,'center');
+  c.line(P.X0,556,P.X1,556,P.light);
+  c.text(P.X0,570,'Chiaplast · Mantenimiento · Documento generado el '+generated,9,false,P.gray);
+  c.text(P.X1,570,'Página '+page+' de '+total,9,true,P.navy,'right');
+}
+/* scope: 'week' (semana visible) o 'month' (cada semana del mes con máquinas; contadas por su lunes). */
+function wkBuildAreaPdf(scope){
+  const P=WK_PDF,mon=Weekly.monday,now=new Date();
+  const generated=(now.toLocaleDateString('es-MX')+', '+now.toLocaleTimeString('es-MX',{hour:'numeric',minute:'2-digit'})).replace(/[  ]/g,' ');
+  const monthName=WK_MESES[mon.getMonth()],year=mon.getFullYear();
+  const title=scope==='month'?'CALENDARIO MENSUAL POR ÁREA · '+monthName.toUpperCase()+' '+year:'CALENDARIO SEMANAL POR ÁREA';
+  const weeks=scope==='month'?wkMonthMondays(mon).filter(m=>wkWeekRows(m).some(r=>r.count)):[mon];
+  const sheets=[];
+  weeks.forEach(m=>{
+    const rows=wkWeekRows(m),info=wkWeekInfo(m),total=rows.reduce((n,r)=>n+r.count,0),areas=rows.filter(r=>r.count).length;
+    const lay=wkLayoutWeek(rows);
+    lay.pages.forEach((slice,i)=>sheets.push(c=>{
+      wkPdfHeader(c,title);
+      wkPdfBar(c,'Semana '+info.weekNum+' · '+info.month,info.range+(i?' (continuación)':''),wkPlural(total,'máquina','máquinas')+' · '+wkPlural(areas,'área','áreas'));
+      wkPdfTable(c,m,slice,lay.ch,lay.fs,lay.spread);
+    }));
+  });
+  if(!sheets.length)sheets.push(c=>{
+    wkPdfHeader(c,title);wkPdfBar(c,monthName+' · '+year,'','');
+    c.text(P.W/2,(P.tableTop+P.tableBottom)/2+4,'Sin máquinas programadas en '+monthName.toLowerCase()+' de '+year,12,false,P.gray,'center');
+  });
+  const pages=sheets.map((draw,i)=>{const c=pdfCanvas(P.H);draw(c);wkPdfFooter(c,i+1,sheets.length,generated);return {ops:c.ops}});
+  return pdfAssemble(pages,P.W,P.H,title,[]);
 }
 async function wkGeneratePdf(){
   const scope=Weekly.pdfScope,mon=Weekly.monday;
   const name=scope==='month'?'CALENDARIO-MES-'+mon.getFullYear()+pad(mon.getMonth()+1)+'.pdf':'CALENDARIO-SEMANA-'+wkKey(mon).replaceAll('-','')+'.pdf';
   Weekly.pdfOpen=false;renderWeekly();
   try{
-    const blob=buildPdf(wkPdfRows(scope),null,{orientation:'landscape'});
+    const blob=wkBuildAreaPdf(scope);
     LastExports.length=0;
     const mode=await exportReport(blob,name,PDF_MIME);
     Weekly.pdfReady=true;renderWeekly();
