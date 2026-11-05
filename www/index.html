@@ -12,21 +12,23 @@
 <div class="app">
 <header class="app-topbar" aria-label="Barra de estado Chiaplast">
   <button class="brand" type="button" onclick="go('menu')" aria-label="Ir al centro de control">
-    <span class="brand-logo"><img src="img/logo-chiaplast.png" alt="Chiaplast"></span><small>MANTENIMIENTO DE PLANTA</small>
+    <span class="brand-logo"><img src="img/logo-chiaplast.png" alt="Chiaplast"></span>
   </button>
-  <span class="plant-status"><i></i> DATOS LOCALES · SIN SINCRONIZACIÓN</span>
+  <span class="topbar-title">Mantenimiento de planta</span>
   <div class="topbar-spacer"></div>
   <span class="topbar-clock" id="dashboardClock"></span>
-  <button class="topbar-user" type="button" onclick="go('tools')">⚙ <span id="topbarUser">Técnico</span></button>
+  <button class="topbar-user" type="button" onclick="go('tools')"><span class="topbar-avatar" id="topbarInitials" aria-hidden="true">T</span><span id="topbarUser">Técnico</span></button>
 </header>
 <nav class="app-sidebar" aria-label="Navegación principal">
-  <button type="button" data-nav="menu" onclick="go('menu')"><span>▦</span>Centro de Control</button>
-  <button type="button" onclick="startWorkflow('daily')"><span>☷</span>Recorrido Diario Ext 1 y 2</button>
-  <button type="button" data-nav="preventive" onclick="startWorkflow('preventive')"><span>◷</span>Generar Reporte MTTO preventivo</button>
-  <button type="button" data-nav="weeklyCalendar" onclick="openWeeklyCalendar()"><span>◫</span>Calendario semanal</button>
-  <button type="button" data-nav="kanban" onclick="go('kanban')"><span>▥</span>Planificación &amp; Kanban</button>
-  <button type="button" data-nav="notes" onclick="go('notes')"><span>▤</span>Bitácora &amp; Historial</button>
-  <button class="sidebar-bottom" type="button" onclick="go('tools')"><span>⚙</span>Ajustes / Configuración</button>
+  <span class="sidebar-logo"><img src="img/logo-chiaplast.png" alt="Chiaplast"></span>
+  <button type="button" data-nav="menu" onclick="go('menu')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>Centro de Control</button>
+  <button type="button" onclick="startWorkflow('daily')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4H9zM15 5h3v16H6V5h3M9 14l2 2 4-4"/></svg>Recorrido diario</button>
+  <button type="button" data-nav="preventive" onclick="startWorkflow('preventive')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Preventivo</button>
+  <button type="button" data-nav="weeklyCalendar" onclick="openWeeklyCalendar()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v15H4zM16 3v5M8 3v5M4 11h16"/></svg>Calendario semanal</button>
+  <button type="button" data-nav="kanban" onclick="go('kanban')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v16H4zM11 4h4v10h-4zM17 4h3v13h-3z"/></svg>Kanban</button>
+  <button type="button" data-nav="notes" onclick="go('notes')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v17H5zM9 4v17M12 9h4M12 13h4"/></svg>Bitácora</button>
+  <span class="sidebar-status"><i aria-hidden="true"></i>Datos locales</span>
+  <button class="sidebar-bottom" type="button" onclick="go('tools')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"/></svg>Ajustes</button>
 </nav>
 
 <!-- Splash -->

@@ -23,7 +23,8 @@ function show(id){
   app.classList.toggle('has-chrome',showChrome);
   const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard','preventiveDrafts','releaseFinal'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
   document.querySelectorAll('.app-sidebar [data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===id||(preventiveScreen&&button.dataset.nav==='preventive')));
-  $('topbarUser').textContent=currentUser()||'Técnico';
+  const user=currentUser()||'Técnico';$('topbarUser').textContent=user;
+  $('topbarInitials').textContent=user.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w.charAt(0).toUpperCase()).join('')||'T';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
@@ -60,7 +61,7 @@ function renderDashboardMetrics(){
 }
 function updateDashboardClock(){
   const now=new Date(),clock=$('dashboardClock');
-  clock.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})+' | '+now.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}).toUpperCase();
+  clock.textContent=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][now.getDay()]+' '+now.getDate()+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][now.getMonth()]+' · '+pad(now.getHours())+':'+pad(now.getMinutes());
 }
 updateDashboardClock();setInterval(updateDashboardClock,30000);
 function openReminders(){go('reminders')}

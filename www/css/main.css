@@ -502,21 +502,28 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
 /* Modal .helpm/.helpbox: estilos base definidos en la sección 6. */
 /* Tablet control-room interface */
 .app-topbar,.app-sidebar{display:none}
-.app.has-chrome .app-topbar{position:absolute;z-index:12;inset:0 0 auto;height:64px;padding:0 18px;background:var(--steel);color:#fff;display:flex;align-items:center;gap:16px}
-.brand{display:flex;align-items:center;gap:10px;color:#fff;text-align:left;padding:0}
-.brand-logo{flex:none;height:44px;display:flex;align-items:center;padding:4px 10px;border-radius:10px;background:#fff}
-.brand-logo img{display:block;height:36px;width:auto}
-.brand small{display:block;font-size:10px;letter-spacing:.1em;color:var(--muted)}
-@media(max-width:699px){.brand-logo{height:40px;padding:3px 8px}.brand-logo img{height:32px}.brand small{display:none}}
-.plant-status,.topbar-clock,.topbar-user{font-size:12px;font-weight:700;letter-spacing:.04em}
-.plant-status{padding:6px 8px;background:var(--steel-3)}.plant-status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:5px}
-.topbar-spacer{flex:1}.topbar-clock{color:var(--muted)}.topbar-user{padding:8px 10px;background:var(--steel-3);color:#fff;border-radius:4px}
-.app.has-chrome .app-sidebar{position:absolute;z-index:11;inset:64px auto 0 0;width:208px;padding:16px 10px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
-.app-sidebar button{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:10px 11px;text-align:left;color:var(--ink);font-size:14px;font-weight:700;border-radius:6px}
-.app-sidebar button span{width:20px;font-size:17px;text-align:center;flex:none}
-.app-sidebar button:hover,.app-sidebar button.active{background:var(--steel);color:white}
-.app-sidebar .sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);border-radius:0}
-.app.has-chrome .screen{top:64px;left:208px;right:0;bottom:0}
+/* Menú lateral de arriba a abajo (248 px; 208 px entre 700 y 979 px) y barra superior clara a su
+   derecha (72 px). En celular (< 700 px) el menú se oculta y la barra es verde oscuro con el logo. */
+.app{--shell-w:248px;--shell-h:72px}
+.app.has-chrome .app-topbar{position:absolute;z-index:12;top:0;right:0;left:var(--shell-w);height:var(--shell-h);padding:0 32px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px}
+.brand{display:none;align-items:center;color:#fff;text-align:left;padding:0}
+.brand-logo{flex:none;height:36px;display:flex;align-items:center;padding:3px 8px;border-radius:10px;background:#fff}
+.brand-logo img{display:block;height:30px;width:auto}
+.topbar-title{font-size:15px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.topbar-spacer{flex:1}
+.topbar-clock{font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap}
+.topbar-user{flex:none;height:44px;display:flex;align-items:center;gap:10px;padding:0 14px 0 6px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600}
+.topbar-avatar{flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--steel);color:#fff;font-size:12px;font-weight:700}
+.app.has-chrome .app-sidebar{position:absolute;z-index:13;inset:0 auto 0 0;width:var(--shell-w);padding:20px 14px;background:var(--steel);display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.sidebar-logo{flex:none;height:56px;margin:0 2px 20px;padding:8px 12px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:#fff}
+.sidebar-logo img{display:block;height:38px;width:auto;max-width:100%}
+.app-sidebar button{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 14px;text-align:left;color:var(--shell-ink);font-size:15px;font-weight:600;line-height:1.2;border-radius:12px}
+.app-sidebar button svg{flex:none;width:20px;height:20px}
+.app-sidebar button:hover{background:rgba(255,255,255,.08)}
+.app-sidebar button.active{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.sidebar-status{margin-top:auto;display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:700;color:var(--shell-ink-soft)}
+.sidebar-status i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.app.has-chrome .screen{top:var(--shell-h);left:var(--shell-w);right:0;bottom:0}
 .app.has-chrome .screen>.body{width:100%;max-width:none;margin:0;padding:20px 24px 28px}
 .app.has-chrome .screen>.bar{min-height:60px;padding:10px 20px}
 .app.has-chrome .screen>.bar h1{font-size:20px}
@@ -575,17 +582,21 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
   .dashboard-area{min-height:145px;padding:11px}
   .dashboard-panel{padding:12px}
 }
+@media(max-width:979px){.app{--shell-w:208px}.app.has-chrome .app-sidebar{padding:20px 10px}.app-sidebar button{gap:10px;padding:0 10px;font-size:14px}.sidebar-status{padding:10px}}
 @media(max-width:900px){
-  .app.has-chrome .app-sidebar{width:184px}
-  .app.has-chrome .screen{left:184px}
   .dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dashboard-areas{grid-template-columns:repeat(3,minmax(0,1fr))}
   .dashboard-area{min-height:140px;padding:10px}
 }
 @media(max-width:699px){
-  .app.has-chrome .app-topbar{height:54px;padding:0 12px}
+  .app{--shell-w:0px;--shell-h:54px}
+  .app.has-chrome .app-topbar{gap:10px;padding:0 12px;background:var(--steel);color:#fff;border-bottom:0}
   .app.has-chrome .app-sidebar{display:none}
-  .app.has-chrome .screen{top:54px;left:0}
+  .brand{display:flex}
+  .topbar-title{color:#fff;font-size:14px}
+  .topbar-clock{color:var(--shell-ink);font-size:13px}
+  .topbar-user{height:44px;padding:0 6px;gap:0}
+  .topbar-user #topbarUser{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .dashboard-heading{align-items:flex-start;flex-direction:column}
   .dashboard-actions{width:100%}  .dashboard-actions .btn{flex:1;min-height:48px;padding:8px 10px;font-size:14px;white-space:normal}
   .dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -595,8 +606,8 @@ input.bad,textarea.bad,select.bad{border-color:var(--err);background:var(--err-s
   .dashboard-areas{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dashboard-lower{grid-template-columns:1fr}
   .workspace-count{margin-left:0}
-  .plant-status{display:none}
 }
+@media(max-width:430px){.app.has-chrome .topbar-title{display:none}}
 /* ===== Refacciones utilizadas en mantenimiento preventivo ===== */
 .parts-card{margin:0 0 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
 .parts-card>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;cursor:pointer;list-style:none}
