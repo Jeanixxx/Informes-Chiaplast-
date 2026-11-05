@@ -209,8 +209,11 @@ function pdfWrap(s,max,size,bold){
   if(cur||!lines.length)lines.push(cur);
   return lines;
 }
-function buildPdf(rows,sig){
-  const W=595,H=842,M=40,CW=W-2*M,BOT=H-56,generated=new Date().toLocaleString('es-MX');
+/* opts.orientation: 'portrait' (A4 vertical, por defecto) o 'landscape' (842×595).
+   Fila tipo 6 = cuadrícula semanal en hoja propia: [título, [{title, items:[texto]}×7], 6]. */
+function buildPdf(rows,sig,opts){
+  const landscape=!!(opts&&opts.orientation==='landscape');
+  const W=landscape?842:595,H=landscape?595:842,M=40,CW=W-2*M,BOT=H-56,generated=new Date().toLocaleString('es-MX');
   const STEEL='0.09 0.17 0.23',ACC='0.14 0.53 0.35',LINE='0.82 0.86 0.89',LIGHT='0.92 0.94 0.96';
   const COL={ok:'0.07 0.50 0.29',bad:'0.70 0.15 0.12',warn:'0.14 0.42 0.29',na:'0.48 0.53 0.57','':'0.09 0.17 0.23'};
   const trow=rows.find(r=>r[2]===3);const docTitle=trow?trow[0]:'REPORTE DE MANTENIMIENTO';
@@ -244,12 +247,35 @@ function buildPdf(rows,sig){
   };
   const photoRows=rows.filter(r=>r[2]===5&&typeof r[1]==='string'&&r[1].startsWith('data:image/jpeg;base64,'));
   const photoDimensions=data=>{try{const bin=atob(data.split(',')[1]);for(let i=2;i<bin.length-9;){if(bin.charCodeAt(i)!==255){i++;continue}const marker=bin.charCodeAt(i+1),len=(bin.charCodeAt(i+2)<<8)|bin.charCodeAt(i+3);if([192,193,194,195,197,198,199,201,202,203,205,206,207].includes(marker))return{w:(bin.charCodeAt(i+7)<<8)|bin.charCodeAt(i+8),h:(bin.charCodeAt(i+5)<<8)|bin.charCodeAt(i+6)};i+=Math.max(2,len)}}catch(e){}return{w:1280,h:720}};
+  let grids=0;
+  const weekGrid=(title,days)=>{
+    if(grids++)newPage();
+    y+=8;R(M,y,CW,20,STEEL);T(M+8,y+14,title,10,true,'1 1 1');y+=26;
+    const n=days.length||7,gap=6,colW=(CW-gap*(n-1))/n,bodyTop=y+22,bodyH=BOT-bodyTop-6;
+    days.forEach((d,i)=>{
+      const x=M+i*(colW+gap),items=Array.isArray(d.items)?d.items:[];
+      R(x,y,colW,22,LIGHT,LINE);T(x+6,y+15,d.title||'',9,true,COL['']);
+      R(x,bodyTop,colW,bodyH,'1 1 1',LINE);
+      /* Reduce la letra hasta 6.5 pt para que quepa el día; si aún no cabe, cierra con «+ N más». */
+      let size=9,lh=11.5,wrapped=[];
+      for(;;){wrapped=items.map(it=>pdfWrap(it,colW-12,size,false));const need=wrapped.reduce((n,ls)=>n+ls.length*lh+4,0);if(need<=bodyH-12||size<=6.5)break;size-=0.5;lh=size*1.28}
+      const limit=bodyTop+bodyH-6;let yy=bodyTop+6+size;
+      for(let k=0;k<wrapped.length;k++){
+        const ls=wrapped[k],reserve=k<wrapped.length-1?lh+4:0;
+        if(yy+(ls.length-1)*lh>limit-reserve){T(x+6,yy,'+ '+(wrapped.length-k)+' más',size,true,COL.na);break}
+        ls.forEach((l,i)=>T(x+6,yy+i*lh,l,size,false,COL['']));yy+=ls.length*lh+4;
+      }
+      if(!items.length)T(x+6,bodyTop+6+size,'Sin máquinas',size,false,COL.na);
+    });
+    y=bodyTop+bodyH;
+  };
   newPage();
   let zebra=0,prevMeta=false;
   rows.forEach(r=>{
     const a=r[0],b=r[1]==null?'':r[1],t=r[2];
     if(t===5)return;
     if(t===3)return;
+    if(t===6){weekGrid(a,Array.isArray(r[1])?r[1]:[]);prevMeta=false;return}
     if(t===1){ensure(20+34);y+=prevMeta?0:8;R(M,y,CW,20,STEEL);T(M+8,y+14,a,10,true,'1 1 1');y+=20;zebra=0;prevMeta=false;return}
     if(t===2){row(a,b,150,{labelBold:true,labelFill:LIGHT});prevMeta=true;return}
     if(t===4){if(prevMeta)y+=10;ensure(18+30);R(M,y,CW,18,LIGHT,LINE);T(M+6,y+12.5,a,9,true,COL['']);T(M+300+6,y+12.5,b,9,true,COL['']);y+=18;zebra=0;prevMeta=false;return}
@@ -296,7 +322,7 @@ function buildPdf(rows,sig){
   pages.forEach((p,i)=>{
     const pid=objs.length+1,cid=pid+1;refs.push(pid+' 0 R');
     const xo=[];if(i===sigPage&&sigCcmId)xo.push('/SigCCM '+sigCcmId+' 0 R');if(i===sigPage&&sigRespId)xo.push('/SigResp '+sigRespId+' 0 R');if(i===sigPage&&sigProductionId)xo.push('/SigProduction '+sigProductionId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
-    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
+    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+'] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
     const stream=p.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
   });
   objs[1]='<< /Type /Pages /Kids ['+refs.join(' ')+'] /Count '+pages.length+' >>';

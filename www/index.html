@@ -12,7 +12,7 @@
 <div class="app">
 <header class="app-topbar" aria-label="Barra de estado Chiaplast">
   <button class="brand" type="button" onclick="go('menu')" aria-label="Ir al centro de control">
-    <span class="brand-mark">C</span><span><b>CHIAPLAST</b><small>MANTENIMIENTO DE PLANTA</small></span>
+    <span class="brand-logo"><img src="img/logo-chiaplast.png" alt="Chiaplast"></span><small>MANTENIMIENTO DE PLANTA</small>
   </button>
   <span class="plant-status"><i></i> DATOS LOCALES · SIN SINCRONIZACIÓN</span>
   <div class="topbar-spacer"></div>
@@ -23,6 +23,7 @@
   <button type="button" data-nav="menu" onclick="go('menu')"><span>▦</span>Centro de Control</button>
   <button type="button" onclick="startWorkflow('daily')"><span>☷</span>Recorrido Diario Ext 1 y 2</button>
   <button type="button" data-nav="preventive" onclick="startWorkflow('preventive')"><span>◷</span>Generar Reporte MTTO preventivo</button>
+  <button type="button" data-nav="weeklyCalendar" onclick="openWeeklyCalendar()"><span>◫</span>Calendario semanal</button>
   <button type="button" data-nav="kanban" onclick="go('kanban')"><span>▥</span>Planificación &amp; Kanban</button>
   <button type="button" data-nav="notes" onclick="go('notes')"><span>▤</span>Bitácora &amp; Historial</button>
   <button class="sidebar-bottom" type="button" onclick="go('tools')"><span>⚙</span>Ajustes / Configuración</button>
@@ -72,6 +73,7 @@
         <button class="dashboard-area" onclick="openNotes()"><b><i>04</i><em>Bitácora local</em></b><strong>Notas técnicas y evidencias</strong><small>Notas de intervención y fotografías</small><span>Abrir notas →</span></button>
         <button class="dashboard-area" onclick="openSpecialWorks()"><b><i>05</i><em id="specialWorkCount">0 pendientes</em></b><strong>Trabajos especiales</strong><small>Órdenes pendientes y formatos de término</small><span>Ver trabajos →</span></button>
         <button class="dashboard-area" onclick="openPreventiveDrafts()"><b><i>06</i><em id="preventiveDraftCount">0 en curso</em></b><strong>Preventivos en curso</strong><small>Retomar, continuar o eliminar formatos guardados</small><span>Ver preventivos →</span></button>
+        <button class="dashboard-area" onclick="openWeeklyCalendar()"><b><i>07</i><em>Lunes a domingo</em></b><strong>Calendario semanal</strong><small>Programa qué máquinas se atienden cada día de la semana</small><span>Abrir calendario →</span></button>
       </div>
     </section>
     <section class="dashboard-panel" style="margin-top:18px">
@@ -458,6 +460,15 @@
   </div>
 </section>
 
+<!-- Calendario semanal de mantenimiento (weekly.js) -->
+<section id="weeklyCalendar" class="screen">
+  <header class="bar">
+    <button class="iconbtn" onclick="history.back()" aria-label="Atrás">‹</button>
+    <h1>Calendario semanal<small>Máquinas programadas de lunes a domingo</small></h1>
+  </header>
+  <div class="body wk-body"><div id="wkRoot"></div></div>
+</section>
+
 <section id="preventiveCalendar" class="screen">
   <header class="bar">
     <button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button>
@@ -603,6 +614,7 @@
 <script src="js/preventive.js"></script>
 <script src="js/daily.js"></script>
 <script src="js/state.js"></script>
+<script src="js/weekly.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
