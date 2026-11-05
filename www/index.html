@@ -562,10 +562,6 @@
   <div class="body"><div class="card"><p class="muted">Consulte el avance de cada formato y retome la captura o la liberación final.</p><div id="savedPreventiveDrafts" class="dashboard-tools"></div></div></div>
 </section>
 
-<div id="helpModal" class="helpm" hidden onclick="this.hidden=true"><div class="helpbox"><p id="helpText"></p><button class="btn btn-p">Entendido</button></div></div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-</div>
-
 <!-- Trabajos especiales: órdenes pendientes y cierre -->
 <section id="specialWorks" class="screen">
   <header class="bar"><button class="iconbtn" onclick="go('menu')" aria-label="Atrás">‹</button><h1>Trabajos especiales<small>Órdenes de intervención y seguimiento</small></h1></header>
@@ -597,6 +593,10 @@
     <div class="dashboard-section"><div class="section-heading"><h2>Órdenes pendientes y terminadas</h2><span id="specialListCount">0 ÓRDENES</span></div><div id="specialList"></div></div>
   </div>
 </section>
+
+<div id="helpModal" class="helpm" hidden onclick="this.hidden=true"><div class="helpbox"><p id="helpText"></p><button class="btn btn-p">Entendido</button></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
 <script src="js/bridge.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/store.js"></script>
