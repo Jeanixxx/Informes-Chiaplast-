@@ -37,7 +37,6 @@ function specialRenderPhotos(){
  });
 }
 function specialRemovePhoto(stage,i){specialPhotos[stage].splice(i,1);specialRenderPhotos();specialSaveDraftOnly()}
-function specialValues(key){return [...document.querySelectorAll('[data-special-key="'+key+'"]')].map(el=>el.value.trim()).filter(Boolean)}
 function specialRenderItems(key,values){const box=$('special'+key.charAt(0).toUpperCase()+key.slice(1)+'List');if(!box)return;const list=Array.isArray(values)&&values.length?values:[''];box.innerHTML=list.map((value,i)=>'<div class="special-repeat-row"><textarea data-special-key="'+key+'" rows="2" placeholder="'+({activitiesToDo:'Actividad por hacer',activitiesDone:'Actividad realizada',urgent:'Tarea urgente',parts:'Refacción y cantidad'}[key]||'Detalle')+'">'+esc(value||'')+'</textarea><button class="btn btn-s" type="button" aria-label="Quitar elemento" onclick="specialRemoveItem(\''+key+'\','+i+')">−</button></div>').join('')}
 function specialValues(key,keepEmpty=false){const values=[...document.querySelectorAll('[data-special-key="'+key+'"]')].map(el=>el.value.trim());return keepEmpty?values:values.filter(Boolean)}
 function specialAddItem(key){const values=specialValues(key,true);values.push('');specialRenderItems(key,values)}
