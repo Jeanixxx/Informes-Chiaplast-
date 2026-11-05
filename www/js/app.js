@@ -61,6 +61,7 @@ function renderDashboardMetrics(){
 }
 function updateDashboardClock(){
   const now=new Date(),clock=$('dashboardClock');
+  const date=$('dashboardDate');if(date){const t=now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).replace(/,/g,'');date.textContent=t.charAt(0).toUpperCase()+t.slice(1)}
   clock.textContent=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][now.getDay()]+' '+now.getDate()+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][now.getMonth()]+' · '+pad(now.getHours())+':'+pad(now.getMinutes());
 }
 updateDashboardClock();setInterval(updateDashboardClock,30000);
@@ -331,7 +332,7 @@ function loadDraft(){
 }
 function closeFormToTools(){Runtime.release=Runtime.release||{};Runtime.release.status='in_progress';saveDraft();renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();go('preventiveDrafts');toast('Borrador guardado. Puede retomarlo desde Preventivos en curso.')}
 function openPreventiveDrafts(){go('preventiveDrafts')}
-function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const items=draftIndex().filter(x=>store.get(x.key,'')),waiting=items.filter(x=>x.status==='awaiting_release').length;el.textContent=items.length+' formatos · '+waiting+' por liberar'}}
+function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const items=draftIndex().filter(x=>store.get(x.key,'')),waiting=items.filter(x=>x.status==='awaiting_release').length;el.textContent=waiting+' por liberar';el.title=items.length+' formatos guardados'}}
 function renderSavedPreventiveDrafts(){
  const box=$('savedPreventiveDrafts');if(!box)return;
  const items=draftIndex().filter(x=>store.get(x.key,''));
@@ -389,12 +390,12 @@ function openHistoryReport(id){
 function renderHomeFollowup(){
   const reminderBox=$('menuReminderCount'),taskBox=$('widgetKanbanCount'),specialBox=$('specialWorkCount'),boardBox=$('widgetBoardCount');
   const reminders=loadReminders().filter(r=>r.status!=='done').length;
-  const tasks=loadKanban(),todo=tasks.filter(t=>(t.status||'todo')==='todo').length,active=tasks.filter(t=>(t.status||'todo')!=='done').length;
+  const tasks=loadKanban(),active=tasks.filter(t=>(t.status||'todo')!=='done').length;
   const special=specialAll().filter(x=>x.status!=='done').length;
-  if(reminderBox)reminderBox.textContent=reminders+' '+(reminders===1?'recordatorio pendiente':'recordatorios pendientes');
-  if(taskBox)taskBox.textContent=todo+' por empezar · '+active+' activas';
-  if(specialBox)specialBox.textContent=special+' '+(special===1?'trabajo pendiente':'trabajos pendientes');
-  if(boardBox)boardBox.textContent='Ver mes actual';
+  if(reminderBox)reminderBox.textContent=reminders+' '+(reminders===1?'pendiente':'pendientes');
+  if(taskBox)taskBox.textContent=active+' '+(active===1?'activa':'activas');
+  if(specialBox)specialBox.textContent=special+' '+(special===1?'pendiente':'pendientes');
+  if(boardBox){const m=new Date().toLocaleDateString('es-MX',{month:'long'});boardBox.textContent=m.charAt(0).toUpperCase()+m.slice(1)}
 }
 function renderRecent(targetId='recent',searchId='historySearch'){
   const target=$(targetId),search=$(searchId);

@@ -1012,3 +1012,50 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
   .wk-dialog h3{font-size:24px}
   .wk-dlg-actions .wk-btn-sec,.wk-dlg-actions .wk-btn-pri{flex:1}
 }
+
+/* 11. Centro de Control (tema Verde planta). Clases .cc- propias: las .dashboard-* siguen en otras pantallas. */
+.app.has-chrome #menu>.body.cc-body{padding:28px 40px 32px}
+.cc-body{display:flex;flex-direction:column;gap:28px}
+.cc-head{display:flex;align-items:center;flex-wrap:wrap;gap:16px}
+.cc-titles{flex:1;min-width:220px}
+.cc-title{margin:0;font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.4px;color:var(--ink)}
+.cc-date{margin:4px 0 0;font-size:15px;color:var(--muted)}
+.cc-actions{display:flex;flex-wrap:wrap;gap:12px}
+.cc-btn{height:50px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;border-radius:14px;font-size:15px;font-weight:700;white-space:nowrap}
+.cc-btn svg{flex:none;width:20px;height:20px}
+.cc-btn-pri{padding:0 22px;background:var(--brand-blue);color:#fff}
+.cc-btn-sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.cc-h2{margin:0 0 14px;font-size:18px;font-weight:700;color:var(--ink)}
+.cc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cc-card{min-width:0;min-height:156px;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:20px;text-align:left;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--ink);transition:box-shadow var(--transition-ui),border-color var(--transition-ui)}
+.cc-card:hover{border-color:#C9DDB5;box-shadow:var(--shadow)}
+.cc-card-top{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px}
+.cc-ico{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:13px}
+.cc-ico svg{width:22px;height:22px}
+.cc-ico.is-lime{background:var(--brand-lime-soft);color:#3D6200}
+.cc-ico.is-blue{background:var(--brand-blue-soft);color:#005A93}
+.cc-status{padding:4px 10px;white-space:nowrap;border-radius:999px;background:var(--chip);color:var(--muted);font-size:12px;font-weight:700}
+.cc-card-title{font-size:17px;font-weight:700;line-height:1.25}
+.cc-card-desc{font-size:14px;line-height:1.4;color:var(--muted)}
+.cc-panel{padding:24px;border-radius:20px;border:1px solid var(--line);background:var(--surface)}
+.cc-panel-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cc-panel-head h2{flex:1;margin:0;font-size:18px;font-weight:700;color:var(--ink)}
+.cc-link{min-height:44px;padding:0 4px;color:var(--brand-blue);font-size:14px;font-weight:700}
+.cc-panel .history-search{margin:0 0 12px}
+.cc-panel .history-search label{margin-bottom:8px;font-size:14px;font-weight:600;color:var(--muted)}
+.cc-panel .history-search input{height:48px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#F9FBF6;color:var(--ink);font-size:15px}
+@media(min-width:980px){.cc-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:980px) and (max-width:1199px){.cc-card{padding:16px}}
+@media(max-width:699px){
+  .app.has-chrome #menu>.body.cc-body{padding:20px 16px 24px}
+  .cc-body{gap:22px}
+  .cc-title{font-size:26px}
+  .cc-actions{width:100%}
+  .cc-btn{flex:1 1 0;min-width:0;padding:0 12px;white-space:normal;line-height:1.15}
+  .cc-grid{gap:12px}
+  .cc-card{min-height:148px;padding:16px;gap:10px}
+  .cc-card-title{font-size:16px}
+  .cc-card-desc{font-size:13px}
+  .cc-panel{padding:18px}
+}
+@media(prefers-color-scheme:dark){.cc-panel .history-search input{background:var(--surface-2)}.cc-card:hover{border-color:var(--line)}.cc-link{color:var(--flow-daily)}}

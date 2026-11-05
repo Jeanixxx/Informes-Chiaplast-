@@ -58,28 +58,28 @@
     <h1>Centro de Control de Planta<small>LÍNEA DE MANDO INDUSTRIAL · OPERACIÓN LOCAL</small></h1>
     <button class="iconbtn" style="width:38px;height:38px;font-size:18px" onclick="go('tools')" aria-label="Configuración">⚙</button>
   </header>
-  <div class="body">
-    <div class="dashboard-heading">
-      <div><span class="eyebrow">LÍNEA DE MANDO INDUSTRIAL · DATOS LOCALES</span><h2>Centro de Control de Planta</h2></div>
-      <div class="dashboard-actions">
-        <button class="btn btn-p" onclick="startWorkflow('daily')">☷ + Recorrido Diario Ext 1 y 2</button>
-        <button class="btn btn-s" onclick="startWorkflow('preventive')">◷ Generar Reporte MTTO preventivo</button>
+  <div class="body cc-body">
+    <div class="cc-head">
+      <div class="cc-titles"><h2 class="cc-title">Centro de Control</h2><p class="cc-date" id="dashboardDate"></p></div>
+      <div class="cc-actions">
+        <button type="button" class="cc-btn cc-btn-sec" onclick="startWorkflow('preventive')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>Reporte preventivo</button>
+        <button type="button" class="cc-btn cc-btn-pri" onclick="startWorkflow('daily')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4H9zM15 5h3v16H6V5h3M9 14l2 2 4-4"/></svg>Recorrido diario</button>
       </div>
     </div>
-    <section class="dashboard-section">
-      <div class="section-heading"><h2>Herramientas de mantenimiento</h2><span>ACCESOS DIRECTOS</span></div>
-      <div class="dashboard-areas dashboard-tools">
-        <button class="dashboard-area" onclick="go('kanban')"><b><i>01</i><em id="widgetKanbanCount">0 por empezar</em></b><strong>Tablero Kanban</strong><small>Actividades por iniciar, en proceso y terminadas</small><span>Abrir tablero →</span></button>
-        <button class="dashboard-area" onclick="openPreventiveBoard()"><b><i>02</i><em id="widgetBoardCount">Tablero mensual</em></b><strong>Tablero mensual de preventivos</strong><small>Seguimiento mensual de máquinas con preventivo realizado</small><span>Abrir tablero →</span></button>
-        <button class="dashboard-area" onclick="openReminders()"><b><i>03</i><em id="menuReminderCount">0 pendientes</em></b><strong>Recordatorios</strong><small>Próximos avisos y tareas programadas</small><span>Ver recordatorios →</span></button>
-        <button class="dashboard-area" onclick="openNotes()"><b><i>04</i><em>Bitácora local</em></b><strong>Notas técnicas y evidencias</strong><small>Notas de intervención y fotografías</small><span>Abrir notas →</span></button>
-        <button class="dashboard-area" onclick="openSpecialWorks()"><b><i>05</i><em id="specialWorkCount">0 pendientes</em></b><strong>Trabajos especiales</strong><small>Órdenes pendientes y formatos de término</small><span>Ver trabajos →</span></button>
-        <button class="dashboard-area" onclick="openPreventiveDrafts()"><b><i>06</i><em id="preventiveDraftCount">0 en curso</em></b><strong>Preventivos en curso</strong><small>Retomar, continuar o eliminar formatos guardados</small><span>Ver preventivos →</span></button>
-        <button class="dashboard-area" onclick="openWeeklyCalendar()"><b><i>07</i><em>Lunes a domingo</em></b><strong>Calendario semanal</strong><small>Programa qué máquinas se atienden cada día de la semana</small><span>Abrir calendario →</span></button>
+    <section class="cc-section" aria-labelledby="ccToolsTitle">
+      <h2 class="cc-h2" id="ccToolsTitle">Herramientas</h2>
+      <div class="cc-grid">
+        <button type="button" class="cc-card" onclick="go('kanban')"><span class="cc-card-top"><span class="cc-ico is-lime"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v16H4zM11 4h4v10h-4zM17 4h3v13h-3z"/></svg></span><span class="cc-status" id="widgetKanbanCount">0 activas</span></span><span class="cc-card-title">Tablero Kanban</span><span class="cc-card-desc">Actividades por iniciar, en proceso y terminadas</span></button>
+        <button type="button" class="cc-card" onclick="openPreventiveBoard()"><span class="cc-card-top"><span class="cc-ico is-blue"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4zM4 10h16M9 10v10M14 10v10"/></svg></span><span class="cc-status" id="widgetBoardCount">Mes actual</span></span><span class="cc-card-title">Tablero mensual</span><span class="cc-card-desc">Seguimiento de los preventivos del mes</span></button>
+        <button type="button" class="cc-card" onclick="openReminders()"><span class="cc-card-top"><span class="cc-ico is-lime"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 8 2 8H4s2-2 2-8M10 21h4"/></svg></span><span class="cc-status" id="menuReminderCount">0 pendientes</span></span><span class="cc-card-title">Recordatorios</span><span class="cc-card-desc">Próximos avisos y tareas programadas</span></button>
+        <button type="button" class="cc-card" onclick="openNotes()"><span class="cc-card-top"><span class="cc-ico is-blue"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h4l2-3h4l2 3h4v13H4zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></span><span class="cc-status">Bitácora</span></span><span class="cc-card-title">Notas técnicas</span><span class="cc-card-desc">Notas de intervención y fotografías</span></button>
+        <button type="button" class="cc-card" onclick="openSpecialWorks()"><span class="cc-card-top"><span class="cc-ico is-lime"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span><span class="cc-status" id="specialWorkCount">0 pendientes</span></span><span class="cc-card-title">Trabajos especiales</span><span class="cc-card-desc">Órdenes pendientes y formatos de término</span></button>
+        <button type="button" class="cc-card" onclick="openPreventiveDrafts()"><span class="cc-card-top"><span class="cc-ico is-blue"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9M12 7v5l3 3"/></svg></span><span class="cc-status" id="preventiveDraftCount">0 por liberar</span></span><span class="cc-card-title">Preventivos en curso</span><span class="cc-card-desc">Retomar o eliminar formatos guardados</span></button>
+        <button type="button" class="cc-card" onclick="openWeeklyCalendar()"><span class="cc-card-top"><span class="cc-ico is-lime"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v15H4zM16 3v5M8 3v5M4 11h16"/></svg></span><span class="cc-status">Esta semana</span></span><span class="cc-card-title">Calendario semanal</span><span class="cc-card-desc">Programa qué máquinas se atienden cada día</span></button>
       </div>
     </section>
-    <section class="dashboard-panel" style="margin-top:18px">
-      <div class="section-heading"><h2>Últimos folios</h2><button type="button" class="text-action" onclick="go('notes')">Historial completo →</button></div>
+    <section class="cc-panel" aria-labelledby="ccRecentTitle">
+      <div class="cc-panel-head"><h2 id="ccRecentTitle">Últimos folios</h2><button type="button" class="cc-link" onclick="go('notes')">Historial completo</button></div>
       <div class="f history-search"><label for="historySearch">Buscar folio, máquina o área</label><input id="historySearch" type="search" placeholder="Ej. BM-1-DIM-20261029" oninput="filterReportHistory()"></div>
       <div id="recent"></div>
     </section>
