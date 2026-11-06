@@ -41,7 +41,7 @@ function wkSave(){
 }
 function wkAdd(day,m){
   const data=wkData(),list=data[day]||[];
-  if(list.some(x=>wkSame(x,m))){Weekly.sel=null;wkNotice(m.name+' ya está programada el '+wkDayName(day),{undo:null,warn:true});renderWeekly();return false}
+  if(list.some(x=>wkSame(x,m))){Weekly.sel=null;wkNotice(m.name+' ya está programada el '+wkDayName(day),{icon:'warn'});renderWeekly();return false}
   data[day]=list.concat([{code:m.code,name:m.name}]);
   Weekly.sel=null;wkSave();buzz(10);renderWeekly();return true;
 }
@@ -50,17 +50,17 @@ const wkKeyDate=k=>{const [y,mo,d]=k.split('-').map(Number);return new Date(y,mo
 const wkDayName=k=>{const d=wkKeyDate(k);return WK_DIA_LARGO[d.getDay()]+' '+d.getDate()};
 const wkDayShort=k=>{const d=wkKeyDate(k);return WK_DIA[d.getDay()].toLowerCase()+' '+d.getDate()};
 /* Una sola escritura: si falla, la memoria se queda como estaba (todo o nada). */
-function wkCommit(next){
+function wkCommit(next,quiet){
   let ok=false;
   try{ok=store.set(KEYS.weeklyCalendar,JSON.stringify(next))}catch(e){ok=false}
-  if(!ok){toast('No se pudo guardar el calendario en este dispositivo.');return false}
+  if(!ok){if(!quiet)toast('No se pudo guardar el calendario en este dispositivo.');return false}
   Weekly.data=next;return true;
 }
 function wkRemove(day,m){
   const data=wkData(),prev=wkClone(data),next=wkClone(data),list=(next[day]||[]).filter(x=>!wkSame(x,m));
   if(list.length)next[day]=list;else delete next[day];
   if(wkSame(Weekly.move,m)&&Weekly.move.day===day)Weekly.move=null;
-  if(wkCommit(next))wkNotice(m.name+' quitada del '+wkDayName(day),{undo:prev});
+  if(wkCommit(next))wkNotice(m.name+' quitada del '+wkDayName(day),{undo:prev,done:m.name+' regresó al '+wkDayName(day)});
   renderWeekly();
 }
 /* Mover = quitar del origen y agregar al final del destino, en una sola escritura. */
@@ -68,26 +68,31 @@ function wkMove(from,to,m){
   Weekly.move=null;
   const data=wkData();
   if(from===to||!(data[from]||[]).some(x=>wkSame(x,m))){renderWeekly();return false}
-  if((data[to]||[]).some(x=>wkSame(x,m))){wkNotice(m.name+' ya está programada el '+wkDayName(to),{undo:null,warn:true});renderWeekly();return false}
+  if((data[to]||[]).some(x=>wkSame(x,m))){wkNotice(m.name+' ya está programada el '+wkDayName(to),{icon:'warn'});renderWeekly();return false}
   const prev=wkClone(data),next=wkClone(data),left=next[from].filter(x=>!wkSame(x,m));
   if(left.length)next[from]=left;else delete next[from];
   next[to]=(next[to]||[]).concat([{code:m.code,name:m.name}]);
   const ok=wkCommit(next);
-  if(ok)wkNotice(m.name+' movida al '+wkDayName(to),{undo:prev});
+  if(ok)wkNotice(m.name+' movida al '+wkDayName(to),{undo:prev,done:m.name+' regresó al '+wkDayName(from)});
   renderWeekly();return ok;
 }
-/* Notificación inferior del calendario (5 s): «Deshacer» tras mover o quitar ({undo: estado anterior}) o aviso
-   sin botón ({undo:null, warn:true}, p. ej. duplicado). Una nueva reemplaza a la anterior: solo se deshace la última. */
+/* Notificación inferior del calendario (5 s), la misma para todo:
+   - mover / quitar: {undo: estado anterior, done: texto al deshacer} → botón «Deshacer»;
+   - duplicado o error: {icon:'warn'}; cambio deshecho: {icon:'undo'} → sin botón.
+   Una nueva reemplaza a la anterior: solo se deshace la última. */
+const WK_NOTICE_ICON={warn:'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',undo:'M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3'};
 function wkNotice(msg,opts){
   const o=opts||{};
   clearTimeout(Weekly.undoT);
-  Weekly.undo={prev:o.undo||null,msg,warn:!!o.warn};
+  Weekly.undo={prev:o.undo||null,done:o.done||'',msg,icon:WK_NOTICE_ICON[o.icon]?o.icon:''};
   Weekly.undoT=setTimeout(()=>{Weekly.undo=null;const u=document.querySelector('#wkRoot .wk-undo');if(u)u.remove();const w=document.querySelector('#wkRoot .wk');if(w)w.classList.remove('has-undo')},5000);
 }
 function wkUndo(){
   const u=Weekly.undo;if(!u||!u.prev)return;
-  clearTimeout(Weekly.undoT);Weekly.undo=null;Weekly.move=null;Weekly.sel=null;
-  if(wkCommit(u.prev))toast('Cambio deshecho.');
+  Weekly.move=null;Weekly.sel=null;
+  /* Si no se puede guardar, wkCommit deja el calendario como estaba antes de intentarlo. */
+  if(wkCommit(u.prev,true))wkNotice(u.done||'Cambio deshecho',{icon:'undo'});
+  else wkNotice('No se pudo deshacer el cambio',{icon:'warn'});
   renderWeekly();
 }
 function wkWeekInfo(mon){
@@ -165,7 +170,7 @@ function renderWeekly(){
   const moveHint=move?move.name+' ('+wkDayShort(move.day)+') seleccionada · toca «Mover aquí» en otro día':'';
   const stripHint=move?'<p class="wk-strip-hint is-move" aria-live="polite">'+esc(moveHint)+'</p>':sel?'<p class="wk-strip-hint">'+esc(selHint)+'</p>':'';
   const nt=Weekly.undo,undoBar=nt?'<div class="wk-undo'+(nt.prev?'':' is-notice')+'" role="status" aria-live="polite">'
-    +(nt.warn?'<svg class="wk-undo-icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>':'')
+    +(nt.icon?'<svg class="wk-undo-icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="'+WK_NOTICE_ICON[nt.icon]+'"></path></svg>':'')
     +'<span>'+esc(nt.msg)+'</span>'+(nt.prev?'<button type="button" data-wk="undo">Deshacer</button>':'')+'</div>':'';
   const areaHint=area.area+' · '+area.entries.length+' equipos';
 
