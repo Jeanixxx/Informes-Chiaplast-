@@ -1,13 +1,16 @@
 /* ===== Calendario semanal de mantenimiento =====
    Semana de lunes a domingo. Las máquinas salen de MACHINE_DB (una tarjeta por entrada) y se asignan
-   a un día arrastrando (tablet/PC) o tocando la tarjeta y luego «+ Agregar aquí» (obligatorio en celular).
-   Un solo estado (Weekly) y un solo render: el CSS decide la distribución en tablet/PC o celular.
+   a un día arrastrando (Pointer Events: mouse, tacto y lápiz) o tocando la tarjeta y luego «+ Agregar aquí».
+   Las tarjetas ya puestas en un día se mueven a otro día de la misma semana igual: arrastrando o con
+   toque + «Mover aquí». Un solo estado (Weekly) y un solo render: el CSS decide la distribución.
    Guardado: { 'AAAA-MM-DD': [{code, name}] } en KEYS.weeklyCalendar. La identidad es área + nombre. */
 const WK_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const WK_MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const WK_DIA=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
 const WK_DIA_LARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-const Weekly={monday:null,area:'CAM',sel:null,drag:null,pdfOpen:false,pdfScope:'week',data:null,pdfReady:false,sheetOpen:false};
+/* sel = tarjeta del panel seleccionada; move = tarjeta de un día seleccionada {day,code,name}; solo una a la vez.
+   undo = {prev, msg}: estado anterior a la última acción de mover o quitar. */
+const Weekly={monday:null,area:'CAM',sel:null,move:null,undo:null,undoT:0,pdfOpen:false,pdfScope:'week',data:null,pdfReady:false,sheetOpen:false};
 
 const wkKey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const wkAddDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
@@ -42,10 +45,48 @@ function wkAdd(day,m){
   data[day]=list.concat([{code:m.code,name:m.name}]);
   Weekly.sel=null;wkSave();buzz(10);renderWeekly();return true;
 }
+const wkClone=d=>JSON.parse(JSON.stringify(d));
+const wkKeyDate=k=>{const [y,mo,d]=k.split('-').map(Number);return new Date(y,mo-1,d)};
+const wkDayName=k=>{const d=wkKeyDate(k);return WK_DIA_LARGO[d.getDay()]+' '+d.getDate()};
+const wkDayShort=k=>{const d=wkKeyDate(k);return WK_DIA[d.getDay()].toLowerCase()+' '+d.getDate()};
+/* Una sola escritura: si falla, la memoria se queda como estaba (todo o nada). */
+function wkCommit(next){
+  let ok=false;
+  try{ok=store.set(KEYS.weeklyCalendar,JSON.stringify(next))}catch(e){ok=false}
+  if(!ok){toast('No se pudo guardar el calendario en este dispositivo.');return false}
+  Weekly.data=next;return true;
+}
 function wkRemove(day,m){
-  const data=wkData(),list=(data[day]||[]).filter(x=>!wkSame(x,m));
-  if(list.length)data[day]=list;else delete data[day];
-  wkSave();renderWeekly();
+  const data=wkData(),prev=wkClone(data),next=wkClone(data),list=(next[day]||[]).filter(x=>!wkSame(x,m));
+  if(list.length)next[day]=list;else delete next[day];
+  if(wkSame(Weekly.move,m)&&Weekly.move.day===day)Weekly.move=null;
+  if(wkCommit(next))wkOfferUndo(prev,m.name+' quitada del '+wkDayName(day));
+  renderWeekly();
+}
+/* Mover = quitar del origen y agregar al final del destino, en una sola escritura. */
+function wkMove(from,to,m){
+  Weekly.move=null;
+  const data=wkData();
+  if(from===to||!(data[from]||[]).some(x=>wkSame(x,m))){renderWeekly();return false}
+  if((data[to]||[]).some(x=>wkSame(x,m))){renderWeekly();toast(m.name+' ya está programada el '+wkDayName(to));return false}
+  const prev=wkClone(data),next=wkClone(data),left=next[from].filter(x=>!wkSame(x,m));
+  if(left.length)next[from]=left;else delete next[from];
+  next[to]=(next[to]||[]).concat([{code:m.code,name:m.name}]);
+  const ok=wkCommit(next);
+  if(ok)wkOfferUndo(prev,m.name+' movida al '+wkDayName(to));
+  renderWeekly();return ok;
+}
+/* Aviso «Deshacer» de 5 s; una acción nueva reemplaza al anterior (solo se deshace la última). */
+function wkOfferUndo(prev,msg){
+  clearTimeout(Weekly.undoT);
+  Weekly.undo={prev,msg};
+  Weekly.undoT=setTimeout(()=>{Weekly.undo=null;const u=document.querySelector('#wkRoot .wk-undo');if(u)u.remove();const w=document.querySelector('#wkRoot .wk');if(w)w.classList.remove('has-undo')},5000);
+}
+function wkUndo(){
+  const u=Weekly.undo;if(!u)return;
+  clearTimeout(Weekly.undoT);Weekly.undo=null;Weekly.move=null;Weekly.sel=null;
+  if(wkCommit(u.prev))toast('Cambio deshecho.');
+  renderWeekly();
 }
 function wkWeekInfo(mon){
   const sun=wkAddDays(mon,6),mm=m=>WK_MESES[m].toLowerCase();
@@ -63,15 +104,18 @@ function wkMonthMondays(mon){
 }
 
 function openWeeklyCalendar(){go('weeklyCalendar')}
-function wkShift(n){Weekly.monday=wkAddDays(Weekly.monday,7*n);Weekly.pdfReady=false;renderWeekly()}
-function wkGoToday(){Weekly.monday=wkMondayOf(new Date());Weekly.pdfReady=false;renderWeekly()}
+function wkShift(n){Weekly.monday=wkAddDays(Weekly.monday,7*n);Weekly.pdfReady=false;Weekly.move=null;renderWeekly()}
+function wkGoToday(){Weekly.monday=wkMondayOf(new Date());Weekly.pdfReady=false;Weekly.move=null;renderWeekly()}
 
 function renderWeekly(){
   const root=$('wkRoot');if(!root)return;
   wkUpdateMode();
   if(!Weekly.monday)Weekly.monday=wkMondayOf(new Date());
   if(!MACHINE_DB[Weekly.area])Weekly.area=Object.keys(MACHINE_DB)[0];
-  const data=wkData(),mon=Weekly.monday,info=wkWeekInfo(mon),todayKey=wkKey(new Date()),sel=Weekly.sel;
+  const data=wkData(),mon=Weekly.monday,info=wkWeekInfo(mon),todayKey=wkKey(new Date());
+  /* Una selección de día que ya no existe (otra semana, quitada, deshecha) se descarta. */
+  if(Weekly.move&&!(data[Weekly.move.day]||[]).some(x=>wkSame(x,Weekly.move)))Weekly.move=null;
+  const sel=Weekly.sel,mv=Weekly.move;
   const area=MACHINE_DB[Weekly.area];
 
   /* Conservar foco y desplazamientos al volver a dibujar */
@@ -81,6 +125,8 @@ function renderWeekly(){
 
   const days=[],weekKeys=[];
   for(let i=0;i<7;i++){const d=wkAddDays(mon,i);days.push(d);weekKeys.push(wkKey(d))}
+  if(mv&&weekKeys.indexOf(mv.day)<0)Weekly.move=null;
+  const move=Weekly.move;
   const maxCount=Math.max(0,...weekKeys.map(k=>(data[k]||[]).length));
   const slots=Math.min(6,Math.max(4,maxCount+1));
   const countInWeek={};
@@ -89,11 +135,19 @@ function renderWeekly(){
   const dayHtml=days.map((d,i)=>{
     const key=weekKeys[i],list=data[key]||[],isToday=key===todayKey;
     const longName=WK_DIA_LARGO[d.getDay()]+' '+d.getDate()+' de '+WK_MESES[d.getMonth()].toLowerCase();
-    return '<section class="wk-day'+(isToday?' is-today':'')+'" data-day="'+key+'" aria-label="'+esc(longName.charAt(0).toUpperCase()+longName.slice(1)+(isToday?' (hoy)':'')+' · '+list.length+' '+(list.length===1?'máquina':'máquinas'))+'">'
+    const dayName=WK_DIA_LARGO[d.getDay()]+' '+d.getDate();
+    const action=sel?'<button type="button" class="wk-place" data-wk="place" data-day="'+key+'">+ Agregar aquí</button>'
+      :move?(move.day===key?'<button type="button" class="wk-place wk-place-cancel" data-wk="move-cancel" data-day="'+key+'">Cancelar</button>'
+        :'<button type="button" class="wk-place" data-wk="move-here" data-day="'+key+'">Mover aquí</button>'):'';
+    /* Tarjeta = <div> con dos botones hermanos: el grande (seleccionar / arrastrar para mover) y ✕. */
+    const card=m=>{const picked=!!move&&move.day===key&&wkSame(move,m),attrs=' data-day="'+key+'" data-code="'+esc(m.code)+'" data-name="'+esc(m.name)+'"';
+      return '<div class="wk-item'+(picked?' is-picked':'')+'" role="listitem">'
+        +'<button type="button" class="wk-item-main" data-wk="item"'+attrs+' aria-pressed="'+picked+'" aria-label="'+esc('Mover '+m.name+', '+dayName)+'"><span class="wk-item-area">'+esc(wkLabel(m.code))+'</span><span class="wk-item-name">'+esc(m.name)+'</span></button>'
+        +'<button type="button" class="wk-remove" data-wk="remove"'+attrs+' aria-label="'+esc('Quitar '+m.name+' ('+wkLabel(m.code)+') del '+dayName)+'">'+wkIcon('M18 6 6 18M6 6l12 12')+'</button></div>'};
+    return '<section class="wk-day'+(isToday?' is-today':'')+(move&&move.day===key?' is-origin':'')+'" data-day="'+key+'" data-wk-day="'+key+'" aria-label="'+esc(longName.charAt(0).toUpperCase()+longName.slice(1)+(isToday?' (hoy)':'')+' · '+list.length+' '+(list.length===1?'máquina':'máquinas'))+'">'
       +'<div class="wk-dayhead"><span class="wk-dow">'+WK_DIA[d.getDay()]+'</span><span class="wk-num">'+d.getDate()+'</span></div>'
-      +'<div class="wk-daybody">'
-      +(sel?'<button type="button" class="wk-place" data-wk="place" data-day="'+key+'">+ Agregar aquí</button>':'')
-      +'<ul class="wk-items">'+(list.length?list.map(m=>'<li class="wk-item"><span class="wk-item-area">'+esc(wkLabel(m.code))+'</span><span class="wk-item-name">'+esc(m.name)+'</span><button type="button" class="wk-remove" data-wk="remove" data-day="'+key+'" data-code="'+esc(m.code)+'" data-name="'+esc(m.name)+'" aria-label="'+esc('Quitar '+m.name+' ('+wkLabel(m.code)+') del '+WK_DIA_LARGO[d.getDay()]+' '+d.getDate())+'">'+wkIcon('M18 6 6 18M6 6l12 12')+'</button></li>').join(''):'')+'</ul>'
+      +'<div class="wk-daybody">'+action
+      +'<div class="wk-items" role="list">'+list.map(card).join('')+'</div>'
       +'</div></section>';
   }).join('');
 
@@ -101,11 +155,14 @@ function renderWeekly(){
     return '<button type="button" role="tab" class="wk-tab" aria-selected="'+on+'" data-wk="area" data-code="'+code+'"><span>'+esc(a.label)+'</span><small>'+a.entries.length+'</small></button>'}).join('');
   const tiles=area.entries.map(e=>{
     const name=machineEntryName(e),m={code:Weekly.area,name},n=countInWeek[m.code+'|'+name]||0,on=wkSame(sel,m);
-    return '<button type="button" class="wk-tile'+(n?' is-scheduled':'')+(on?' is-selected':'')+'" draggable="true" data-wk="tile" data-code="'+esc(m.code)+'" data-name="'+esc(name)+'" aria-pressed="'+on+'">'
+    return '<button type="button" class="wk-tile'+(n?' is-scheduled':'')+(on?' is-selected':'')+'" data-wk="tile" data-code="'+esc(m.code)+'" data-name="'+esc(name)+'" aria-pressed="'+on+'">'
       +'<span class="wk-tile-top"><span class="wk-tile-area">'+esc(area.label)+'</span>'+(n?'<span class="wk-badge">'+(n===1?'1 día':n+' días')+'</span>':'')+'</span>'
       +'<span class="wk-tile-name">'+esc(name)+'</span></button>';
   }).join('');
   const selHint=sel?sel.name+' seleccionada · toca «+ Agregar aquí» en un día':'';
+  const moveHint=move?move.name+' ('+wkDayShort(move.day)+') seleccionada · toca «Mover aquí» en otro día':'';
+  const stripHint=move?'<p class="wk-strip-hint is-move" aria-live="polite">'+esc(moveHint)+'</p>':sel?'<p class="wk-strip-hint">'+esc(selHint)+'</p>':'';
+  const undoBar=Weekly.undo?'<div class="wk-undo" role="status"><span>'+esc(Weekly.undo.msg)+'</span><button type="button" data-wk="undo">Deshacer</button></div>':'';
   const areaHint=area.area+' · '+area.entries.length+' equipos';
 
   const mondays=wkMonthMondays(mon);
@@ -120,10 +177,10 @@ function renderWeekly(){
     +'<div class="wk-dlg-actions"><button type="button" class="wk-btn-sec" data-wk="close">Cancelar</button><button type="button" class="wk-btn-pri" data-wk="generate">Generar PDF</button></div>'
     +'</div></div>':'';
 
-  root.innerHTML='<div class="wk'+(sel?' has-sel':'')+'" style="--wk-slots:'+slots+'">'
+  root.innerHTML='<div class="wk'+(sel||move?' has-sel':'')+(Weekly.undo?' has-undo':'')+'" style="--wk-slots:'+slots+'">'
     /* La franja de la semana es el encabezado de la pantalla (sin logo); ‹ Volver solo se ve en celular. */
     +'<header class="wk-strip"><button type="button" class="wk-navbtn wk-back" data-wk="back" aria-label="Volver">'+wkIcon('m15 18-6-6 6-6')+'</button>'
-    +'<div class="wk-titles"><h1 class="wk-title">Semana '+info.weekNum+' · '+esc(info.month)+'</h1><p class="wk-range">'+esc(info.range)+'</p>'+(sel?'<p class="wk-strip-hint">'+esc(selHint)+'</p>':'')+'</div>'
+    +'<div class="wk-titles"><h1 class="wk-title">Semana '+info.weekNum+' · '+esc(info.month)+'</h1><p class="wk-range">'+esc(info.range)+'</p>'+stripHint+'</div>'
     +'<div class="wk-nav"><button type="button" class="wk-navbtn" data-wk="prev" aria-label="Semana anterior">'+wkIcon('m15 18-6-6 6-6')+'</button><button type="button" class="wk-today" data-wk="today">Hoy</button><button type="button" class="wk-navbtn" data-wk="next" aria-label="Semana siguiente">'+wkIcon('m9 18 6-6-6-6')+'</button>'
     +'<span class="wk-sep" aria-hidden="true"></span>'
     +'<button type="button" class="wk-sheet-btn" data-wk="sheet" aria-controls="wkSide" aria-expanded="'+Weekly.sheetOpen+'">'+wkIcon('M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z')+'Máquinas</button>'
@@ -137,7 +194,7 @@ function renderWeekly(){
     +'</div></aside>'
     +'<section class="wk-week" aria-label="Días de la semana">'+dayHtml+'</section>'
     +'<div class="wk-sheet-scrim" data-wk="sheet-scrim" aria-hidden="true"></div>'
-    +dialog+'</div>';
+    +undoBar+dialog+'</div>';
 
   const tilesNew=root.querySelector('.wk-tiles');if(tilesNew&&tilesScroll){tilesNew.scrollLeft=tilesScroll[0];tilesNew.scrollTop=tilesScroll[1]}
   root.querySelectorAll('.wk-day').forEach(d=>{const l=d.querySelector('.wk-items');if(l&&itemScroll[d.dataset.day])l.scrollTop=itemScroll[d.dataset.day]});
@@ -320,7 +377,8 @@ function wkSheet(open,opts){
 (function wkBindEvents(){
   const root=$('wkRoot');if(!root)return;
   const tileOf=el=>{const t=el&&el.closest('.wk-tile');return t?{code:t.dataset.code,name:t.dataset.name}:null};
-  const clearOver=()=>root.querySelectorAll('.wk-day.is-over').forEach(d=>d.classList.remove('is-over'));
+  const cardSel=m=>'.wk-item-main[data-day="'+CSS.escape(m.day)+'"][data-code="'+CSS.escape(m.code)+'"][data-name="'+CSS.escape(m.name)+'"]';
+  const isShown=()=>{const s=$('weeklyCalendar');return !!s&&s.classList.contains('active')};
   root.addEventListener('click',e=>{
     const b=e.target.closest('[data-wk]');if(!b||!root.contains(b))return;
     const a=b.dataset.wk;
@@ -329,7 +387,14 @@ function wkSheet(open,opts){
     else if(a==='next')wkShift(1);
     else if(a==='today')wkGoToday();
     else if(a==='area'){Weekly.area=b.dataset.code;renderWeekly()}
-    else if(a==='tile'){const m=tileOf(b);Weekly.sel=wkSame(Weekly.sel,m)?null:m;if(Weekly.sel&&wkIsLateral()&&Weekly.sheetOpen)wkSheet(false);renderWeekly()}
+    else if(a==='tile'){const m=tileOf(b);Weekly.move=null;Weekly.sel=wkSame(Weekly.sel,m)?null:m;if(Weekly.sel&&wkIsLateral()&&Weekly.sheetOpen)wkSheet(false);renderWeekly()}
+    else if(a==='item'){
+      const m={day:b.dataset.day,code:b.dataset.code,name:b.dataset.name};
+      Weekly.sel=null;Weekly.move=Weekly.move&&Weekly.move.day===m.day&&wkSame(Weekly.move,m)?null:m;renderWeekly();
+    }
+    else if(a==='move-here'){const mv=Weekly.move;if(mv)wkMove(mv.day,b.dataset.day,mv)}
+    else if(a==='move-cancel'){const mv=Weekly.move;Weekly.move=null;renderWeekly();const c=mv&&root.querySelector(cardSel(mv));if(c)c.focus({preventScroll:true})}
+    else if(a==='undo')wkUndo();
     else if(a==='sheet')wkSheet(!Weekly.sheetOpen,{focus:true});
     else if(a==='sheet-close'||a==='sheet-scrim')wkSheet(false,{focus:true});
     else if(a==='place'){if(Weekly.sel)wkAdd(b.dataset.day,Weekly.sel)}
@@ -341,33 +406,121 @@ function wkSheet(open,opts){
     else if(a==='share')shareLast(0);
     else if(a==='back')history.back();
   });
-  root.addEventListener('dragstart',e=>{
-    const m=tileOf(e.target);if(!m)return;
-    Weekly.drag=m;
-    try{e.dataTransfer.setData('text/plain',m.code+'|'+m.name);e.dataTransfer.effectAllowed='copy'}catch(_){}
+
+  /* ===== Arrastre único con Pointer Events (mouse, tacto y lápiz) =====
+     Tarjeta del panel → AGREGAR a un día; tarjeta de un día → MOVER a otro día de la semana visible.
+     Mouse: empieza al moverse > 6 px con el botón presionado. Tacto/lápiz: pulsación larga de 300 ms sin
+     moverse > 8 px; si el dedo se mueve antes es un desplazamiento normal. Un toque corto es una selección. */
+  const MOUSE_PX=6,SLOP_PX=8,HOLD_MS=300,EDGE_PX=48,STEP_PX=8;
+  let D=null,suppress=null;
+  const clearOver=()=>root.querySelectorAll('.wk-day.is-over').forEach(d=>d.classList.remove('is-over'));
+  const dayAt=(x,y)=>{const el=document.elementFromPoint(x,y),d=el&&el.closest('[data-wk-day]');return d&&root.contains(d)?d:null};
+  function updateOver(){
+    const day=dayAt(D.x,D.y),ok=day&&!(D.kind==='move'&&day.dataset.wkDay===D.from)?day:null;
+    if(ok===D.over)return;
+    if(D.over)D.over.classList.remove('is-over');
+    D.over=ok;if(ok)ok.classList.add('is-over');
+  }
+  const placeGhost=()=>{if(D.ghost)D.ghost.style.transform='translate3d('+(D.x-D.ox)+'px,'+(D.y-D.oy)+'px,0) rotate(2deg)'};
+  /* Contenedor que se desliza bajo el dedo: la lista de un día lleno o, si no, el cuerpo de la pantalla
+     (en celular, la lista de días apilados). */
+  function edgeScroller(){
+    const el=document.elementFromPoint(D.x,D.y),list=el&&el.closest('.wk-items'),sec=$('weeklyCalendar'),body=sec&&sec.querySelector('.body');
+    for(const sc of [list&&root.contains(list)?list:null,body]){
+      if(!sc||sc.scrollHeight<=sc.clientHeight+1)continue;
+      const r=sc.getBoundingClientRect();
+      if(D.y<r.top+EDGE_PX&&sc.scrollTop>0)return {sc,dy:-STEP_PX};
+      if(D.y>r.bottom-EDGE_PX&&sc.scrollTop+sc.clientHeight<sc.scrollHeight-1)return {sc,dy:STEP_PX};
+    }
+    return null;
+  }
+  function tick(){
+    if(!D||!D.active)return;
+    const s=edgeScroller();
+    if(s){s.sc.scrollTop+=s.dy;updateOver()}
+    D.raf=requestAnimationFrame(tick);
+  }
+  function startDrag(){
+    if(!D||D.active)return;
+    clearTimeout(D.timer);
+    if(!D.src.isConnected){D=null;return}
+    D.active=true;
+    try{D.src.setPointerCapture(D.id)}catch(_){}
+    const card=D.kind==='move'?D.src.closest('.wk-item'):D.src,r=card.getBoundingClientRect();
+    const g=document.createElement('div'),gw=Math.round(Math.max(120,Math.min(220,r.width)));
+    g.className='wk-ghost';g.setAttribute('aria-hidden','true');g.style.width=gw+'px';
+    g.innerHTML='<span class="wk-ghost-area">'+esc(wkLabel(D.m.code))+'</span><span class="wk-ghost-name">'+esc(D.m.name)+'</span>';
+    document.body.appendChild(g);
+    D.ghost=g;D.card=card;
+    D.ox=Math.min(Math.max(D.x-r.left,0),gw-12);D.oy=Math.min(Math.max(D.y-r.top,0),g.offsetHeight-8);
+    card.classList.add('wk-drag-src');
     const w=root.querySelector('.wk');if(w)w.classList.add('is-dragging');
     /* Arrastre desde la hoja lateral: se oculta (sin quitarla del DOM) para dejar libres los días. */
-    if(wkIsLateral()&&Weekly.sheetOpen)setTimeout(()=>{const s=$('weeklyCalendar');if(s&&Weekly.drag)s.classList.add('wk-sheet-dragging')},0);
+    const sec=$('weeklyCalendar');
+    if(D.kind==='add'&&wkIsLateral()&&Weekly.sheetOpen&&sec){sec.classList.add('wk-sheet-dragging');D.sheet=true}
+    try{const s=getSelection();if(s)s.removeAllRanges()}catch(_){}
+    placeGhost();updateOver();
+    D.raf=requestAnimationFrame(tick);
+  }
+  /* drop=true: soltar (pointerup); false: cancelar (fuera de un día, pointercancel, Escape). */
+  function endDrag(drop){
+    const d=D;D=null;if(!d)return;
+    clearTimeout(d.timer);
+    if(!d.active)return;
+    cancelAnimationFrame(d.raf);
+    suppress={code:d.m.code,name:d.m.name,day:d.from||'',until:Date.now()+400};
+    try{if(d.src.hasPointerCapture(d.id))d.src.releasePointerCapture(d.id)}catch(_){}
+    if(d.ghost)d.ghost.remove();
+    if(d.card)d.card.classList.remove('wk-drag-src');
+    clearOver();
+    const w=root.querySelector('.wk');if(w)w.classList.remove('is-dragging');
+    const to=drop&&d.over?d.over.dataset.wkDay:null;
+    if(d.sheet){if(to)wkSheet(false);else{const s=$('weeklyCalendar');if(s)s.classList.remove('wk-sheet-dragging')}}
+    if(!to)return;
+    if(d.kind==='add')wkAdd(to,d.m);else wkMove(d.from,to,d.m);
+  }
+  root.addEventListener('pointerdown',e=>{
+    if(D||!e.isPrimary||Weekly.pdfOpen)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    const src=e.target.closest('.wk-tile,.wk-item-main');if(!src||!root.contains(src))return;
+    const move=src.classList.contains('wk-item-main');
+    D={id:e.pointerId,src,kind:move?'move':'add',m:{code:src.dataset.code,name:src.dataset.name},from:move?src.dataset.day:null,
+      x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,touch:e.pointerType!=='mouse',active:false,over:null,timer:0,raf:0};
+    if(D.touch)D.timer=setTimeout(startDrag,HOLD_MS);
   });
-  const endSheetDrag=()=>{const s=$('weeklyCalendar');if(s&&s.classList.contains('wk-sheet-dragging'))wkSheet(false)};
-  root.addEventListener('dragend',()=>{Weekly.drag=null;clearOver();const w=root.querySelector('.wk');if(w)w.classList.remove('is-dragging');endSheetDrag()});
-  root.addEventListener('dragover',e=>{
-    const day=e.target.closest('.wk-day');if(!day||!Weekly.drag)return;
-    e.preventDefault();try{e.dataTransfer.dropEffect='copy'}catch(_){}
-    if(!day.classList.contains('is-over')){clearOver();day.classList.add('is-over')}
+  document.addEventListener('pointermove',e=>{
+    if(!D||e.pointerId!==D.id)return;
+    D.x=e.clientX;D.y=e.clientY;
+    if(!D.active){
+      const dist=Math.hypot(D.x-D.x0,D.y-D.y0);
+      if(D.touch){if(dist>SLOP_PX)endDrag(false);return}
+      if(dist<=MOUSE_PX)return;
+      startDrag();if(!D)return;
+    }
+    e.preventDefault();placeGhost();updateOver();
   });
-  root.addEventListener('dragleave',e=>{const day=e.target.closest('.wk-day');if(day&&!day.contains(e.relatedTarget))day.classList.remove('is-over')});
-  root.addEventListener('drop',e=>{
-    const day=e.target.closest('.wk-day');if(!day)return;
-    e.preventDefault();
-    let m=Weekly.drag;
-    if(!m){try{const [code,...rest]=e.dataTransfer.getData('text/plain').split('|');if(MACHINE_DB[code]&&rest.length)m={code,name:rest.join('|')}}catch(_){}}
-    Weekly.drag=null;clearOver();endSheetDrag();
-    if(m)wkAdd(day.dataset.day,m);
-  });
+  document.addEventListener('pointerup',e=>{if(!D||e.pointerId!==D.id)return;D.x=e.clientX;D.y=e.clientY;if(D.active)updateOver();endDrag(true)});
+  document.addEventListener('pointercancel',e=>{if(D&&e.pointerId===D.id)endDrag(false)});
+  addEventListener('blur',()=>endDrag(false));
+  /* En tacto, la WebView no debe desplazar la página mientras se arrastra. El listener existe desde el inicio
+     (si se registra a mitad del gesto, Chrome ya no permite cancelar el touchmove), pero solo llama a
+     preventDefault() mientras el arrastre está activo. */
+  document.addEventListener('touchmove',e=>{if(D&&D.active&&e.cancelable)e.preventDefault()},{passive:false});
+  root.addEventListener('contextmenu',e=>{if(D)e.preventDefault()});
+  /* El clic que el navegador genera al soltar un arrastre no debe seleccionar la tarjeta arrastrada;
+     cualquier otro clic (p. ej. «Deshacer» justo después) sí pasa. */
+  root.addEventListener('click',e=>{
+    const s=suppress;if(!s)return;
+    if(Date.now()>s.until){suppress=null;return}
+    const t=e.target.closest('.wk-tile,.wk-item-main');
+    if(t&&t.dataset.code===s.code&&t.dataset.name===s.name&&(t.dataset.day||'')===s.day){suppress=null;e.preventDefault();e.stopPropagation()}
+  },true);
+
   document.addEventListener('keydown',e=>{
     if(e.key!=='Escape')return;
+    if(D&&D.active){endDrag(false);return}
     if(Weekly.pdfOpen){Weekly.pdfOpen=false;renderWeekly()}
+    else if(Weekly.move&&isShown()){const mv=Weekly.move;Weekly.move=null;renderWeekly();const c=root.querySelector(cardSel(mv));if(c)c.focus({preventScroll:true})}
     else if(Weekly.sheetOpen&&wkIsLateral())wkSheet(false,{focus:true});
   });
   const body=$('weeklyCalendar')&&$('weeklyCalendar').querySelector('.body');

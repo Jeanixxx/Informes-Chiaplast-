@@ -916,7 +916,7 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .wk-day{min-width:0;display:flex;flex-direction:column;border-radius:16px;background:#F7FAF2;border:1.5px solid #E3EDD6}
 .wk-day.is-today{background:#E3F1FB;border-color:#0080D0}
 .wk.has-sel .wk-day:not(.is-today),.wk.is-dragging .wk-day:not(.is-today){border-style:dashed;border-color:#BFDD8E}
-.wk .wk-day.is-over{background:#EDF6DD;border:1.5px dashed #74B800}
+.wk .wk-day.is-over{background:#EDF6DD;border:2px dashed #74B800}
 .wk-dayhead{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px 10px}
 .wk-dow{font-size:12px;font-weight:700;letter-spacing:1.2px;color:#4A6450}
 .wk-num{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:20px;font-weight:800;color:#10301A}
@@ -924,11 +924,16 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .is-today .wk-dow{color:#005A93}
 .wk-daybody{display:flex;flex-direction:column;gap:6px;padding:0 4px 8px}
 .wk-place{min-height:44px;padding:0 4px;border-radius:10px;border:2px dashed #74B800;background:#fff;color:#2F5A00;font-size:13px;font-weight:800}
-.wk-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;height:calc(var(--wk-slots) * var(--wk-item-h) + (var(--wk-slots) - 1) * 6px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#A8D461 transparent}
-.wk-item{flex:none;height:var(--wk-item-h);display:grid;grid-template-columns:minmax(0,1fr) 44px;grid-template-rows:44px auto;align-items:center;padding:0 0 6px 7px;border-radius:10px;background:#fff;border:1px solid #BFDD8E}
-.wk-item-area{grid-column:1;grid-row:1;font-size:10px;font-weight:700;letter-spacing:.8px;color:#3D6200}
-.wk-item-name{grid-column:1/3;grid-row:2;align-self:start;padding-right:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto;font-size:12.5px;font-weight:700;line-height:1.15;color:#10301A}
-.wk-remove{grid-column:2;grid-row:1;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#4A6450}
+.wk-place.wk-place-cancel{border:1px solid #DCE6D3;color:#4A6450}
+.wk-items{margin:0;padding:0;display:flex;flex-direction:column;gap:6px;height:calc(var(--wk-slots) * var(--wk-item-h) + (var(--wk-slots) - 1) * 6px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#A8D461 transparent}
+/* Tarjeta de un día: <div> con dos botones hermanos; el grande ocupa toda la tarjeta y ✕ va encima a la derecha. */
+.wk-item{flex:none;position:relative;height:var(--wk-item-h);border-radius:10px;background:#fff;border:1px solid #BFDD8E;transition:transform 120ms,opacity 120ms}
+.wk-item.is-picked{background:#EDF6DD;border:2px solid #74B800}
+.wk-item-main{width:100%;height:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:44px auto;align-items:center;align-content:start;padding:0 0 6px 7px;text-align:left;border-radius:9px;cursor:grab}
+.wk-item-main,.wk-tile{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.wk-item-area{grid-row:1;padding-right:44px;font-size:10px;font-weight:700;letter-spacing:.8px;color:#3D6200}
+.wk-item-name{grid-row:2;align-self:start;padding-right:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto;font-size:12.5px;font-weight:700;line-height:1.15;color:#10301A}
+.wk-remove{position:absolute;top:0;right:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#4A6450}
 .wk-remove svg{width:14px;height:14px}
 .wk-remove:hover{background:#F1F6EA}
 .wk-side{grid-area:side;align-self:stretch;position:relative;min-height:420px}
@@ -944,6 +949,16 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .wk-tiles{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:78px;gap:8px;align-content:start;padding:0 12px 12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#A8D461 transparent}
 .wk-tile{min-width:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:10px 12px;text-align:left;border-radius:14px;background:#fff;border:1.5px solid #CFE3B4;color:#10301A;cursor:grab}
 .wk-tile:active{cursor:grabbing}
+/* Arrastre (Pointer Events): tarjeta de origen marcada, fantasma que sigue al dedo o al cursor, aviso Deshacer. */
+.wk .wk-drag-src{transform:scale(.97);opacity:.5}
+.wk.is-dragging,.wk.is-dragging *{cursor:grabbing}
+.wk-ghost{position:fixed;top:0;left:0;z-index:1000;pointer-events:none;touch-action:none;display:flex;flex-direction:column;gap:3px;padding:8px 12px;border-radius:12px;background:#fff;border:1.5px solid #74B800;color:#10301A;box-shadow:0 12px 28px rgba(16,48,26,.25);will-change:transform}
+.wk-ghost-area{font-size:11px;font-weight:700;letter-spacing:.8px;color:#3D6200}
+.wk-ghost-name{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:16px;font-weight:800;line-height:1.1}
+.wk-undo{position:fixed;z-index:45;left:50%;bottom:calc(var(--sb) + 20px);transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;gap:12px;padding:6px 6px 6px 18px;border-radius:16px;background:#10301A;color:#fff;font-size:15px;font-weight:700;box-shadow:0 12px 28px rgba(16,48,26,.25)}
+.wk-undo span{min-width:0}
+.wk-undo button{flex:none;min-height:44px;padding:0 16px;border-radius:12px;background:#fff;color:#2F5A00;font-size:15px;font-weight:800}
+.wk-strip-hint.is-move{display:block;margin:2px 0 0;font-size:13px;font-weight:700;color:#0F2A08}
 .wk-tile.is-scheduled{background:#ECEFEA;border-color:#C9D0C6;box-shadow:inset 0 0 0 999px rgba(60,72,62,.03),0 2px 6px rgba(40,52,42,.10)}
 .wk-tile.is-selected{background:#EDF6DD;border-color:#74B800;box-shadow:none}
 .wk-tile-top{width:100%;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#3D6200}
@@ -1013,10 +1028,10 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
   #weeklyCalendar.wk-dense .wk-dayhead{padding:8px 4px 6px}
   #weeklyCalendar.wk-dense .wk-dow{font-size:11px}
   #weeklyCalendar.wk-dense .wk-num{width:34px;height:34px;font-size:18px}
-  #weeklyCalendar.wk-dense .wk-item{grid-template-columns:minmax(0,1fr) 26px;grid-template-rows:auto auto;align-content:center;column-gap:2px;padding:4px 3px 4px 7px}
-  #weeklyCalendar.wk-dense .wk-item-area{grid-row:1;font-size:10px}
-  #weeklyCalendar.wk-dense .wk-item-name{grid-column:1;grid-row:2;padding-right:0;font-size:13px}
-  #weeklyCalendar.wk-dense .wk-remove{position:relative;grid-column:2;grid-row:1/3;align-self:center;width:26px;height:26px;min-height:26px}
+  #weeklyCalendar.wk-dense .wk-item-main{grid-template-rows:auto auto;align-content:center;padding:4px 31px 4px 7px}
+  #weeklyCalendar.wk-dense .wk-item-area{grid-row:1;padding-right:0;font-size:10px}
+  #weeklyCalendar.wk-dense .wk-item-name{grid-row:2;padding-right:0;font-size:13px}
+  #weeklyCalendar.wk-dense .wk-remove{top:50%;right:3px;transform:translateY(-50%);width:26px;height:26px;min-height:26px}
   #weeklyCalendar.wk-dense .wk-remove::before{content:"";position:absolute;inset:-9px -3px -9px -15px}
   #weeklyCalendar.wk-dense .wk-place{font-size:12px}
 }
@@ -1055,10 +1070,13 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
   .wk-items{order:1;width:100%;height:auto;flex-direction:row;flex-wrap:wrap;overflow:visible}
   .wk-items:empty{display:none}
   .wk-place{order:2;padding:0 12px;font-size:14px}
-  .wk-item{height:44px;max-width:100%;display:flex;align-items:center;gap:4px;padding:0 0 0 10px}
-  .wk-item-area{flex:none}
+  .wk-item{height:44px;max-width:100%;display:flex;align-items:center}
+  .wk-item-main{width:auto;min-width:0;flex:0 1 auto;display:flex;align-items:center;gap:4px;padding:0 0 0 10px}
+  .wk-item-area{flex:none;padding-right:0}
   .wk-item-name{display:block;align-self:center;min-width:0;padding:0;white-space:nowrap;text-overflow:ellipsis;font-size:14px;-webkit-line-clamp:none}
-  .wk-remove{flex:none}
+  .wk-remove{position:static;flex:none}
+  .wk-undo{bottom:calc(var(--sb) + 12px);font-size:14px}
+  .wk.has-undo{padding-bottom:72px}
   .wk-backdrop{align-items:flex-end;padding:0}
   .wk-dialog{width:100%;gap:16px;padding:22px 16px calc(20px + var(--sb));border-radius:24px 24px 0 0}
   .wk-dialog h3{font-size:24px}
