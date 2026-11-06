@@ -1,4 +1,4 @@
-const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo.", "preventiveDrafts": "Consulta qué preventivos siguen en captura y cuáles esperan liberación final.", "releaseFinal": "Comprueba la máquina trabajando en producción, registra comentarios y agrega las firmas opcionales antes de generar el reporte."};
+const HELP={"menu": "Chequeo diario: elige una máquina, captura y termina; luego otra máquina o termina para generar un solo documento. Los datos se guardan en este dispositivo.", "dailyArea": "Elige el área y la máquina. Puedes agregar tantas máquinas como quieras en un solo reporte.", "dailyMachine": "Toca una máquina para capturarla. ✓ indica que ya está en el reporte. Si no aparece, usa \"Otra máquina\".", "dailyBatch": "Aquí ves las máquinas del reporte. Agrega otra, edita o elimina. \"Terminar y guardar\" crea un solo documento y lo guarda en Descargas/Chiaplast.", "form": "Completa los campos en rojo y continúa.", "notes": "Las notas y fotos se conservan 30 días y luego se eliminan. Genera el PDF si necesitas conservarlas.", "reminders": "Los avisos se programan en Android por máquina, fecha y hora.", "kanban": "Organiza tareas de mantenimiento por estado.", "preventiveBoard": "Toca una máquina para marcar su preventivo del mes con la fecha elegida. Se guarda solo en este dispositivo; cambia de mes con las flechas y exporta el CSV si quieres un respaldo.", "preventiveDrafts": "Consulta qué preventivos siguen en captura y cuáles esperan liberación final.", "weeklyCalendar": "Arrastra una máquina a un día o tócala y luego toca «+ Agregar aquí». Una máquina puede ir en varios días, pero solo una vez por día. Todo se guarda en este dispositivo.", "releaseFinal": "Comprueba la máquina trabajando en producción, registra comentarios y agrega las firmas opcionales antes de generar el reporte."};
 function showHelp(){const a=document.querySelector('.screen.active');$('helpText').textContent=HELP[a&&a.id]||HELP.menu;$('helpModal').hidden=false}
 document.querySelectorAll('.screen:not(.splash):not(.login) .bar').forEach(b=>{const h=document.createElement('button');h.className='iconbtn';h.style.cssText='width:38px;height:38px;font-size:17px;margin-left:auto';h.textContent='?';h.setAttribute('aria-label','Ayuda');h.onclick=showHelp;b.appendChild(h)});
 const AppState={session:false,user:'',settings:{},history:[]};
@@ -23,7 +23,8 @@ function show(id){
   app.classList.toggle('has-chrome',showChrome);
   const preventiveScreen=['preventiveCalendar','preventiveOrder','preventiveArea','preventiveMachine','preventiveBoard','preventiveDrafts','releaseFinal'].includes(id)||(id==='form'&&Runtime.workflow==='preventive');
   document.querySelectorAll('.app-sidebar [data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===id||(preventiveScreen&&button.dataset.nav==='preventive')));
-  $('topbarUser').textContent=currentUser()||'Técnico';
+  const user=currentUser()||'Técnico';$('topbarUser').textContent=user;
+  $('topbarInitials').textContent=user.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w.charAt(0).toUpperCase()).join('')||'T';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   const b=$(id).querySelector('.body'); if(b) b.scrollTop=0;
@@ -31,6 +32,7 @@ function show(id){
   if(id==='preventiveDrafts')renderSavedPreventiveDrafts();
   if(id==='specialWorks')specialRender();
   if(id==='preventiveBoard')renderPmBoard();
+  if(id==='weeklyCalendar')renderWeekly();
   if(id==='preventiveCalendar')renderPreventiveCalendar();
   if(id==='preventiveOrder')renderPreventiveOrder();
   if(id==='dailyBatch') renderDailyBatch();
@@ -59,7 +61,8 @@ function renderDashboardMetrics(){
 }
 function updateDashboardClock(){
   const now=new Date(),clock=$('dashboardClock');
-  clock.textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})+' | '+now.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}).toUpperCase();
+  const date=$('dashboardDate');if(date){const t=now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).replace(/,/g,'');date.textContent=t.charAt(0).toUpperCase()+t.slice(1)}
+  clock.textContent=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][now.getDay()]+' '+now.getDate()+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][now.getMonth()]+' · '+pad(now.getHours())+':'+pad(now.getMinutes());
 }
 updateDashboardClock();setInterval(updateDashboardClock,30000);
 function openReminders(){go('reminders')}
@@ -100,6 +103,62 @@ function openReminderForKanbanTask(id){
   $('reminderText').value=existing?existing.text:task.title;$('reminderMachine').value=existing&&existing.machine||task.area||'';
   $('reminderDate').value=future?existing.date:dueDate;$('reminderTime').value=future?existing.time:(dueDate===when.date?when.time:'08:00');$('reminderText').focus();
 }
+/* ===== Menú lateral: plegable en >= 700 px y panel deslizable en celular =====
+   Escritorio/tablet: .sidebar-collapsed cambia --shell-w (248/208 → 76 px); la preferencia se guarda en
+   KEYS.sidebarCollapsed y, sin preferencia, arranca expandido en >= 980 px y plegado entre 700 y 979 px.
+   Celular: el mismo <nav> se abre como panel modal. Al abrirlo se agrega una entrada al historial
+   ({drawer:1}) para que Atrás de Android lo cierre sin navegar; al elegir una opción, primero se retira
+   esa entrada y después se navega como siempre. */
+const Nav=(()=>{
+  const app=document.querySelector('.app'),side=$('appSidebar'),toggle=$('navToggle'),openBtn=$('navOpen'),scrim=$('navScrim');
+  const mobile=matchMedia('(max-width:699px)'),wide=matchMedia('(min-width:980px)');
+  let drawer=false,pushed=false,pending=null;
+  const saved=()=>{let v=null;try{v=store.get(KEYS.sidebarCollapsed,null)}catch(e){}return v==='1'?true:v==='0'?false:null};
+  const focusables=()=>[...side.querySelectorAll('button')].filter(b=>b.getClientRects().length);
+  function sync(){
+    if(mobile.matches){toggle.setAttribute('aria-label','Cerrar menú');toggle.title='Cerrar menú';toggle.setAttribute('aria-expanded',String(drawer))}
+    else{const c=app.classList.contains('sidebar-collapsed'),t=c?'Expandir menú':'Plegar menú';toggle.setAttribute('aria-label',t);toggle.title=t;toggle.setAttribute('aria-expanded',String(!c))}
+    openBtn.setAttribute('aria-expanded',String(drawer));
+  }
+  function applySaved(){const v=saved();app.classList.toggle('sidebar-collapsed',v===null?!wide.matches:v);sync()}
+  function toggleCollapsed(){const c=!app.classList.contains('sidebar-collapsed');app.classList.toggle('sidebar-collapsed',c);try{store.set(KEYS.sidebarCollapsed,c?'1':'0')}catch(e){}sync()}
+  function setDrawer(open){
+    drawer=open;app.classList.toggle('drawer-open',open);
+    if(open){side.setAttribute('role','dialog');side.setAttribute('aria-modal','true');side.setAttribute('aria-label','Menú principal')}
+    else{side.removeAttribute('role');side.removeAttribute('aria-modal');side.setAttribute('aria-label','Navegación principal')}
+    sync();
+  }
+  function openDrawer(){
+    if(drawer||!mobile.matches)return;
+    setDrawer(true);history.pushState(Object.assign({},history.state||{},{drawer:1}),'');pushed=true;
+    const f=focusables()[0];if(f)f.focus();
+  }
+  function finishClose(){pushed=false;setDrawer(false);const then=pending;pending=null;if(then)then();else if(mobile.matches)openBtn.focus()}
+  function closeDrawer(then){if(!drawer){if(then)then();return}pending=then||null;if(pushed)history.back();else finishClose()}
+  toggle.addEventListener('click',()=>{if(mobile.matches)closeDrawer();else toggleCollapsed()});
+  openBtn.addEventListener('click',openDrawer);
+  scrim.addEventListener('click',()=>closeDrawer());
+  /* Elegir una opción con el panel abierto: se cierra y luego se ejecuta su onclick de siempre. */
+  side.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!drawer||!b||b===toggle||typeof b.onclick!=='function')return;
+    e.stopPropagation();e.preventDefault();const fn=b.onclick;closeDrawer(()=>fn.call(b,e));
+  },true);
+  document.addEventListener('keydown',e=>{
+    if(!drawer)return;
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeDrawer();return}
+    if(e.key!=='Tab')return;
+    const f=focusables();if(!f.length)return;const i=f.indexOf(document.activeElement);
+    if(i<0){e.preventDefault();f[0].focus()}
+    else if(e.shiftKey&&i===0){e.preventDefault();f[f.length-1].focus()}
+    else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}
+  },true);
+  /* Atrás con el panel abierto: solo lo cierra (se registra antes que el popstate de la navegación). */
+  addEventListener('popstate',e=>{if(drawer&&pushed){e.stopImmediatePropagation();finishClose()}});
+  mobile.addEventListener('change',()=>{if(!mobile.matches&&drawer)closeDrawer();sync()});
+  wide.addEventListener('change',applySaved);
+  applySaved();
+  return {open:openDrawer,close:closeDrawer,isOpen:()=>drawer,toggleCollapsed};
+})();
 function root(id){history.replaceState({s:id},'');show(id)}
 addEventListener('popstate',e=>{
   if(!isIn()){root('login');return}
@@ -315,7 +374,10 @@ function saveDraft(){
 }
 function loadDraft(){
   let raw=null;try{raw=JSON.parse(store.get(draftStorageKey(),'null'))}catch(e){}
-  const s=normalizeDraft(raw),ok=!!s&&s.code===Runtime.code&&(s.flow||'preventive')===Runtime.checkType;
+  /* Un borrador del catálogo anterior (p. ej. IMP-1 guardado con code CAM) carga con su code vigente. */
+  const s=normalizeDraft(raw),cur=s?machineCurrent(s.code,s.machine||''):null;
+  const ok=!!s&&(s.code===Runtime.code||cur.code===Runtime.code)&&(s.flow||'preventive')===Runtime.checkType;
+  if(ok&&s.code!==Runtime.code){s.code=cur.code;s.machine=cur.name;s.area=Runtime.area}
   const keep={d:$('d').value,t:$('t').value,ccm:$('ccmName').value,resp:$('respSigName').value,production:$('productionName').value};
   setFormState(ok?s:null);
   $('d').value=$('d').value||keep.d;$('t').value=$('t').value||keep.t;
@@ -326,7 +388,7 @@ function loadDraft(){
 }
 function closeFormToTools(){Runtime.release=Runtime.release||{};Runtime.release.status='in_progress';saveDraft();renderSavedPreventiveDrafts();renderSavedPreventiveDraftCount();go('preventiveDrafts');toast('Borrador guardado. Puede retomarlo desde Preventivos en curso.')}
 function openPreventiveDrafts(){go('preventiveDrafts')}
-function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const items=draftIndex().filter(x=>store.get(x.key,'')),waiting=items.filter(x=>x.status==='awaiting_release').length;el.textContent=items.length+' formatos · '+waiting+' por liberar'}}
+function renderSavedPreventiveDraftCount(){const el=$('preventiveDraftCount');if(el){const items=draftIndex().filter(x=>store.get(x.key,'')),waiting=items.filter(x=>x.status==='awaiting_release').length;el.textContent=waiting+' por liberar';el.title=items.length+' formatos guardados'}}
 function renderSavedPreventiveDrafts(){
  const box=$('savedPreventiveDrafts');if(!box)return;
  const items=draftIndex().filter(x=>store.get(x.key,''));
@@ -384,12 +446,12 @@ function openHistoryReport(id){
 function renderHomeFollowup(){
   const reminderBox=$('menuReminderCount'),taskBox=$('widgetKanbanCount'),specialBox=$('specialWorkCount'),boardBox=$('widgetBoardCount');
   const reminders=loadReminders().filter(r=>r.status!=='done').length;
-  const tasks=loadKanban(),todo=tasks.filter(t=>(t.status||'todo')==='todo').length,active=tasks.filter(t=>(t.status||'todo')!=='done').length;
+  const tasks=loadKanban(),active=tasks.filter(t=>(t.status||'todo')!=='done').length;
   const special=specialAll().filter(x=>x.status!=='done').length;
-  if(reminderBox)reminderBox.textContent=reminders+' '+(reminders===1?'recordatorio pendiente':'recordatorios pendientes');
-  if(taskBox)taskBox.textContent=todo+' por empezar · '+active+' activas';
-  if(specialBox)specialBox.textContent=special+' '+(special===1?'trabajo pendiente':'trabajos pendientes');
-  if(boardBox)boardBox.textContent='Ver mes actual';
+  if(reminderBox)reminderBox.textContent=reminders+' '+(reminders===1?'pendiente':'pendientes');
+  if(taskBox)taskBox.textContent=active+' '+(active===1?'activa':'activas');
+  if(specialBox)specialBox.textContent=special+' '+(special===1?'pendiente':'pendientes');
+  if(boardBox){const m=new Date().toLocaleDateString('es-MX',{month:'long'});boardBox.textContent=m.charAt(0).toUpperCase()+m.slice(1)}
 }
 function renderRecent(targetId='recent',searchId='historySearch'){
   const target=$(targetId),search=$(searchId);
@@ -406,13 +468,13 @@ function renderRecent(targetId='recent',searchId='historySearch'){
 }
 
 /* Inicio: splash visible y restauración de sesión coherente */
-runStorageMigrations();
+const storageReady=runStorageMigrations().catch(()=>{});
 syncAppState();
-setTimeout(()=>{
+Promise.all([storageReady,new Promise(r=>setTimeout(r,1500))]).then(()=>{
   syncAppState();
   root(AppState.session?'menu':'login');
   purgeExpiredNotes().catch(()=>{});
-},1500);
+});
 setInterval(()=>{if(!document.hidden)purgeExpiredNotes().catch(()=>{})},60*60*1000);
 
 

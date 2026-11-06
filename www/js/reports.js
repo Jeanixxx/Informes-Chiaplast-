@@ -209,8 +209,60 @@ function pdfWrap(s,max,size,bold){
   if(cur||!lines.length)lines.push(cur);
   return lines;
 }
-function buildPdf(rows,sig){
-  const W=595,H=842,M=40,CW=W-2*M,BOT=H-56,generated=new Date().toLocaleString('es-MX');
+/* ===== Primitivas reutilizables del escritor de PDF =====
+   Coordenadas en puntos desde la esquina superior izquierda (como en pantalla); se convierten al
+   sistema del PDF (origen abajo) al escribir. Fuentes: F1 = Helvetica, F2 = Helvetica-Bold (WinAnsi). */
+const pdfRgb=hex=>{const h=String(hex).replace('#','');return [0,2,4].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(' ')};
+/* Anchos de Helvetica para los signos que pdfWidth no distingue (en milésimas de em). */
+const PDF_EXTRA_W={183:278,215:584,8211:556,8212:1000,8226:350,8230:1000};
+function pdfMeasure(s,size,bold){let w=0;for(const ch of String(s==null?'':s)){const c=ch.codePointAt(0);w+=PDF_EXTRA_W[c]!==undefined?PDF_EXTRA_W[c]*size/1000:pdfWidth(ch,size,bold)}return w}
+/* Recorta el texto con "…" hasta que quepa en max puntos. */
+function pdfFit(s,max,size,bold){s=String(s==null?'':s);if(pdfMeasure(s,size,bold)<=max)return s;let t=s;while(t&&pdfMeasure(t.replace(/\s+$/,'')+'…',size,bold)>max)t=t.slice(0,-1);return t?t.replace(/\s+$/,'')+'…':''}
+/* Hoja de dibujo: rect (relleno, borde, esquinas redondeadas), line y text (izquierda, derecha o centro). */
+function pdfCanvas(H){
+  const ops=[],n=v=>(+v).toFixed(2);
+  return {ops,
+    rect(x,y,w,h,o){
+      o=o||{};const r=Math.min(o.r||0,w/2,h/2),x0=x,y0=H-y-h,x1=x+w,y1=H-y;let path;
+      if(r>0){const k=r*0.5523;path=n(x0+r)+' '+n(y0)+' m '+n(x1-r)+' '+n(y0)+' l '+n(x1-r+k)+' '+n(y0)+' '+n(x1)+' '+n(y0+r-k)+' '+n(x1)+' '+n(y0+r)+' c '+n(x1)+' '+n(y1-r)+' l '+n(x1)+' '+n(y1-r+k)+' '+n(x1-r+k)+' '+n(y1)+' '+n(x1-r)+' '+n(y1)+' c '+n(x0+r)+' '+n(y1)+' l '+n(x0+r-k)+' '+n(y1)+' '+n(x0)+' '+n(y1-r+k)+' '+n(x0)+' '+n(y1-r)+' c '+n(x0)+' '+n(y0+r)+' l '+n(x0)+' '+n(y0+r-k)+' '+n(x0+r-k)+' '+n(y0)+' '+n(x0+r)+' '+n(y0)+' c h'}
+      else path=n(x0)+' '+n(y0)+' '+n(w)+' '+n(h)+' re';
+      ops.push((o.fill?pdfRgb(o.fill)+' rg ':'')+(o.stroke?pdfRgb(o.stroke)+' RG '+n(o.lw||0.75)+' w ':'')+path+' '+(o.fill&&o.stroke?'B':o.fill?'f':'S'));
+    },
+    line(xa,ya,xb,yb,color,lw){ops.push(pdfRgb(color)+' RG '+n(lw||0.75)+' w '+n(xa)+' '+n(H-ya)+' m '+n(xb)+' '+n(H-yb)+' l S')},
+    text(x,y,s,size,bold,color,align){
+      const w=align?pdfMeasure(s,size,bold):0,px=align==='right'?x-w:align==='center'?x-w/2:x;
+      ops.push('BT /'+(bold?'F2':'F1')+' '+size+' Tf '+pdfRgb(color)+' rg '+n(px)+' '+n(H-y)+' Td ('+pdfEnc(s)+') Tj ET');
+    }
+  };
+}
+/* Arma el archivo PDF: catálogo, fuentes, info, una página + contenido por hoja y objetos extra
+   (imágenes) al final. pages: [{ops, xo:['/Img1 12 0 R', …]}]. El primer objeto extra recibe el id
+   5 + 2·páginas + 1. */
+function pdfAssemble(pages,W,H,title,extra){
+  const objs=[];const add=s=>{objs.push(s);return objs.length};
+  add('<< /Type /Catalog /Pages 2 0 R >>');add('PAGES');
+  add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  const info=add('<< /Title ('+pdfEnc(title+' - Chiaplast')+') /Author (Chiaplast Mantenimiento) /Creator (Aplicacion de Mantenimiento Chiaplast) >>');
+  const refs=[];
+  pages.forEach(p=>{
+    const pid=objs.length+1,cid=pid+1,xo=p.xo||[];refs.push(pid+' 0 R');
+    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+'] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
+    const stream=p.ops.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
+  });
+  objs[1]='<< /Type /Pages /Kids ['+refs.join(' ')+'] /Count '+pages.length+' >>';
+  (extra||[]).forEach(add);
+  let pdf='%PDF-1.4\n%CHIA\n';const off=[];
+  objs.forEach((o,i)=>{off.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n'});
+  const xr=pdf.length;pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  off.forEach(o=>{pdf+=String(o).padStart(10,'0')+' 00000 n \n'});
+  pdf+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R /Info '+info+' 0 R >>\nstartxref\n'+xr+'\n%%EOF';
+  return new Blob([pdf],{type:PDF_MIME});
+}
+/* opts.orientation: 'portrait' (A4 vertical, por defecto) o 'landscape' (842×595). */
+function buildPdf(rows,sig,opts){
+  const landscape=!!(opts&&opts.orientation==='landscape');
+  const W=landscape?842:595,H=landscape?595:842,M=40,CW=W-2*M,BOT=H-56,generated=new Date().toLocaleString('es-MX');
   const STEEL='0.09 0.17 0.23',ACC='0.14 0.53 0.35',LINE='0.82 0.86 0.89',LIGHT='0.92 0.94 0.96';
   const COL={ok:'0.07 0.50 0.29',bad:'0.70 0.15 0.12',warn:'0.14 0.42 0.29',na:'0.48 0.53 0.57','':'0.09 0.17 0.23'};
   const trow=rows.find(r=>r[2]===3);const docTitle=trow?trow[0]:'REPORTE DE MANTENIMIENTO';
@@ -287,29 +339,18 @@ function buildPdf(rows,sig){
     T(M,H-20,'Chiaplast · Mantenimiento · Documento generado el '+generated,8,false,COL.na);
     T(W-M,H-20,'Página '+(i+1)+' de '+total,8,true,COL.na,true);
   });
-  const objs=[];const add=s=>{objs.push(s);return objs.length};
-  add('<< /Type /Catalog /Pages 2 0 R >>');add('PAGES');
-  add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
-  add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
-  const info=add('<< /Title ('+pdfEnc(docTitle+' - Chiaplast')+') /Author (Chiaplast Mantenimiento) /Creator (Aplicacion de Mantenimiento Chiaplast) >>');
-  const photoStartId=5+pages.length*2+1,sigCcmId=sig&&sig.ccm&&sig.ccm.hex?photoStartId+photoRows.length:0,sigRespId=sig&&sig.responsable&&sig.responsable.hex?photoStartId+photoRows.length+(sigCcmId?1:0):0,sigProductionId=sig&&sig.production&&sig.production.hex?photoStartId+photoRows.length+(sigCcmId?1:0)+(sigRespId?1:0):0,refs=[];
-  pages.forEach((p,i)=>{
-    const pid=objs.length+1,cid=pid+1;refs.push(pid+' 0 R');
+  const photoStartId=5+pages.length*2+1,sigCcmId=sig&&sig.ccm&&sig.ccm.hex?photoStartId+photoRows.length:0,sigRespId=sig&&sig.responsable&&sig.responsable.hex?photoStartId+photoRows.length+(sigCcmId?1:0):0,sigProductionId=sig&&sig.production&&sig.production.hex?photoStartId+photoRows.length+(sigCcmId?1:0)+(sigRespId?1:0):0;
+  const pageObjs=pages.map((p,i)=>{
     const xo=[];if(i===sigPage&&sigCcmId)xo.push('/SigCCM '+sigCcmId+' 0 R');if(i===sigPage&&sigRespId)xo.push('/SigResp '+sigRespId+' 0 R');if(i===sigPage&&sigProductionId)xo.push('/SigProduction '+sigProductionId+' 0 R');if(pagePhotoRefs[i]!==undefined)xo.push('/Img1 '+(photoStartId+pagePhotoRefs[i])+' 0 R');
-    add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>'+(xo.length?' /XObject << '+xo.join(' ')+' >>':'')+' >> /Contents '+cid+' 0 R >>');
-    const stream=p.join('\n');add('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');
+    return {ops:p,xo};
   });
-  objs[1]='<< /Type /Pages /Kids ['+refs.join(' ')+'] /Count '+pages.length+' >>';
-  photoRows.forEach(r=>{const bin=atob(r[1].split(',')[1]);let hex='';for(let i=0;i<bin.length;i++)hex+=bin.charCodeAt(i).toString(16).padStart(2,'0');const dim=photoDimensions(r[1]);add('<< /Type /XObject /Subtype /Image /Width '+dim.w+' /Height '+dim.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length '+(hex.length+1)+' >>\nstream\n'+hex+'>\nendstream')});
-  if(sigCcmId){const z=sig.ccm,d=z.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+z.w+' /Height '+z.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
-  if(sigRespId){const z=sig.responsable,d=z.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+z.w+' /Height '+z.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
-  if(sigProductionId){const z=sig.production,d=z.hex+'>';add('<< /Type /XObject /Subtype /Image /Width '+z.w+' /Height '+z.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream')}
-  let pdf='%PDF-1.4\n%CHIA\n';const off=[];
-  objs.forEach((o,i)=>{off.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n'});
-  const xr=pdf.length;pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
-  off.forEach(o=>{pdf+=String(o).padStart(10,'0')+' 00000 n \n'});
-  pdf+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R /Info '+info+' 0 R >>\nstartxref\n'+xr+'\n%%EOF';
-  return new Blob([pdf],{type:PDF_MIME});
+  const extra=[];
+  photoRows.forEach(r=>{const bin=atob(r[1].split(',')[1]);let hex='';for(let i=0;i<bin.length;i++)hex+=bin.charCodeAt(i).toString(16).padStart(2,'0');const dim=photoDimensions(r[1]);extra.push('<< /Type /XObject /Subtype /Image /Width '+dim.w+' /Height '+dim.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length '+(hex.length+1)+' >>\nstream\n'+hex+'>\nendstream')});
+  const sigObj=z=>{const d=z.hex+'>';return '<< /Type /XObject /Subtype /Image /Width '+z.w+' /Height '+z.h+' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length '+d.length+' >>\nstream\n'+d+'\nendstream'};
+  if(sigCcmId)extra.push(sigObj(sig.ccm));
+  if(sigRespId)extra.push(sigObj(sig.responsable));
+  if(sigProductionId)extra.push(sigObj(sig.production));
+  return pdfAssemble(pageObjs,W,H,docTitle,extra);
 }
 function selectedExport(name){
   const active=document.querySelector('.screen.active');
