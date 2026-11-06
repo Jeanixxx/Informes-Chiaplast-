@@ -41,7 +41,7 @@ function wkSave(){
 }
 function wkAdd(day,m){
   const data=wkData(),list=data[day]||[];
-  if(list.some(x=>wkSame(x,m))){Weekly.sel=null;renderWeekly();toast(m.name+' ya está programada ese día.');return false}
+  if(list.some(x=>wkSame(x,m))){Weekly.sel=null;wkNotice(m.name+' ya está programada el '+wkDayName(day),{undo:null,warn:true});renderWeekly();return false}
   data[day]=list.concat([{code:m.code,name:m.name}]);
   Weekly.sel=null;wkSave();buzz(10);renderWeekly();return true;
 }
@@ -60,7 +60,7 @@ function wkRemove(day,m){
   const data=wkData(),prev=wkClone(data),next=wkClone(data),list=(next[day]||[]).filter(x=>!wkSame(x,m));
   if(list.length)next[day]=list;else delete next[day];
   if(wkSame(Weekly.move,m)&&Weekly.move.day===day)Weekly.move=null;
-  if(wkCommit(next))wkOfferUndo(prev,m.name+' quitada del '+wkDayName(day));
+  if(wkCommit(next))wkNotice(m.name+' quitada del '+wkDayName(day),{undo:prev});
   renderWeekly();
 }
 /* Mover = quitar del origen y agregar al final del destino, en una sola escritura. */
@@ -68,22 +68,24 @@ function wkMove(from,to,m){
   Weekly.move=null;
   const data=wkData();
   if(from===to||!(data[from]||[]).some(x=>wkSame(x,m))){renderWeekly();return false}
-  if((data[to]||[]).some(x=>wkSame(x,m))){renderWeekly();toast(m.name+' ya está programada el '+wkDayName(to));return false}
+  if((data[to]||[]).some(x=>wkSame(x,m))){wkNotice(m.name+' ya está programada el '+wkDayName(to),{undo:null,warn:true});renderWeekly();return false}
   const prev=wkClone(data),next=wkClone(data),left=next[from].filter(x=>!wkSame(x,m));
   if(left.length)next[from]=left;else delete next[from];
   next[to]=(next[to]||[]).concat([{code:m.code,name:m.name}]);
   const ok=wkCommit(next);
-  if(ok)wkOfferUndo(prev,m.name+' movida al '+wkDayName(to));
+  if(ok)wkNotice(m.name+' movida al '+wkDayName(to),{undo:prev});
   renderWeekly();return ok;
 }
-/* Aviso «Deshacer» de 5 s; una acción nueva reemplaza al anterior (solo se deshace la última). */
-function wkOfferUndo(prev,msg){
+/* Notificación inferior del calendario (5 s): «Deshacer» tras mover o quitar ({undo: estado anterior}) o aviso
+   sin botón ({undo:null, warn:true}, p. ej. duplicado). Una nueva reemplaza a la anterior: solo se deshace la última. */
+function wkNotice(msg,opts){
+  const o=opts||{};
   clearTimeout(Weekly.undoT);
-  Weekly.undo={prev,msg};
+  Weekly.undo={prev:o.undo||null,msg,warn:!!o.warn};
   Weekly.undoT=setTimeout(()=>{Weekly.undo=null;const u=document.querySelector('#wkRoot .wk-undo');if(u)u.remove();const w=document.querySelector('#wkRoot .wk');if(w)w.classList.remove('has-undo')},5000);
 }
 function wkUndo(){
-  const u=Weekly.undo;if(!u)return;
+  const u=Weekly.undo;if(!u||!u.prev)return;
   clearTimeout(Weekly.undoT);Weekly.undo=null;Weekly.move=null;Weekly.sel=null;
   if(wkCommit(u.prev))toast('Cambio deshecho.');
   renderWeekly();
@@ -162,7 +164,9 @@ function renderWeekly(){
   const selHint=sel?sel.name+' seleccionada · toca «+ Agregar aquí» en un día':'';
   const moveHint=move?move.name+' ('+wkDayShort(move.day)+') seleccionada · toca «Mover aquí» en otro día':'';
   const stripHint=move?'<p class="wk-strip-hint is-move" aria-live="polite">'+esc(moveHint)+'</p>':sel?'<p class="wk-strip-hint">'+esc(selHint)+'</p>':'';
-  const undoBar=Weekly.undo?'<div class="wk-undo" role="status"><span>'+esc(Weekly.undo.msg)+'</span><button type="button" data-wk="undo">Deshacer</button></div>':'';
+  const nt=Weekly.undo,undoBar=nt?'<div class="wk-undo'+(nt.prev?'':' is-notice')+'" role="status" aria-live="polite">'
+    +(nt.warn?'<svg class="wk-undo-icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>':'')
+    +'<span>'+esc(nt.msg)+'</span>'+(nt.prev?'<button type="button" data-wk="undo">Deshacer</button>':'')+'</div>':'';
   const areaHint=area.area+' · '+area.entries.length+' equipos';
 
   const mondays=wkMonthMondays(mon);

@@ -958,6 +958,9 @@ button:not(.parts-remove),.kanban-actions button,.reminder-actions .btn{min-heig
 .wk-undo{position:fixed;z-index:45;left:50%;bottom:calc(var(--sb) + 20px);transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);display:flex;align-items:center;gap:12px;padding:6px 6px 6px 18px;border-radius:16px;background:#10301A;color:#fff;font-size:15px;font-weight:700;box-shadow:0 12px 28px rgba(16,48,26,.25)}
 .wk-undo span{min-width:0}
 .wk-undo button{flex:none;min-height:44px;padding:0 16px;border-radius:12px;background:#fff;color:#2F5A00;font-size:15px;font-weight:800}
+/* Aviso sin botón (duplicado): mismo alto que con «Deshacer» (44 px + 12 px de relleno) e ícono de 20 px. */
+.wk-undo.is-notice{min-height:56px;padding-right:18px;gap:10px}
+.wk-undo-icon{flex:none;width:20px;height:20px}
 .wk-strip-hint.is-move{display:block;margin:2px 0 0;font-size:13px;font-weight:700;color:#0F2A08}
 .wk-tile.is-scheduled{background:#ECEFEA;border-color:#C9D0C6;box-shadow:inset 0 0 0 999px rgba(60,72,62,.03),0 2px 6px rgba(40,52,42,.10)}
 .wk-tile.is-selected{background:#EDF6DD;border-color:#74B800;box-shadow:none}
